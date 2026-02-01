@@ -26,3 +26,11 @@ Die Anordnung ist so, dass die Felder in einem Raster dargestellt werden, das de
 passe das widget noch folgender maßen an. 
 ich möchte an den stellen im raster wo noch kein feld hinterlegt eine möglichkeit besteht, ein neues feld zu erstellen.
 Klickt man auf diese stelle, öffnet sich ein modal in dem die wichtigsten attribute des feldes eingegeben werden können (position, größe, preis pro monat, status).
+
+es gibt eine besonderheit beim raster. ein feld kann größer als 1x1 sein.
+Das bedeutet, dass ein feld mehrere positionen im raster einnehmen kann.
+Passe das widget so an, dass diese größen berücksichtigt werden und die felder entsprechend im raster dargestellt werden.
+passe auch den seeder (FieldSeeder) an sodass keine Felder mit überlappenden positionen erstellt werden.
+
+nochmal zum verständins. wenn ein field (bspw. row=1 und col=1) im raster eine width von 2 hat, dann ist auch automatisch das feld an position (row=1, col=2) belegt. im widget wird das field dann über 2 rows dargestellt und ersetzt die position (row=1, col=2). es soll also kein leeres feld an dieser position geben.
+das gleich gilt für height. wenn ein field eine height von 2 hat, dann ist auch automatisch die position (row=2, col=1) belegt.

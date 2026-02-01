@@ -66,84 +66,121 @@ class FieldSeeder extends Seeder
             ],
         ];
 
-        $row = 0;
-        $column = 0;
-        $fieldCount = 0;
-        $maxFields = min($board->rows * $board->columns, 30); // Max 30 Felder pro Board
+        $createdFields = [];
+        $maxAttempts = 100;
+        $attempt = 0;
 
         // Erstelle verschiedene Feldtypen
         foreach ($fieldTypes as $typeIndex => $fieldType) {
             foreach ($fieldType['names'] as $nameIndex => $name) {
-                if ($fieldCount >= $maxFields) {
+                if ($attempt >= $maxAttempts) {
                     break 2;
                 }
 
-                // Berechne Position
-                $column = $fieldCount % $board->columns;
-                $row = (int)($fieldCount / $board->columns);
+                // Finde eine freie Position für dieses Feld
+                $placed = false;
+                for ($tryRow = 1; $tryRow <= $board->{Board::rows} && !$placed; $tryRow++) {
+                    for ($tryCol = 1; $tryCol <= $board->{Board::columns} && !$placed; $tryCol++) {
+                        $attempt++;
 
-                // Prüfe ob Feld ins Board passt
-                if ($row + $fieldType['height'] > $board->rows ||
-                    $column + $fieldType['width'] > $board->columns) {
-                    $fieldCount++;
-                    continue;
+                        // Prüfe ob Feld ins Board passt
+                        if ($tryRow + $fieldType['height'] - 1 > $board->{Board::rows} ||
+                            $tryCol + $fieldType['width'] - 1 > $board->{Board::columns}) {
+                            continue;
+                        }
+
+                        // Prüfe auf Überlappung mit bereits erstellten Feldern
+                        if ($this->hasOverlap($tryRow, $tryCol, $fieldType['width'], $fieldType['height'], $createdFields)) {
+                            continue;
+                        }
+
+                        // Wähle Status basierend auf Feldtyp
+                        $status = match ($typeIndex) {
+                            0, 1 => Field::STATUS_RENTED, // Premium Felder meist vermietet
+                            2 => rand(0, 1) ? Field::STATUS_RENTED : Field::STATUS_AVAILABLE,
+                            3 => rand(0, 2) ? Field::STATUS_AVAILABLE : Field::STATUS_RENTED,
+                            default => Field::STATUS_AVAILABLE,
+                        };
+
+                        $field = Field::create([
+                            Field::board_id => $board->id,
+                            Field::name => $name . ' (' . $board->{Board::name} . ')',
+                            Field::row => $tryRow,
+                            Field::column => $tryCol,
+                            Field::width => $fieldType['width'],
+                            Field::height => $fieldType['height'],
+                            Field::price_per_month => $fieldType['price'],
+                            Field::status => $status,
+                            Field::description => $this->getFieldDescription($name, $fieldType['price']),
+                        ]);
+
+                        $createdFields[] = [
+                            'row' => $tryRow,
+                            'column' => $tryCol,
+                            'width' => $fieldType['width'],
+                            'height' => $fieldType['height'],
+                        ];
+
+                        $placed = true;
+                    }
                 }
-
-                // Wähle Status basierend auf Feldtyp
-                $status = match ($typeIndex) {
-                    0, 1 => Field::STATUS_RENTED, // Premium Felder meist vermietet
-                    2 => rand(0, 1) ? Field::STATUS_RENTED : Field::STATUS_AVAILABLE,
-                    3 => rand(0, 2) ? Field::STATUS_AVAILABLE : Field::STATUS_RENTED,
-                    default => Field::STATUS_AVAILABLE,
-                };
-
-                Field::create([
-                    Field::board_id => $board->id,
-                    Field::name => $name . ' (' . $board->name . ')',
-                    Field::row => $row,
-                    Field::column => $column,
-                    Field::width => $fieldType['width'],
-                    Field::height => $fieldType['height'],
-                    Field::price_per_month => $fieldType['price'],
-                    Field::status => $status,
-                    Field::description => $this->getFieldDescription($name, $fieldType['price']),
-                ]);
-
-                $fieldCount += $fieldType['width'] * $fieldType['height'];
             }
         }
 
         // Fülle restliche Positionen mit Standard-Feldern
         $standardPrice = 120.00;
-        for ($r = 0; $r < $board->rows; $r++) {
-            for ($c = 0; $c < $board->columns; $c++) {
+        for ($r = 1; $r <= $board->{Board::rows}; $r++) {
+            for ($c = 1; $c <= $board->{Board::columns}; $c++) {
                 // Prüfe ob Position schon belegt ist
-                $existingField = Field::where(Field::board_id, $board->id)
-                    ->where(function ($query) use ($r, $c) {
-                        $query->where(function ($q) use ($r, $c) {
-                            $q->where(Field::row, '<=', $r)
-                              ->whereRaw('`row` + `height` > ?', [$r])
-                              ->where(Field::column, '<=', $c)
-                              ->whereRaw('`column` + `width` > ?', [$c]);
-                        });
-                    })
-                    ->first();
-
-                if (!$existingField) {
-                    Field::create([
-                        Field::board_id => $board->id,
-                        Field::name => 'Feld ' . chr(65 + $r) . ($c + 1) . ' (' . $board->name . ')',
-                        Field::row => $r,
-                        Field::column => $c,
-                        Field::width => 1,
-                        Field::height => 1,
-                        Field::price_per_month => $standardPrice,
-                        Field::status => rand(0, 3) > 0 ? Field::STATUS_AVAILABLE : Field::STATUS_RENTED,
-                        Field::description => 'Standardfeld mit guter Sichtbarkeit.',
-                    ]);
+                if ($this->hasOverlap($r, $c, 1, 1, $createdFields)) {
+                    continue;
                 }
+
+                $field = Field::create([
+                    Field::board_id => $board->id,
+                    Field::name => 'Feld ' . chr(64 + $r) . $c . ' (' . $board->{Board::name} . ')',
+                    Field::row => $r,
+                    Field::column => $c,
+                    Field::width => 1,
+                    Field::height => 1,
+                    Field::price_per_month => $standardPrice,
+                    Field::status => rand(0, 3) > 0 ? Field::STATUS_AVAILABLE : Field::STATUS_RENTED,
+                    Field::description => 'Standardfeld mit guter Sichtbarkeit.',
+                ]);
+
+                $createdFields[] = [
+                    'row' => $r,
+                    'column' => $c,
+                    'width' => 1,
+                    'height' => 1,
+                ];
             }
         }
+    }
+
+    /**
+     * Check if a field would overlap with existing fields
+     */
+    private function hasOverlap(int $newRow, int $newCol, int $newWidth, int $newHeight, array $existingFields): bool
+    {
+        foreach ($existingFields as $existing) {
+            $existingRow = $existing['row'];
+            $existingCol = $existing['column'];
+            $existingWidth = $existing['width'];
+            $existingHeight = $existing['height'];
+
+            // Prüfe auf Überlappung in beide Richtungen
+            $rowOverlap = $newRow < $existingRow + $existingHeight &&
+                         $newRow + $newHeight > $existingRow;
+            $colOverlap = $newCol < $existingCol + $existingWidth &&
+                         $newCol + $newWidth > $existingCol;
+
+            if ($rowOverlap && $colOverlap) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

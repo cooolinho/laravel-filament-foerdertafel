@@ -33,10 +33,13 @@
                 <div class="overflow-x-auto">
                     <div class="inline-block min-w-full align-middle">
                         <div class="grid gap-3 p-4"
-                             style="grid-template-columns: repeat({{ $this->record->{\App\Models\Board::columns} }}, minmax(120px, 1fr)); grid-auto-rows: minmax(120px, auto);">
+                             style="grid-template-columns: repeat({{ $this->record->{\App\Models\Board::columns} }}, minmax(120px, 1fr)); grid-template-rows: repeat({{ $this->record->{\App\Models\Board::rows} }}, minmax(120px, auto));">
                             @foreach($this->getFieldsGrid() as $row => $columns)
                                 @foreach($columns as $col => $field)
-                                    @if($field)
+                                    @if($field === 'occupied')
+                                        {{-- Occupied position - render invisible placeholder --}}
+                                        <div style="grid-column: {{ $col }}; grid-row: {{ $row }};" class="pointer-events-none"></div>
+                                    @elseif($field)
                                         @php
                                             $activeRental = $this->getActiveRental($field);
                                             $fieldStatus = $field->{\App\Models\Field::status};
@@ -46,9 +49,11 @@
                                                 \App\Models\Field::STATUS_RESERVED => 'border-blue-500 bg-blue-50 dark:bg-blue-950',
                                                 default => 'border-gray-500 bg-gray-50 dark:bg-gray-800'
                                             };
+                                            $fieldWidth = $field->{\App\Models\Field::width};
+                                            $fieldHeight = $field->{\App\Models\Field::height};
                                         @endphp
 
-                                        <div class="relative group">
+                                        <div class="relative group" style="grid-column: {{ $col }} / span {{ $fieldWidth }}; grid-row: {{ $row }} / span {{ $fieldHeight }};">
                                             <a href="{{ \App\Filament\Admin\Resources\Fields\FieldResource::getUrl('view', ['record' => $field->id]) }}"
                                                class="flex flex-col p-4 rounded-lg border-2 transition-all hover:shadow-xl hover:scale-105 h-full {{ $borderColor }}"
                                                style="min-height: 120px;">
@@ -58,9 +63,9 @@
                                                     <div class="text-xs font-mono text-gray-500 dark:text-gray-400">
                                                         [{{ $field->{\App\Models\Field::row} }},{{ $field->{\App\Models\Field::column} }}]
                                                     </div>
-                                                    @if($field->{\App\Models\Field::width} > 1 || $field->{\App\Models\Field::height} > 1)
+                                                    @if($fieldWidth > 1 || $fieldHeight > 1)
                                                         <x-filament::badge color="gray" size="xs">
-                                                            {{ $field->{\App\Models\Field::width} }}x{{ $field->{\App\Models\Field::height} }}
+                                                            {{ $fieldWidth }}x{{ $fieldHeight }}
                                                         </x-filament::badge>
                                                     @endif
                                                 </div>
@@ -97,7 +102,7 @@
                                             </a>
 
                                             {{-- Quick Actions (on hover) --}}
-                                            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10">
                                                 <a href="{{ \App\Filament\Admin\Resources\Fields\FieldResource::getUrl('edit', ['record' => $field->id]) }}"
                                                    class="p-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                                                    title="Bearbeiten">
@@ -117,7 +122,7 @@
                                         <button
                                             wire:click="openCreateFieldModal({{ $row }}, {{ $col }})"
                                             class="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-600 transition-all group cursor-pointer"
-                                            style="min-height: 120px;"
+                                            style="grid-column: {{ $col }}; grid-row: {{ $row }}; min-height: 120px;"
                                             title="Neues Feld erstellen">
                                             <div class="flex flex-col items-center justify-center h-full opacity-50 group-hover:opacity-100 transition-opacity">
                                                 <x-filament::icon

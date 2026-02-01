@@ -45,17 +45,42 @@ class FieldsWidget extends Widget implements HasForms, HasActions
                     ->where(Rental::start_date, '<=', now())
                     ->where(Rental::end_date, '>=', now());
             }, 'rentals.customer'])
-            ->get()
-            ->keyBy(function ($field) {
-                return $field->{Field::row} . '-' . $field->{Field::column};
-            });
+            ->get();
 
-        // Create grid structure
+        // Create grid structure with null values
         $grid = [];
         for ($row = 1; $row <= $this->record->{Board::rows}; $row++) {
             $grid[$row] = [];
             for ($col = 1; $col <= $this->record->{Board::columns}; $col++) {
-                $grid[$row][$col] = $fields->get($row . '-' . $col);
+                $grid[$row][$col] = null;
+            }
+        }
+
+        // Place fields in grid, marking occupied positions
+        foreach ($fields as $field) {
+            $fieldRow = $field->{Field::row};
+            $fieldCol = $field->{Field::column};
+            $fieldWidth = $field->{Field::width};
+            $fieldHeight = $field->{Field::height};
+
+            // Mark the top-left position with the field object
+            if (array_key_exists($fieldRow, $grid) && array_key_exists($fieldCol, $grid[$fieldRow])) {
+                $grid[$fieldRow][$fieldCol] = $field;
+            }
+
+            // Mark all other occupied positions as 'occupied' (string marker)
+            for ($r = $fieldRow; $r < $fieldRow + $fieldHeight; $r++) {
+                for ($c = $fieldCol; $c < $fieldCol + $fieldWidth; $c++) {
+                    // Skip the top-left position (already has the field object)
+                    if ($r === $fieldRow && $c === $fieldCol) {
+                        continue;
+                    }
+
+                    // Mark as occupied if within board bounds
+                    if (isset($grid[$r][$c])) {
+                        $grid[$r][$c] = 'occupied';
+                    }
+                }
             }
         }
 
@@ -181,17 +206,43 @@ class FieldsWidget extends Widget implements HasForms, HasActions
                     return;
                 }
 
-                // Prüfe ob bereits ein Feld an dieser Position existiert
-                $existingField = Field::where(Field::board_id, $this->record->id)
-                    ->where(Field::row, $data[Field::row])
-                    ->where(Field::column, $data[Field::column])
-                    ->first();
+                $newRow = $data[Field::row];
+                $newCol = $data[Field::column];
+                $newWidth = $data[Field::width];
+                $newHeight = $data[Field::height];
 
-                if ($existingField) {
+                // Prüfe ob das neue Feld innerhalb des Boards liegt
+                if ($newRow + $newHeight > $this->record->{Board::rows} + 1 ||
+                    $newCol + $newWidth > $this->record->{Board::columns} + 1) {
+                    Notification::make()
+                        ->warning()
+                        ->title('Feld zu groß')
+                        ->body('Das Feld passt nicht vollständig auf das Board.')
+                        ->send();
+                    return;
+                }
+
+                // Prüfe ob eine der Positionen bereits belegt ist
+                $hasOverlap = Field::where(Field::board_id, $this->record->id)
+                    ->get()
+                    ->contains(function ($existingField) use ($newRow, $newCol, $newWidth, $newHeight) {
+                        $existingRow = $existingField->{Field::row};
+                        $existingCol = $existingField->{Field::column};
+                        $existingWidth = $existingField->{Field::width};
+                        $existingHeight = $existingField->{Field::height};
+
+                        // Prüfe auf Überlappung in beide Richtungen
+                        $rowOverlap = $newRow < $existingRow + $existingHeight && $newRow + $newHeight > $existingRow;
+                        $colOverlap = $newCol < $existingCol + $existingWidth && $newCol + $newWidth > $existingCol;
+
+                        return $rowOverlap && $colOverlap;
+                    });
+
+                if ($hasOverlap) {
                     Notification::make()
                         ->warning()
                         ->title('Position bereits belegt')
-                        ->body('An dieser Position existiert bereits ein Feld.')
+                        ->body('Das Feld überschneidet sich mit einem bestehenden Feld.')
                         ->send();
                     return;
                 }
