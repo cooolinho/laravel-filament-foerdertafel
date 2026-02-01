@@ -113,10 +113,24 @@
                                             </div>
                                         </div>
                                     @else
-                                        {{-- Empty grid cell --}}
-                                        <div class="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900"
-                                             style="min-height: 120px;">
-                                        </div>
+                                        {{-- Empty grid cell - clickable to create new field --}}
+                                        <button
+                                            wire:click="openCreateFieldModal({{ $row }}, {{ $col }})"
+                                            class="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-600 transition-all group cursor-pointer"
+                                            style="min-height: 120px;"
+                                            title="Neues Feld erstellen">
+                                            <div class="flex flex-col items-center justify-center h-full opacity-50 group-hover:opacity-100 transition-opacity">
+                                                <x-filament::icon
+                                                    icon="heroicon-o-plus-circle"
+                                                    class="w-8 h-8 text-gray-400 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-400" />
+                                                <span class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                                    [{{ $row }},{{ $col }}]
+                                                </span>
+                                                <span class="text-xs font-semibold text-gray-600 dark:text-gray-300 mt-1">
+                                                    Feld erstellen
+                                                </span>
+                                            </div>
+                                        </button>
                                     @endif
                                 @endforeach
                             @endforeach
@@ -165,4 +179,6 @@
             </div>
         @endif
     </x-filament::section>
+
+    <x-filament-actions::modals />
 </x-filament-widgets::widget>

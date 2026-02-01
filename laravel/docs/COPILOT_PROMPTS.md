@@ -22,3 +22,7 @@ passe mir mein FieldsWidget und das template an. Ich möchte das alle Felder ein
 Jedes Feld soll seinen Status (verfügbar, vermietet) anzeigen und bei Klick auf ein Feld sollen die Details des Feldes angezeigt werden, 
 inklusive der Möglichkeit, das Feld zu bearbeiten oder eine neue Vermietung zu starten.
 Die Anordnung ist so, dass die Felder in einem Raster dargestellt werden, das der Anzahl der Reihen und Spalten des Boards entspricht.
+
+passe das widget noch folgender maßen an. 
+ich möchte an den stellen im raster wo noch kein feld hinterlegt eine möglichkeit besteht, ein neues feld zu erstellen.
+Klickt man auf diese stelle, öffnet sich ein modal in dem die wichtigsten attribute des feldes eingegeben werden können (position, größe, preis pro monat, status).
