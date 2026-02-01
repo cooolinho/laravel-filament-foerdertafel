@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\Boards\Pages\CreateBoard;
 use App\Filament\Admin\Resources\Boards\Pages\EditBoard;
 use App\Filament\Admin\Resources\Boards\Pages\ListBoards;
 use App\Filament\Admin\Resources\Boards\Pages\ViewBoard;
+use App\Filament\Admin\Resources\Boards\RelationManagers\FieldsRelationManager;
 use App\Filament\Admin\Resources\Boards\Schemas\BoardForm;
 use App\Filament\Admin\Resources\Boards\Schemas\BoardInfolist;
 use App\Filament\Admin\Resources\Boards\Tables\BoardsTable;
@@ -15,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Ramsey\Uuid\Guid\Fields;
 use UnitEnum;
 
 class BoardResource extends Resource
@@ -59,7 +61,7 @@ class BoardResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            FieldsRelationManager::class,
         ];
     }
 

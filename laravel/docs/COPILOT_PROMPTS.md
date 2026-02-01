@@ -17,3 +17,8 @@ Erstelle mir nun für alle Models eine Seeder Datei, die jeweils mehrere Datens�
 Alle anderen Seeder können seperat aufgerufen werden.
 
 überarbeite die Resource Dateien noch mit einer sinnvollen Navigation und Gruppierung. Füge ein auch ein passendes Icon hinzu.
+
+passe mir mein FieldsWidget und das template an. Ich möchte das alle Felder eines Boards in einer übersichtlichen Ansicht dargestellt werden. 
+Jedes Feld soll seinen Status (verfügbar, vermietet) anzeigen und bei Klick auf ein Feld sollen die Details des Feldes angezeigt werden, 
+inklusive der Möglichkeit, das Feld zu bearbeiten oder eine neue Vermietung zu starten.
+Die Anordnung ist so, dass die Felder in einem Raster dargestellt werden, das der Anzahl der Reihen und Spalten des Boards entspricht.
