@@ -2,10 +2,11 @@
 
 namespace App\Filament\Admin\Resources\Inquiries\Schemas;
 
+use App\Filament\Admin\Resources\Boards\BoardResource;
 use App\Models\Inquiry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
 
 class InquiryInfolist
@@ -35,7 +36,9 @@ class InquiryInfolist
                             }),
 
                         TextEntry::make('board.name')
-                            ->label('Board'),
+                            ->label('Board')
+                            ->url(fn (Inquiry $record) => BoardResource::getViewUrl($record->board))
+                            ->openUrlInNewTab(),
 
                         Group::make([
                             TextEntry::make(Inquiry::start_date)

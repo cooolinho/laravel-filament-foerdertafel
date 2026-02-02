@@ -9,6 +9,7 @@ use App\Filament\Admin\Resources\Users\Pages\ViewUser;
 use App\Filament\Admin\Resources\Users\Schemas\UserForm;
 use App\Filament\Admin\Resources\Users\Schemas\UserInfolist;
 use App\Filament\Admin\Resources\Users\Tables\UsersTable;
+use App\Filament\Traits\UseResourceUrlsTrait;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -18,6 +19,8 @@ use Filament\Tables\Table;
 
 class UserResource extends Resource
 {
+    use UseResourceUrlsTrait;
+
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;

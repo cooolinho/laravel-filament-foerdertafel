@@ -9,6 +9,7 @@ use App\Filament\Admin\Resources\Rentals\Pages\ViewRental;
 use App\Filament\Admin\Resources\Rentals\Schemas\RentalForm;
 use App\Filament\Admin\Resources\Rentals\Schemas\RentalInfolist;
 use App\Filament\Admin\Resources\Rentals\Tables\RentalsTable;
+use App\Filament\Traits\UseResourceUrlsTrait;
 use App\Models\Rental;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 class RentalResource extends Resource
 {
+    use UseResourceUrlsTrait;
+
     protected static ?string $model = Rental::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;

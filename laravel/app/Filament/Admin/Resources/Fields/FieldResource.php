@@ -10,6 +10,7 @@ use App\Filament\Admin\Resources\Fields\RelationManagers\RentalsRelationManager;
 use App\Filament\Admin\Resources\Fields\Schemas\FieldForm;
 use App\Filament\Admin\Resources\Fields\Schemas\FieldInfolist;
 use App\Filament\Admin\Resources\Fields\Tables\FieldsTable;
+use App\Filament\Traits\UseResourceUrlsTrait;
 use App\Models\Field;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -20,6 +21,8 @@ use UnitEnum;
 
 class FieldResource extends Resource
 {
+    use UseResourceUrlsTrait;
+
     protected static ?string $model = Field::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquares2x2;

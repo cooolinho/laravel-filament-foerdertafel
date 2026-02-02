@@ -2,10 +2,54 @@
 
 namespace App\Models;
 
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * App\Models\Inquiry
+ *
+ * @property int $id
+ * @property int $board_id
+ * @property string $customer_name
+ * @property string $customer_email
+ * @property string|null $customer_phone
+ * @property string $start_date
+ * @property string $end_date
+ * @property array|null $requested_fields
+ * @property string $status
+ * @property string|null $message
+ * @property string|null $admin_notes
+ * @property int|null $rental_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Board $board
+ * @property-read Rental|null $rental
+ * @property-read Collection|Field[] $fields
+ * @property-read int|null $fields_count
+ * @method static Builder|Inquiry newModelQuery()
+ * @method static Builder|Inquiry newQuery()
+ * @method static Builder|Inquiry query()
+ * @method static Builder|Inquiry whereAdminNotes($value)
+ * @method static Builder|Inquiry whereBoardId($value)
+ * @method static Builder|Inquiry whereCreatedAt($value)
+ * @method static Builder|Inquiry whereCustomerEmail($value)
+ * @method static Builder|Inquiry whereCustomerName($value)
+ * @method static Builder|Inquiry whereCustomerPhone($value)
+ * @method static Builder|Inquiry whereEndDate($value)
+ * @method static Builder|Inquiry whereId($value)
+ * @method static Builder|Inquiry whereMessage($value)
+ * @method static Builder|Inquiry whereRentalId($value)
+ * @method static Builder|Inquiry whereRequestedFields($value)
+ * @method static Builder|Inquiry whereStartDate($value)
+ * @method static Builder|Inquiry whereStatus($value)
+ * @method static Builder|Inquiry whereUpdatedAt($value)
+ * @mixin Eloquent
+ */
 class Inquiry extends Model
 {
     const string board_id = 'board_id';

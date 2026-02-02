@@ -6,9 +6,11 @@ use App\Filament\Admin\Resources\Locations\Pages\CreateLocation;
 use App\Filament\Admin\Resources\Locations\Pages\EditLocation;
 use App\Filament\Admin\Resources\Locations\Pages\ListLocations;
 use App\Filament\Admin\Resources\Locations\Pages\ViewLocation;
+use App\Filament\Admin\Resources\Locations\RelationManagers\BoardsRelationManager;
 use App\Filament\Admin\Resources\Locations\Schemas\LocationForm;
 use App\Filament\Admin\Resources\Locations\Schemas\LocationInfolist;
 use App\Filament\Admin\Resources\Locations\Tables\LocationsTable;
+use App\Filament\Traits\UseResourceUrlsTrait;
 use App\Models\Location;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -19,6 +21,8 @@ use UnitEnum;
 
 class LocationResource extends Resource
 {
+    use UseResourceUrlsTrait;
+
     protected static ?string $model = Location::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
@@ -59,7 +63,7 @@ class LocationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            BoardsRelationManager::class,
         ];
     }
 

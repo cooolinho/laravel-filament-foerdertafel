@@ -10,17 +10,19 @@ use App\Filament\Admin\Resources\Boards\RelationManagers\FieldsRelationManager;
 use App\Filament\Admin\Resources\Boards\Schemas\BoardForm;
 use App\Filament\Admin\Resources\Boards\Schemas\BoardInfolist;
 use App\Filament\Admin\Resources\Boards\Tables\BoardsTable;
+use App\Filament\Traits\UseResourceUrlsTrait;
 use App\Models\Board;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Ramsey\Uuid\Guid\Fields;
 use UnitEnum;
 
 class BoardResource extends Resource
 {
+    use UseResourceUrlsTrait;
+
     protected static ?string $model = Board::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedViewColumns;

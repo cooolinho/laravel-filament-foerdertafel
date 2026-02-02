@@ -6,9 +6,11 @@ use App\Filament\Admin\Resources\Inquiries\Pages\CreateInquiry;
 use App\Filament\Admin\Resources\Inquiries\Pages\EditInquiry;
 use App\Filament\Admin\Resources\Inquiries\Pages\ListInquiries;
 use App\Filament\Admin\Resources\Inquiries\Pages\ViewInquiry;
+use App\Filament\Admin\Resources\Inquiries\RelationManagers\FieldsRelationManager;
 use App\Filament\Admin\Resources\Inquiries\Schemas\InquiryForm;
 use App\Filament\Admin\Resources\Inquiries\Schemas\InquiryInfolist;
 use App\Filament\Admin\Resources\Inquiries\Tables\InquiriesTable;
+use App\Filament\Traits\UseResourceUrlsTrait;
 use App\Models\Inquiry;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -18,6 +20,8 @@ use Filament\Tables\Table;
 
 class InquiryResource extends Resource
 {
+    use UseResourceUrlsTrait;
+
     protected static ?string $model = Inquiry::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
@@ -48,7 +52,7 @@ class InquiryResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            FieldsRelationManager::class,
         ];
     }
 
