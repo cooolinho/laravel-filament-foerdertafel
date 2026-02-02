@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\Boards\Schemas;
 
 use App\Models\Board;
 use App\Models\Location;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -43,6 +44,27 @@ class BoardInfolist
                             ->state(fn ($record) => $record->fields()->count()),
                     ])
                     ->columns(3),
+
+                Section::make('Background & Positioning')
+                    ->schema([
+                        ImageEntry::make(Board::background_image)
+                            ->disk('public')
+                            ->label('Hintergrundbild')
+                            ->imageHeight(200)
+                            ->placeholder('Kein Hintergrundbild hochgeladen'),
+
+                        TextEntry::make(Board::grid_offset_x)
+                            ->label('Grid Offset X')
+                            ->suffix(' px')
+                            ->default(0),
+
+                        TextEntry::make(Board::grid_offset_y)
+                            ->label('Grid Offset Y')
+                            ->suffix(' px')
+                            ->default(0),
+                    ])
+                    ->columns(3)
+                    ->collapsible(),
 
                 Section::make('Timestamps')
                     ->schema([

@@ -28,8 +28,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->command->info('✓ Database seeded successfully!');
-        $this->command->info('✓ 5 Locations created');
-        $this->command->info('✓ 6 Boards created');
+        $this->command->info('✓ 1 Locations created');
+        $this->command->info('✓ 1 Boards created');
         $this->command->info('✓ Multiple Fields created per Board');
         $this->command->info('✓ 12 Customers created');
         $this->command->info('✓ 10 Rentals created (Active, Completed, Cancelled)');

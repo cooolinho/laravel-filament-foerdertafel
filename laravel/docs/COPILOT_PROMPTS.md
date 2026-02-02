@@ -34,3 +34,16 @@ passe auch den seeder (FieldSeeder) an sodass keine Felder mit überlappenden po
 
 nochmal zum verständins. wenn ein field (bspw. row=1 und col=1) im raster eine width von 2 hat, dann ist auch automatisch das feld an position (row=1, col=2) belegt. im widget wird das field dann über 2 rows dargestellt und ersetzt die position (row=1, col=2). es soll also kein leeres feld an dieser position geben.
 das gleich gilt für height. wenn ein field eine height von 2 hat, dann ist auch automatisch die position (row=2, col=1) belegt.
+
+Ein Board soll ein Hintergrundbild zugeordnet werden können indem man eines hochlädt.
+Das Hintergrundbild wird im FieldsWidget als Hintergrund des Rasters angezeigt. 
+Gehen wird davon aus ich lade eine Fussball Stadion als Lufaufnahme hoch. Das Fussball Feld (welches als Raster hintergrund dient) ist weiter mittig im Bild. Die Felder sollen also passend zum Hintergrundbild positioniert werden können. Das ist nötig wenn die um das Fussball Feld noch eine Art Rahmen ist. Dann würde bspw. Das Feld (1, 1) nicht an der oberen linken eckfahne sein sondern irgendwo in den zuschauerrängen und das soll ja nicht.
+Ich muss also pro hintergrundbild am Board auch ein versatz für das raster einstellen können (x und y achse). Passe mir das Board Model, die Migration und die Resource entsprechend an.
+
+Ich möchte das Hintergrundbild nicht im Admin Bereich anzeigen lassen, da das Widget FieldsWidget zu viele Informationen hat und somit das Bild nicht passend dargestellt werden kann.
+Stattdessen möchte ich das Hintergrundbild im Frontend anzeigen lassen, wenn ich mir das Board ansehe. Ich habe eine BoardPage erstellt. Hier soll ein Board mit dessen Feldern angezeigt werden. Fast genau die gleiche darstellung wie im FieldsWidget, nur das es hier um die Ansicht für Kunden geht.
+Die Kunden sollen das Raster mit den Feldern sehen. Wenn eine Kachel frei ist, soll diese als verfügbar angezeigt werden. Wenn ein Feld vermietet ist, soll der Name des Kunden der zurzeit das Feld gemietet hat angezeigt werden. Hat der Kunde mehrere Felder nebeneinander gemietet, sollen diese auch zusammenhängend dargestellt werden.
+Zur Info: Im späteren Verlauf (Beim Anfrageprozess der noch folgt) sollen die Kunden dann auch die Möglichkeit haben, Felder zu mieten und Inhalte hochzuladen. Kunden haben die Möglichkeit ein einzelndes oder mehrere Felder nebeneinander zu mieten.
+Am Board muss grid_offset_x und grid_offset_y durch padding angepasst werden, damit das Raster passend zum Hintergrundbild positioniert ist. Das Hintergrundbild streckt (horizontal und vertikal) sich dann über das gesamte Board und innerhalb des Boards wird dann das Raster mit den padding Angaben positioniert.
+Zusätzlich soll noch ein gap bestimmt werden können, also der abstand zwischen den feldern im raster.
+Passe mir die BoardPage und alle zugehörigen Dateien entsprechend an.

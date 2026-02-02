@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\Boards\Schemas;
 
 use App\Models\Board;
 use App\Models\Location;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -65,6 +66,52 @@ class BoardForm
                             ->default(10),
                     ])
                     ->columns(2),
+
+                Section::make('Background & Positioning')
+                    ->description('Laden Sie ein Hintergrundbild hoch (z.B. Luftaufnahme des Stadions) und positionieren Sie das Raster passend zum Spielfeld.')
+                    ->schema([
+                        FileUpload::make(Board::background_image)
+                            ->label('Hintergrundbild')
+                            ->image()
+                            ->imageEditor()
+                            ->imageEditorAspectRatioOptions([
+                                null,
+                                '16:9',
+                                '4:3',
+                                '1:1',
+                            ])
+                            ->maxSize(5120) // 5MB
+                            ->directory('board-backgrounds')
+                            ->disk('public')
+                            ->downloadable()
+                            ->helperText('Empfohlen: Luftaufnahme des Stadions (max. 5MB, JPG/PNG)')
+                            ->columnSpanFull(),
+
+                        TextInput::make(Board::grid_offset_x)
+                            ->label('Grid Offset X (Pixel)')
+                            ->helperText('Horizontaler Versatz des Rasters vom linken Bildrand')
+                            ->numeric()
+                            ->default(0)
+                            ->suffix('px'),
+
+                        TextInput::make(Board::grid_offset_y)
+                            ->label('Grid Offset Y (Pixel)')
+                            ->helperText('Vertikaler Versatz des Rasters vom oberen Bildrand')
+                            ->numeric()
+                            ->default(0)
+                            ->suffix('px'),
+
+                        TextInput::make(Board::grid_gap)
+                            ->label('Grid Gap (Pixel)')
+                            ->helperText('Abstand zwischen den Feldern im Raster')
+                            ->numeric()
+                            ->default(12)
+                            ->minValue(0)
+                            ->maxValue(50)
+                            ->suffix('px'),
+                    ])
+                    ->columns(3)
+                    ->collapsible(),
 
                 Section::make('Additional Information')
                     ->schema([

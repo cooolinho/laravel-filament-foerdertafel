@@ -32,8 +32,13 @@
                 {{-- Fields Grid --}}
                 <div class="overflow-x-auto">
                     <div class="inline-block min-w-full align-middle">
-                        <div class="grid gap-3 p-4"
-                             style="grid-template-columns: repeat({{ $this->record->{\App\Models\Board::columns} }}, minmax(120px, 1fr)); grid-template-rows: repeat({{ $this->record->{\App\Models\Board::rows} }}, minmax(120px, auto));">
+                        @php
+                            $gap = $this->record->{\App\Models\Board::grid_gap} ?? 12;
+                        @endphp
+                        <div class="grid p-4"
+                             style="grid-template-columns: repeat({{ $this->record->{\App\Models\Board::columns} }}, minmax(120px, 1fr));
+                                    grid-template-rows: repeat({{ $this->record->{\App\Models\Board::rows} }}, minmax(120px, auto));
+                                    gap: {{ $gap }}px;">
                             @foreach($this->getFieldsGrid() as $row => $columns)
                                 @foreach($columns as $col => $field)
                                     @if($field === 'occupied')
@@ -118,7 +123,6 @@
                                             </div>
                                         </div>
                                     @else
-                                        {{-- Empty grid cell - clickable to create new field --}}
                                         <button
                                             wire:click="openCreateFieldModal({{ $row }}, {{ $col }})"
                                             class="rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-600 transition-all group cursor-pointer"

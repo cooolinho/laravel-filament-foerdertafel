@@ -51,9 +51,6 @@ class AppPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->userMenu(false)
-            ->topNavigation()
-            ->authMiddleware([
-                Authenticate::class,
-            ]);
+            ->topNavigation();
     }
 }

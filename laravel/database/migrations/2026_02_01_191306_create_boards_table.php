@@ -19,6 +19,10 @@ return new class extends Migration
             $table->integer(Board::rows);
             $table->integer(Board::columns);
             $table->text(Board::description)->nullable();
+            $table->string(Board::background_image)->nullable();
+            $table->integer(Board::grid_offset_x)->default(0);
+            $table->integer(Board::grid_offset_y)->default(0);
+            $table->integer(Board::grid_gap)->default(12);
             $table->timestamps();
         });
     }

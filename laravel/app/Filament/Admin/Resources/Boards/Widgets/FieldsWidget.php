@@ -77,7 +77,7 @@ class FieldsWidget extends Widget implements HasForms, HasActions
                     }
 
                     // Mark as occupied if within board bounds
-                    if (isset($grid[$r][$c])) {
+                    if (array_key_exists($r, $grid) && array_key_exists($c, $grid[$r])) {
                         $grid[$r][$c] = 'occupied';
                     }
                 }

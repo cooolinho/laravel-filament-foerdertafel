@@ -44,6 +44,10 @@ class Board extends Model
     const string rows = 'rows';
     const string columns = 'columns';
     const string description = 'description';
+    const string background_image = 'background_image';
+    const string grid_offset_x = 'grid_offset_x';
+    const string grid_offset_y = 'grid_offset_y';
+    const string grid_gap = 'grid_gap';
 
     protected $fillable = [
         self::location_id,
@@ -51,11 +55,18 @@ class Board extends Model
         self::rows,
         self::columns,
         self::description,
+        self::background_image,
+        self::grid_offset_x,
+        self::grid_offset_y,
+        self::grid_gap,
     ];
 
     protected $casts = [
         self::rows => 'integer',
         self::columns => 'integer',
+        self::grid_offset_x => 'integer',
+        self::grid_offset_y => 'integer',
+        self::grid_gap => 'integer',
     ];
 
     /**

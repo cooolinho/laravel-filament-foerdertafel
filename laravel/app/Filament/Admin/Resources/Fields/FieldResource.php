@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\Fields\Pages\CreateField;
 use App\Filament\Admin\Resources\Fields\Pages\EditField;
 use App\Filament\Admin\Resources\Fields\Pages\ListFields;
 use App\Filament\Admin\Resources\Fields\Pages\ViewField;
+use App\Filament\Admin\Resources\Fields\RelationManagers\RentalsRelationManager;
 use App\Filament\Admin\Resources\Fields\Schemas\FieldForm;
 use App\Filament\Admin\Resources\Fields\Schemas\FieldInfolist;
 use App\Filament\Admin\Resources\Fields\Tables\FieldsTable;
@@ -79,7 +80,7 @@ class FieldResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RentalsRelationManager::class,
         ];
     }
 
