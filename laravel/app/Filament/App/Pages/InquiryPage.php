@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Events\InquiryCreated;
 use App\Models\Board;
 use App\Models\Field;
 use App\Models\Inquiry;
@@ -204,6 +205,9 @@ class InquiryPage extends Page implements HasForms
 
                 return $inquiry;
             });
+
+            // Dispatch event to reserve fields
+            InquiryCreated::dispatch($inquiry);
 
             // Set session variable and redirect to confirmation page
             session(['inquiry_complete' => $inquiry->id]);

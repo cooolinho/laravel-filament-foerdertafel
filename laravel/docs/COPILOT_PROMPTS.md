@@ -75,3 +75,6 @@ Passe mir die InquiryCompletePage und alle zugehörigen Dateien entsprechend an.
 Die InquiryCompletePage kann nur geöffnet werden wenn eine Session Variable (inquiry_complete) gesetzt ist.
 Passe mir die InquiryPage entsprechend an, sodass nach dem Absenden der Anfrage die Session Variable gesetzt wird und der Nutzer auf die InquiryCompletePage weitergeleitet wird.
 Auf der InquiryCompletePage wird die Session Variable wieder gelöscht, sodass die Seite nicht erneut aufgerufen werden kann ohne eine neue Anfrage zu stellen. mit canView muss geprüft werden ob die Session Variable gesetzt ist, ansonsten wird man auf die Anfrage Seite weitergeleitet.
+
+wenn ein Inquiry erstellt wird, sollen die Felder auf reserviert gesetzt werden, sodass diese nicht mehr in der Board Ansicht als verfügbar angezeigt werden.
+Erstelle mir dazu ein Listeners und Subscriber System, welches auf das Erstellen eines Inquiry hört und die entsprechenden Felder auf reserviert setzt.
