@@ -2,11 +2,30 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * App\Models\Rental
+ *
+ * @property int $id
+ * @property int $customer_id
+ * @property Carbon $start_date
+ * @property Carbon $end_date
+ * @property float $total_price
+ * @property string $status
+ * @property string|null $notes
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ *
+ * @property-read Customer $customer
+ * @property-read Collection|Field[] $fields
+ * @property-read Collection|Inquiry[] $inquiries
+ */
 class Rental extends Model
 {
     const string customer_id = 'customer_id';

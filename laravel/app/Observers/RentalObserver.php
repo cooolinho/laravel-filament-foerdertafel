@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Events\RentalCreated;
+use App\Events\RentalEnded;
 use App\Models\Field;
 use App\Models\Rental;
 
@@ -13,6 +15,9 @@ class RentalObserver
     public function created(Rental $rental): void
     {
         $this->updateFieldStatus($rental);
+
+        // Löse RentalCreated Event aus
+        event(new RentalCreated($rental));
     }
 
     /**
@@ -20,6 +25,20 @@ class RentalObserver
      */
     public function updated(Rental $rental): void
     {
+        // Prüfe ob der Status auf "completed" oder "cancelled" geändert wurde
+        if ($rental->isDirty(Rental::status)) {
+            $oldStatus = $rental->getOriginal(Rental::status);
+            $newStatus = $rental->status;
+
+            // Wenn die Vermietung beendet oder abgebrochen wurde
+            if (in_array($newStatus, [Rental::STATUS_COMPLETED, Rental::STATUS_CANCELLED])
+                && $oldStatus === Rental::STATUS_ACTIVE) {
+
+                // Löse RentalEnded Event aus
+                event(new RentalEnded($rental));
+            }
+        }
+
         $this->updateFieldStatus($rental);
     }
 
@@ -31,6 +50,11 @@ class RentalObserver
         // Wenn Rental gelöscht wird, setze alle Fields auf available
         // (falls sie nicht noch in anderen aktiven Rentals sind)
         $this->releaseFields($rental);
+
+        // Löse RentalEnded Event aus wenn die Vermietung aktiv war
+        if ($rental->status === Rental::STATUS_ACTIVE) {
+            event(new RentalEnded($rental));
+        }
     }
 
     /**

@@ -99,4 +99,18 @@ Passe mir die SettingsPage so an, dass ich dort die folgenden einstellungen vorn
 - Standard Vorlage für E-Mails (Verknüpfung zu EmailTemplate)
 Die default settings sollten über die migration gesetzt werden, sodass bei der Installation des Projekts bereits sinnvolle Standardwerte vorhanden sind.
 
+Event System
+Ich möchte ein Event System in meinem Laravel Projekt implementieren, um auf bestimmte Aktionen zu reagieren und entsprechende Prozesse auszulösen.
+Erstelle mir dazu die folgenden Events, Listener und Subscriber:
+- Event: RentalCreated
+  - Beschreibung: Wird ausgelöst, wenn eine neue Vermietung (Rental) erstellt wird.
+  - Listener: SendRentalConfirmationEmail
+    - Beschreibung: Sendet eine Bestätigungs-E-Mail an den Kunden mit den Details der Vermietung.
+- Event: RentalEnded
+  - Beschreibung: Wird ausgelöst, wenn eine Vermietung endet.
+  - Listener: SetFieldsToAvailable
+    - Beschreibung: Setzt die Felder der beendeten Vermietung auf den Status "verfügbar".
+      Passe mir die entsprechenden Models, Migrations, Resources und alle zugehörigen Dateien an, um dieses Event System zu integrieren.
+      Stelle sicher, dass die Events korrekt ausgelöst werden und die Listener die gewünschten Aktionen ausführen.
+
 

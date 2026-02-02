@@ -4,8 +4,12 @@ namespace App\Providers;
 
 use App\Events\InquiryCreated;
 use App\Events\InquiryRejected;
+use App\Events\RentalCreated;
+use App\Events\RentalEnded;
 use App\Listeners\ReleaseReservedFields;
 use App\Listeners\ReserveFieldsForInquiry;
+use App\Listeners\SendRentalConfirmationEmail;
+use App\Listeners\SetFieldsToAvailable;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -21,6 +25,12 @@ class EventServiceProvider extends ServiceProvider
         ],
         InquiryRejected::class => [
             ReleaseReservedFields::class,
+        ],
+        RentalCreated::class => [
+            SendRentalConfirmationEmail::class,
+        ],
+        RentalEnded::class => [
+            SetFieldsToAvailable::class,
         ],
     ];
 
