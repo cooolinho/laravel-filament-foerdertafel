@@ -14,7 +14,7 @@ class LocationSeeder extends Seeder
     {
         $locations = [
             [
-                Location::name => 'Stadion',
+                Location::name => 'Fussball Stadion',
                 Location::address => 'Musterstraße 1, 12345 Musterstadt',
                 Location::description => 'Hauptstadion in der Innenstadt mit moderner Ausstattung.',
             ],

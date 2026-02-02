@@ -62,3 +62,8 @@ für jedes belegte feld in der InquiryPage soll der name des kunden angezeigt we
 beim absenden der Anfrage soll geprüft werden ob die ausgewählten Felder nebeneinander liegen. Falls nicht soll eine Fehlermeldung angezeigt werden.
 Bei der auswahl der felder muss also immer ein rechteck gebildet werden können. wenn also die felder (1,1), (1,2) und (2,1) ausgewählt sind, dann fehlt das feld (2,2) um ein rechteck zu bilden und es soll eine fehlermeldung angezeigt werden.
 Erstelle eine eigene Validierungsregel für diese Prüfung. Füge auch noch eine maximale anzahl an feldern hinzu die ausgewählt werden können (z.b. 10 felder). Auch hierfür eine eigene Validierungsregel.
+
+passe mir meinen boardseeder und den fieldseeder an. ich will genau 1 board mit 17 rows und 16 columns haben. da es sich um ein fussball stadion handelt soll es vordefinierte felder geben die bestimmte bereiche des fussball feldes abdecken.
+Es gib 4 ecken mit einem feld von 1x1 in jeder ecke.
+Es gibt 2 Tore mit jeweils 5 feldern von 1x5. (startend bei (row=7, col=1) und (row=7, col=16))
+Es gibt einen Mittelkreis mit 20 feldern von 4x5. (startend bei (row=7, col=7))

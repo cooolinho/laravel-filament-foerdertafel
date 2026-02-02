@@ -20,16 +20,16 @@ class BoardSeeder extends Seeder
             return;
         }
 
-        // Berlin-Mitte: 2 Boards
-        $berlin = $locations->where(Location::name, 'Stadion')->first();
-        if ($berlin) {
+        // Fussball Stadion: 1 Board with 17 rows and 16 columns
+        $stadion = $locations->where(Location::name, 'Fussball Stadion')->first();
+        if ($stadion) {
             Board::create([
-                Board::location_id => $berlin->id,
-                Board::name => 'Fördertafel',
-                Board::rows => 16,
-                Board::columns => 17,
+                Board::location_id => $stadion->id,
+                Board::name => 'Fördertafel Fussballstadion',
+                Board::rows => 17,
+                Board::columns => 16,
                 Board::grid_gap => 1,
-                Board::description => 'Jugendfördertafel für den Sportplatz in Berlin-Mitte.',
+                Board::description => 'Fördertafel für das Fussballstadion mit vordefinierten Feldern für Ecken, Tore und Mittelkreis.',
             ]);
         }
     }

@@ -29,79 +29,88 @@ class RentalSeeder extends Seeder
 
         // Erstelle verschiedene Rental-Szenarien
 
-        // 1. Max Mustermann - Premium Tor-Position (langfristig)
+        // 1. Max Mustermann - Beide Tore (Premium-Position, langfristig)
         $customer1 = $customers->where(Customer::name, 'Max Mustermann')->first();
         if ($customer1) {
-            $torFields = $fields->where(Field::status, Field::STATUS_RENTED)
-                ->filter(fn($f) => str_contains($f->name, 'Tor'))
-                ->take(2);
+            $torFields = $fields->filter(fn($f) => str_contains($f->name, 'Tor'));
 
             if ($torFields->isNotEmpty()) {
                 $rental = Rental::create([
                     Rental::customer_id => $customer1->id,
                     Rental::start_date => now()->subMonths(6),
                     Rental::end_date => now()->addMonths(12),
-                    Rental::total_price => $torFields->sum(Field::price_per_month),
+                    Rental::total_price => $torFields->sum(Field::price_per_month) * 6, // 6 Monate bereits vermietet
                     Rental::status => Rental::STATUS_ACTIVE,
-                    Rental::notes => 'Jahresvertrag mit Option auf Verlängerung.',
+                    Rental::notes => 'Jahresvertrag für beide Tor-Positionen mit Option auf Verlängerung.',
                 ]);
                 $rental->fields()->attach($torFields->pluck('id'));
             }
         }
 
-        // 2. Anna Schmidt - Mittelkreis (mittelfristig)
+        // 2. Anna Schmidt - Mittelkreis (Premium-Position, mittelfristig)
         $customer2 = $customers->where(Customer::name, 'Anna Schmidt')->first();
         if ($customer2) {
-            $mittelkreisFields = $fields->where(Field::status, Field::STATUS_RENTED)
-                ->filter(fn($f) => str_contains($f->name, 'Mittelkreis'))
-                ->take(1);
+            $mittelkreisFields = $fields->filter(fn($f) => str_contains($f->name, 'Mittelkreis'));
 
             if ($mittelkreisFields->isNotEmpty()) {
                 $rental = Rental::create([
                     Rental::customer_id => $customer2->id,
                     Rental::start_date => now()->subMonths(3),
                     Rental::end_date => now()->addMonths(6),
-                    Rental::total_price => $mittelkreisFields->sum(Field::price_per_month),
+                    Rental::total_price => $mittelkreisFields->sum(Field::price_per_month) * 9, // 9 Monate Vertrag
                     Rental::status => Rental::STATUS_ACTIVE,
-                    Rental::notes => 'Testphase, eventuell Verlängerung.',
+                    Rental::notes => 'Testphase für Mittelkreis-Position, eventuell Verlängerung.',
                 ]);
                 $rental->fields()->attach($mittelkreisFields->pluck('id'));
             }
         }
 
-        // 3. Thomas Müller - Strafraum + Mittelfeld (Premium Paket)
+        // 3. Thomas Müller - Alle 4 Ecken (Paket)
         $customer3 = $customers->where(Customer::name, 'Thomas Müller')->first();
         if ($customer3) {
-            $premiumFields = $fields->where(Field::status, Field::STATUS_RENTED)
-                ->filter(fn($f) => str_contains($f->name, 'Strafraum') || str_contains($f->name, 'Mittelfeld'))
-                ->take(3);
+            $eckenFields = $fields->filter(fn($f) => str_contains($f->name, 'Ecke'));
 
-            if ($premiumFields->isNotEmpty()) {
+            if ($eckenFields->isNotEmpty()) {
+                foreach ($eckenFields as $field) {
+                    if ($field->status === Field::STATUS_AVAILABLE) {
+                        $field->update([Field::status => Field::STATUS_RENTED]);
+                    }
+                }
+
                 $rental = Rental::create([
                     Rental::customer_id => $customer3->id,
                     Rental::start_date => now()->subMonths(12),
                     Rental::end_date => now()->addMonths(18),
-                    Rental::total_price => $premiumFields->sum(Field::price_per_month),
+                    Rental::total_price => $eckenFields->sum(Field::price_per_month) * 30, // 30 Monate gesamt
                     Rental::status => Rental::STATUS_ACTIVE,
-                    Rental::notes => 'VIP-Paket mit mehreren Premium-Positionen.',
+                    Rental::notes => 'Langfristiges Paket mit allen 4 Eckpositionen.',
                 ]);
-                $rental->fields()->attach($premiumFields->pluck('id'));
+                $rental->fields()->attach($eckenFields->pluck('id'));
             }
         }
 
         // 4. Sarah Weber - Mehrere Standard-Felder
         $customer4 = $customers->where(Customer::name, 'Sarah Weber')->first();
         if ($customer4) {
-            $standardFields = $fields->where(Field::status, Field::STATUS_RENTED)
-                ->whereNotIn('id', Rental::with('fields')->get()->pluck('fields')->flatten()->pluck('id'))
+            // Hole bereits vermietete Field IDs
+            $rentedFieldIds = Rental::with('fields')->get()->pluck('fields')->flatten()->pluck('id')->toArray();
+
+            $standardFields = $fields->where(Field::status, Field::STATUS_AVAILABLE)
+                ->whereNotIn('id', $rentedFieldIds)
+                ->where(Field::width, 1)
+                ->where(Field::height, 1)
                 ->take(4);
 
             if ($standardFields->isNotEmpty()) {
+                foreach ($standardFields as $field) {
+                    $field->update([Field::status => Field::STATUS_RENTED]);
+                }
+
                 $rental = Rental::create([
                     Rental::customer_id => $customer4->id,
                     Rental::start_date => now()->subMonth(),
                     Rental::end_date => now()->addMonths(3),
-                    Rental::total_price => $standardFields->sum(Field::price_per_month),
+                    Rental::total_price => $standardFields->sum(Field::price_per_month) * 4, // 4 Monate
                     Rental::status => Rental::STATUS_ACTIVE,
                     Rental::notes => 'Budget-freundliches Paket für Neukundin.',
                 ]);
@@ -109,10 +118,12 @@ class RentalSeeder extends Seeder
             }
         }
 
-        // 5. Michael Becker - Einzelnes günstiges Feld (kurzfristig)
+        // 5. Michael Becker - Einzelnes Standard-Feld (kurzfristig)
         $customer5 = $customers->where(Customer::name, 'Michael Becker')->first();
         if ($customer5) {
             $cheapField = $fields->where(Field::status, Field::STATUS_AVAILABLE)
+                ->where(Field::width, 1)
+                ->where(Field::height, 1)
                 ->sortBy(Field::price_per_month)
                 ->first();
 
@@ -134,6 +145,8 @@ class RentalSeeder extends Seeder
         $customer6 = $customers->where(Customer::name, 'Julia Fischer')->first();
         if ($customer6) {
             $availableFields = $fields->where(Field::status, Field::STATUS_AVAILABLE)
+                ->where(Field::width, 1)
+                ->where(Field::height, 1)
                 ->take(2);
 
             if ($availableFields->isNotEmpty()) {
@@ -141,7 +154,7 @@ class RentalSeeder extends Seeder
                     Rental::customer_id => $customer6->id,
                     Rental::start_date => now()->subMonths(8),
                     Rental::end_date => now()->subMonth(),
-                    Rental::total_price => $availableFields->sum(Field::price_per_month),
+                    Rental::total_price => $availableFields->sum(Field::price_per_month) * 7, // 7 Monate
                     Rental::status => Rental::STATUS_COMPLETED,
                     Rental::notes => 'Vertrag erfolgreich abgeschlossen.',
                 ]);
@@ -153,6 +166,8 @@ class RentalSeeder extends Seeder
         $customer7 = $customers->where(Customer::name, 'Peter Hoffmann')->first();
         if ($customer7) {
             $availableFields = $fields->where(Field::status, Field::STATUS_AVAILABLE)
+                ->where(Field::width, 1)
+                ->where(Field::height, 1)
                 ->skip(2)
                 ->take(1);
 
@@ -161,7 +176,7 @@ class RentalSeeder extends Seeder
                     Rental::customer_id => $customer7->id,
                     Rental::start_date => now()->subMonths(2),
                     Rental::end_date => now()->addMonth(),
-                    Rental::total_price => $availableFields->sum(Field::price_per_month),
+                    Rental::total_price => $availableFields->sum(Field::price_per_month) * 3, // 3 Monate
                     Rental::status => Rental::STATUS_CANCELLED,
                     Rental::notes => 'Kunde hat aufgrund von Budget-Kürzungen storniert.',
                 ]);
@@ -173,6 +188,8 @@ class RentalSeeder extends Seeder
         $customer8 = $customers->where(Customer::name, 'Lisa Schneider')->first();
         if ($customer8) {
             $midFields = $fields->where(Field::status, Field::STATUS_AVAILABLE)
+                ->where(Field::width, 1)
+                ->where(Field::height, 1)
                 ->skip(3)
                 ->take(2);
 
@@ -185,7 +202,7 @@ class RentalSeeder extends Seeder
                     Rental::customer_id => $customer8->id,
                     Rental::start_date => now()->subMonths(4),
                     Rental::end_date => null, // Unbefristetes Rental
-                    Rental::total_price => $midFields->sum(Field::price_per_month),
+                    Rental::total_price => $midFields->sum(Field::price_per_month) * 4, // 4 Monate bisher
                     Rental::status => Rental::STATUS_ACTIVE,
                     Rental::notes => 'Unbefristete Vermietung mit monatlicher Kündigungsfrist.',
                 ]);
@@ -197,6 +214,8 @@ class RentalSeeder extends Seeder
         $customer9 = $customers->where(Customer::name, 'Daniel Koch')->first();
         if ($customer9) {
             $futureFields = $fields->where(Field::status, Field::STATUS_AVAILABLE)
+                ->where(Field::width, 1)
+                ->where(Field::height, 1)
                 ->skip(5)
                 ->take(2);
 
@@ -209,7 +228,7 @@ class RentalSeeder extends Seeder
                     Rental::customer_id => $customer9->id,
                     Rental::start_date => now()->addMonth(),
                     Rental::end_date => now()->addMonths(7),
-                    Rental::total_price => $futureFields->sum(Field::price_per_month),
+                    Rental::total_price => $futureFields->sum(Field::price_per_month) * 6, // 6 Monate
                     Rental::status => Rental::STATUS_ACTIVE,
                     Rental::notes => 'Vorab-Buchung für nächste Saison.',
                 ]);
@@ -223,18 +242,16 @@ class RentalSeeder extends Seeder
             $smallFields = $fields->where(Field::status, Field::STATUS_AVAILABLE)
                 ->where(Field::width, 1)
                 ->where(Field::height, 1)
+                ->skip(7)
                 ->take(5);
 
             if ($smallFields->isNotEmpty()) {
-                foreach ($smallFields as $field) {
-                    $field->update([Field::status => Field::STATUS_RENTED]);
-                }
 
                 $rental = Rental::create([
                     Rental::customer_id => $customer10->id,
-                    Rental::start_date => now()->subWeeks(2),
+                    Rental::start_date => now()->startOfMonth(),
                     Rental::end_date => now()->addMonths(4),
-                    Rental::total_price => $smallFields->sum(Field::price_per_month),
+                    Rental::total_price => $smallFields->sum(Field::price_per_month) * 4, // 4 Monate
                     Rental::status => Rental::STATUS_ACTIVE,
                     Rental::notes => 'Event-Paket mit mehreren kleinen Flächen.',
                 ]);
