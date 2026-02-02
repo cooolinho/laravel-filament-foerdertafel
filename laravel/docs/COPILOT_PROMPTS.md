@@ -47,3 +47,18 @@ Zur Info: Im späteren Verlauf (Beim Anfrageprozess der noch folgt) sollen die K
 Am Board muss grid_offset_x und grid_offset_y durch padding angepasst werden, damit das Raster passend zum Hintergrundbild positioniert ist. Das Hintergrundbild streckt (horizontal und vertikal) sich dann über das gesamte Board und innerhalb des Boards wird dann das Raster mit den padding Angaben positioniert.
 Zusätzlich soll noch ein gap bestimmt werden können, also der abstand zwischen den feldern im raster.
 Passe mir die BoardPage und alle zugehörigen Dateien entsprechend an.
+
+ich will das kunden eine anfrage (InquiryPage) stellen können um felder zu mieten. Bei der Anfrage sollen die kunden angeben können welche felder (positionen im raster) sie mieten wollen, für welchen zeitraum (startdatum, enddatum) und ihre kontaktinformationen (name, email, telefon).
+Aus dieser Anfrage wird dann später im Admin Bereich eine Vermietung (Rental) erstellt. Dies soll verhindern, dass kunden direkt im frontend felder mieten können ohne vorherige prüfung.
+Die InquiryPage ist über das Board erreichbar. Dort wird das Board mit dem Raster der Felder angezeigt (wie in der BoardPage). Der Kunde kann dann die gewünschten Felder auswählen (auch mehrere nebeneinander) und im Anschluss das Formular mit den weiteren Angaben ausfüllen und absenden.
+Passe mir das Inquiry Model, die Migration und die Resource im Admin Bereich entsprechend an.
+
+Füge nun die zur InquiryPage ein Formular hinzu, in dem die Kunden ihre Kontaktinformationen (Name, E-Mail, Telefon), die gewünschten Felder (Positionen im Raster) und den gewünschten Zeitraum (Startdatum, Enddatum) angeben können.
+Passe mir auch die Validierung an, sodass geprüft wird, dass mindestens ein Feld ausgewählt ist. Bei der Auswahl soll der Preis pro Monat der ausgewählten Felder angezeigt werden, sowie der Gesamtpreis für den gewählten Zeitraum.
+Man gelangt über die BoardPage zur InquiryPage.
+
+für jedes belegte feld in der InquiryPage soll der name des kunden angezeigt werden, der das feld aktuell gemietet hat. Die Felder die zur Auswahl stehen sollen also nicht mit grid-columns start und end arbeiten sondern dynamisch anhand der positionen der felder im Board gerendert werden.
+
+beim absenden der Anfrage soll geprüft werden ob die ausgewählten Felder nebeneinander liegen. Falls nicht soll eine Fehlermeldung angezeigt werden.
+Bei der auswahl der felder muss also immer ein rechteck gebildet werden können. wenn also die felder (1,1), (1,2) und (2,1) ausgewählt sind, dann fehlt das feld (2,2) um ein rechteck zu bilden und es soll eine fehlermeldung angezeigt werden.
+Erstelle eine eigene Validierungsregel für diese Prüfung. Füge auch noch eine maximale anzahl an feldern hinzu die ausgewählt werden können (z.b. 10 felder). Auch hierfür eine eigene Validierungsregel.

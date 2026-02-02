@@ -42,8 +42,9 @@ class FieldsWidget extends Widget implements HasForms, HasActions
         $fields = $this->record->fields()
             ->with(['rentals' => function ($query) {
                 $query->where(Rental::status, Rental::STATUS_ACTIVE)
-                    ->where(Rental::start_date, '<=', now())
-                    ->where(Rental::end_date, '>=', now());
+//                    ->where(Rental::start_date, '<=', now())
+//                    ->where(Rental::end_date, '>=', now())
+                ;
             }, 'rentals.customer'])
             ->get();
 
@@ -94,8 +95,8 @@ class FieldsWidget extends Widget implements HasForms, HasActions
     {
         $rental = $field->rentals()
             ->where(Rental::status, Rental::STATUS_ACTIVE)
-            ->where(Rental::start_date, '<=', now())
-            ->where(Rental::end_date, '>=', now())
+//            ->where(Rental::start_date, '<=', now())
+//            ->where(Rental::end_date, '>=', now())
             ->with('customer')
             ->first();
 
@@ -137,7 +138,7 @@ class FieldsWidget extends Widget implements HasForms, HasActions
             ->label('Neues Feld erstellen')
             ->icon('heroicon-o-plus')
             ->color('success')
-            ->form([
+            ->schema([
                 TextInput::make(Field::name)
                     ->label('Feldname')
                     ->required()
@@ -260,6 +261,89 @@ class FieldsWidget extends Widget implements HasForms, HasActions
                 // Reset selection
                 $this->selectedRow = null;
                 $this->selectedColumn = null;
+            });
+    }
+
+    /**
+     * Fill All Fields Action - Creates fields for all empty positions
+     */
+    public function fillAllFieldsAction(): Action
+    {
+        return Action::make('fillAllFields')
+            ->label('Alle restlichen Felder erstellen')
+            ->icon('heroicon-o-squares-plus')
+            ->color('primary')
+            ->requiresConfirmation()
+            ->modalHeading('Alle restlichen Felder erstellen?')
+            ->modalDescription('Möchten Sie für alle leeren Positionen im Raster automatisch Felder erstellen? Bereits vorhandene Felder bleiben unverändert.')
+            ->modalSubmitActionLabel('Ja, Felder erstellen')
+            ->modalCancelActionLabel('Abbrechen')
+            ->action(function () {
+                if (!$this->record) {
+                    Notification::make()
+                        ->danger()
+                        ->title('Fehler')
+                        ->body('Board nicht gefunden.')
+                        ->send();
+                    return;
+                }
+
+                $board = $this->record;
+                $createdCount = 0;
+                $skippedCount = 0;
+
+                // Get all existing fields
+                $existingFields = Field::where(Field::board_id, $board->id)->get();
+
+                // Create a map of occupied positions
+                $occupiedPositions = [];
+                foreach ($existingFields as $field) {
+                    for ($r = $field->{Field::row}; $r < $field->{Field::row} + $field->{Field::height}; $r++) {
+                        for ($c = $field->{Field::column}; $c < $field->{Field::column} + $field->{Field::width}; $c++) {
+                            $occupiedPositions[$r . ',' . $c] = true;
+                        }
+                    }
+                }
+
+                // Iterate through all grid positions
+                for ($row = 1; $row <= $board->{Board::rows}; $row++) {
+                    for ($col = 1; $col <= $board->{Board::columns}; $col++) {
+                        // Check if position is already occupied
+                        if (isset($occupiedPositions[$row . ',' . $col])) {
+                            $skippedCount++;
+                            continue;
+                        }
+
+                        // Create new field at this position
+                        Field::create([
+                            Field::board_id => $board->id,
+                            Field::name => "Feld {$row}-{$col}",
+                            Field::row => $row,
+                            Field::column => $col,
+                            Field::width => 1,
+                            Field::height => 1,
+                            Field::price_per_month => 100.00,
+                            Field::status => Field::STATUS_AVAILABLE,
+                            Field::description => "Automatisch erstelltes Feld an Position ({$row},{$col})",
+                        ]);
+
+                        $createdCount++;
+                    }
+                }
+
+                if ($createdCount > 0) {
+                    Notification::make()
+                        ->success()
+                        ->title('Felder erstellt')
+                        ->body("{$createdCount} neue Felder wurden erfolgreich erstellt. {$skippedCount} Positionen waren bereits belegt.")
+                        ->send();
+                } else {
+                    Notification::make()
+                        ->info()
+                        ->title('Keine neuen Felder')
+                        ->body('Alle Positionen im Raster sind bereits belegt.')
+                        ->send();
+                }
             });
     }
 

@@ -59,6 +59,15 @@ class Field extends Model
     }
 
     /**
+     * Get the inquiries that request this field.
+     */
+    public function inquiries(): BelongsToMany
+    {
+        return $this->belongsToMany(Inquiry::class, 'inquiry_field')
+            ->withTimestamps();
+    }
+
+    /**
      * Check if the field is available.
      */
     public function isAvailable(): bool

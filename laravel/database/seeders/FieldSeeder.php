@@ -34,33 +34,33 @@ class FieldSeeder extends Seeder
             // Premium Felder (teuer)
             [
                 'names' => ['Tor Links', 'Tor Rechts'],
-                'price' => 500.00,
+                'price' => 10,
                 'width' => 2,
                 'height' => 2,
             ],
             [
                 'names' => ['Elfmeterpunkt', 'Mittelkreis'],
-                'price' => 400.00,
+                'price' => 10,
                 'width' => 2,
                 'height' => 2,
             ],
             [
                 'names' => ['Strafraum Links', 'Strafraum Rechts'],
-                'price' => 350.00,
+                'price' => 10,
                 'width' => 3,
                 'height' => 2,
             ],
             // Mittelfeld Felder (mittel)
             [
                 'names' => ['Mittellinie Mitte', 'Mittelfeld Links', 'Mittelfeld Rechts'],
-                'price' => 200.00,
+                'price' => 10,
                 'width' => 2,
                 'height' => 1,
             ],
             // Standard Felder (günstig)
             [
                 'names' => ['Außenlinie Links', 'Außenlinie Rechts', 'Eckfahne'],
-                'price' => 100.00,
+                'price' => 10,
                 'width' => 1,
                 'height' => 1,
             ],
@@ -128,7 +128,7 @@ class FieldSeeder extends Seeder
         }
 
         // Fülle restliche Positionen mit Standard-Feldern
-        $standardPrice = 120.00;
+        $standardPrice = 2;
         for ($r = 1; $r <= $board->{Board::rows}; $r++) {
             for ($c = 1; $c <= $board->{Board::columns}; $c++) {
                 // Prüfe ob Position schon belegt ist

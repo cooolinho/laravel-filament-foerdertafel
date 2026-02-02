@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             FieldSeeder::class,
             CustomerSeeder::class,
             RentalSeeder::class,
+            InquirySeeder::class,
         ]);
 
         $this->command->info('✓ Database seeded successfully!');
@@ -33,5 +34,6 @@ class DatabaseSeeder extends Seeder
         $this->command->info('✓ Multiple Fields created per Board');
         $this->command->info('✓ 12 Customers created');
         $this->command->info('✓ 10 Rentals created (Active, Completed, Cancelled)');
+        $this->command->info('✓ 5 Inquiries created per Board');
     }
 }

@@ -11,6 +11,12 @@ Willkommen zur Dokumentation des Laravel Filament Fördertafel Projekts!
   - Beispiel-Anwendungsfälle
   - Migration-Übersicht
 
+- **[INQUIRY_SYSTEM.md](INQUIRY_SYSTEM.md)** - Anfrage-System Dokumentation
+  - Customer-Frontend Anfragen
+  - Admin-Verwaltung und Konvertierung
+  - Status-Workflow
+  - Integration mit Rentals
+
 - **[MODEL_CONSTANTS.md](MODEL_CONSTANTS.md)** - Model-Konstanten Pattern
   - Warum Konstanten verwenden?
   - Übersicht aller Model-Konstanten

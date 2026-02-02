@@ -14,13 +14,22 @@
                             </p>
                         @endif
                     </div>
-                    <div class="text-right">
-                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                            {{ $this->board->location->{\App\Models\Location::name} }}
+                    <div class="flex flex-col items-end gap-3">
+                        <div class="text-right">
+                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                {{ $this->board->location->{\App\Models\Location::name} }}
+                            </div>
+                            <div class="text-xs text-gray-400 dark:text-gray-500">
+                                {{ $this->board->{\App\Models\Board::rows} }} × {{ $this->board->{\App\Models\Board::columns} }} Felder
+                            </div>
                         </div>
-                        <div class="text-xs text-gray-400 dark:text-gray-500">
-                            {{ $this->board->{\App\Models\Board::rows} }} × {{ $this->board->{\App\Models\Board::columns} }} Felder
-                        </div>
+                        <a href="{{ route('filament.app.pages.inquiry-page', ['board' => $this->board->id]) }}"
+                           class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Anfrage stellen
+                        </a>
                     </div>
                 </div>
             </div>
@@ -61,7 +70,7 @@
                            background-size: 100% 100%;
                            background-position: center;
                            background-repeat: no-repeat;
-                           height: 1600px;">
+                           height: 800px;">
 
                     {{-- Grid Container with Padding (Offset) --}}
                     @php
@@ -109,6 +118,9 @@
                                             $fieldStatus = $field->{\App\Models\Field::status};
                                             $fieldWidth = $field->{\App\Models\Field::width};
                                             $fieldHeight = $field->{\App\Models\Field::height};
+                                            $fieldRow = $field->{\App\Models\Field::row};
+                                            $fieldColumn = $field->{\App\Models\Field::column};
+                                            $fieldIdentifier = chr(64 + $fieldRow) . $fieldColumn;
 
                                             // Style based on status
                                             $borderColor = "border-white/20 bg-black/5 backdrop-blur-sm";
@@ -124,7 +136,7 @@
                                                 @if($activeRental)
                                                     {{-- Rented Field - Show Customer --}}
                                                     <div class="bg-black/70 text-white px-4 py-3 rounded-lg w-full h-full text-center">
-                                                        <div class="font-bold">
+                                                        <div class="flex items-center justify-center gap-2 mb-2 h-full">
                                                             {{ $activeRental->customer->{\App\Models\Customer::name} ?? 'N/A' }}
                                                         </div>
                                                     </div>
@@ -133,7 +145,7 @@
                                                     {{-- Available Field --}}
                                                     <div class="rounded-lg w-full h-full">
                                                         <div class="flex items-center justify-center gap-2 mb-2 h-full">
-                                                            <div class="w-6 h-6 rounded border-2 border-green-500 bg-green-500/20"></div>
+                                                            <div class="w-8 h-8 rounded border-2 border-green-500 bg-green-500/20 text-center">{{ $fieldIdentifier }}</div>
                                                         </div>
                                                     </div>
 
@@ -144,14 +156,14 @@
                                                     {{-- Reserved Field --}}
                                                     <div class="rounded-lg w-full h-full">
                                                         <div class="flex items-center justify-center gap-2 mb-2 h-full">
-                                                            <div class="w-6 h-6 rounded border-2 border-blue-500 bg-blue-500/20"></div>
+                                                            <div class="w-8 h-8 rounded border-2 border-blue-500 bg-blue-500/20 text-center">{{ $fieldIdentifier }}</div>
                                                         </div>
                                                     </div>
                                                 @elseif($fieldStatus === \App\Models\Field::STATUS_RENTED)
                                                     {{-- Reserved Field --}}
                                                     <div class="rounded-lg w-full h-full">
                                                         <div class="flex items-center justify-center gap-2 mb-2 h-full">
-                                                            <div class="w-6 h-6 rounded border-2 border-yellow-500 bg-yellow-500/20"></div>
+                                                            <div class="w-8 h-8 rounded border-2 border-yellow-500 bg-yellow-500/20 text-center">{{ $fieldIdentifier }}</div>
                                                         </div>
                                                     </div>
                                                 @endif

@@ -84,4 +84,12 @@ class Board extends Model
     {
         return $this->hasMany(Field::class);
     }
+
+    /**
+     * Get the inquiries for the board.
+     */
+    public function inquiries(): HasMany
+    {
+        return $this->hasMany(Inquiry::class);
+    }
 }

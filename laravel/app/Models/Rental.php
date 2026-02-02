@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Rental extends Model
 {
@@ -48,6 +49,14 @@ class Rental extends Model
     public function fields(): BelongsToMany
     {
         return $this->belongsToMany(Field::class, 'field_rental');
+    }
+
+    /**
+     * Get the inquiries that were converted to this rental.
+     */
+    public function inquiries(): HasMany
+    {
+        return $this->hasMany(Inquiry::class);
     }
 
     /**

@@ -1,13 +1,17 @@
 <x-filament-widgets::widget>
     <x-filament::section>
         <x-slot name="heading">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between w-full">
                 <span>Board Felder</span>
-                @if($this->record)
-                    <x-filament::badge color="gray">
-                        {{ $this->record->{\App\Models\Board::rows} }} x {{ $this->record->{\App\Models\Board::columns} }}
-                    </x-filament::badge>
-                @endif
+                <div class="flex items-center gap-3">
+                    @if($this->record)
+                        <x-filament::badge color="gray">
+                            {{ $this->record->{\App\Models\Board::rows} }} x {{ $this->record->{\App\Models\Board::columns} }}
+                        </x-filament::badge>
+
+                        {{ ($this->fillAllFieldsAction)(['record' => $this->record]) }}
+                    @endif
+                </div>
             </div>
         </x-slot>
 
@@ -56,6 +60,9 @@
                                             };
                                             $fieldWidth = $field->{\App\Models\Field::width};
                                             $fieldHeight = $field->{\App\Models\Field::height};
+                                            $fieldRow = $field->{\App\Models\Field::row};
+                                            $fieldColumn = $field->{\App\Models\Field::column};
+                                            $fieldIdentifier = chr(64 + $fieldRow) . $fieldColumn;
                                         @endphp
 
                                         <div class="relative group" style="grid-column: {{ $col }} / span {{ $fieldWidth }}; grid-row: {{ $row }} / span {{ $fieldHeight }};">
@@ -66,7 +73,8 @@
                                                 {{-- Position & Name --}}
                                                 <div class="flex items-start justify-between mb-2">
                                                     <div class="text-xs font-mono text-gray-500 dark:text-gray-400">
-                                                        [{{ $field->{\App\Models\Field::row} }},{{ $field->{\App\Models\Field::column} }}]
+{{--                                                        [{{ $field->{\App\Models\Field::row} }},{{ $field->{\App\Models\Field::column} }}]--}}
+                                                        [{{ $fieldIdentifier }}]
                                                     </div>
                                                     @if($fieldWidth > 1 || $fieldHeight > 1)
                                                         <x-filament::badge color="gray" size="xs">

@@ -31,8 +31,9 @@ class BoardPage extends Page
             $this->board = Board::with([
                 'fields.rentals' => function ($query) {
                     $query->where(Rental::status, Rental::STATUS_ACTIVE)
-                        ->where(Rental::start_date, '<=', now())
-                        ->where(Rental::end_date, '>=', now());
+//                        ->where(Rental::start_date, '<=', now())
+//                        ->where(Rental::end_date, '>=', now())
+                    ;
                 },
                 'fields.rentals.customer'
             ])->find($boardId);
@@ -40,8 +41,9 @@ class BoardPage extends Page
             $this->board = Board::with([
                 'fields.rentals' => function ($query) {
                     $query->where(Rental::status, Rental::STATUS_ACTIVE)
-                        ->where(Rental::start_date, '<=', now())
-                        ->where(Rental::end_date, '>=', now());
+//                        ->where(Rental::start_date, '<=', now())
+//                        ->where(Rental::end_date, '>=', now())
+                    ;
                 },
                 'fields.rentals.customer'
             ])->first();
@@ -106,8 +108,8 @@ class BoardPage extends Page
     {
         $rental = $field->rentals()
             ->where(Rental::status, Rental::STATUS_ACTIVE)
-            ->where(Rental::start_date, '<=', now())
-            ->where(Rental::end_date, '>=', now())
+//            ->where(Rental::start_date, '<=', now())
+//            ->where(Rental::end_date, '>=', now())
             ->with('customer')
             ->first();
 
