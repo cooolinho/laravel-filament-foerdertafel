@@ -1,0 +1,142 @@
+<?php
+
+namespace App\Filament\Admin\Pages;
+
+use App\Models\EmailTemplate;
+use App\Models\Setting;
+use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+
+class SettingsPage extends Page implements HasForms
+{
+    use InteractsWithForms;
+
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-cog-6-tooth';
+
+    protected static ?string $navigationLabel = 'Einstellungen';
+
+    protected static ?string $title = 'Einstellungen';
+
+    protected string $view = 'filament.admin.pages.settings-page';
+
+    public ?array $data = [];
+
+    public function mount(): void
+    {
+        $settings = Setting::current();
+
+        if ($settings) {
+            $this->form->fill([
+                Setting::default_payment_method => $settings->default_payment_method,
+                Setting::default_rental_duration => $settings->default_rental_duration,
+                Setting::max_fields_per_customer => $settings->max_fields_per_customer,
+                Setting::email_notifications_enabled => $settings->email_notifications_enabled,
+                Setting::default_email_template_id => $settings->default_email_template_id,
+            ]);
+        }
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->schema([
+                Section::make('Allgemeine Einstellungen')
+                    ->description('Grundeinstellungen für das gesamte System')
+                    ->schema([
+                        Select::make(Setting::default_payment_method)
+                            ->label('Standard Zahlungsmethode')
+                            ->options(Setting::getPaymentMethods())
+                            ->required()
+                            ->helperText('Die voreingestellte Zahlungsmethode für neue Kunden')
+                            ->native(false),
+
+                        TextInput::make(Setting::default_rental_duration)
+                            ->label('Standard Mietdauer (Monate)')
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
+                            ->maxValue(12)
+                            ->default(1)
+                            ->suffix('Monat(e)')
+                            ->helperText('Voreingestellte Mietdauer in Monaten'),
+
+                        TextInput::make(Setting::max_fields_per_customer)
+                            ->label('Maximale Anzahl Felder pro Kunde')
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
+                            ->maxValue(100)
+                            ->default(10)
+                            ->suffix('Feld(er)')
+                            ->helperText('Wie viele Felder kann ein Kunde maximal mieten'),
+                    ])
+                    ->columns(2),
+
+                Section::make('E-Mail Einstellungen')
+                    ->description('Konfiguration für E-Mail-Benachrichtigungen')
+                    ->schema([
+                        Toggle::make(Setting::email_notifications_enabled)
+                            ->label('E-Mail Benachrichtigungen aktivieren')
+                            ->helperText('Aktiviert oder deaktiviert das Versenden von E-Mail-Benachrichtigungen')
+                            ->default(true)
+                            ->inline(false),
+
+                        Select::make(Setting::default_email_template_id)
+                            ->label('Standard E-Mail Vorlage')
+                            ->options(EmailTemplate::where('is_active', true)->pluck(EmailTemplate::name, 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->helperText('Die Vorlage, die standardmäßig für E-Mails verwendet wird')
+                            ->native(false),
+                    ])
+                    ->columns(1),
+
+                Action::make('save')
+                    ->label('Einstellungen speichern')
+                    ->button()
+                    ->color('primary')
+                    ->icon('heroicon-o-check')
+                    ->submit('save'),
+            ])
+            ->statePath('data');
+    }
+
+    public function save(): void
+    {
+        $data = $this->form->getState();
+
+        $settings = Setting::current();
+
+        if ($settings) {
+            $settings->update($data);
+        } else {
+            Setting::create($data);
+        }
+
+        Notification::make()
+            ->success()
+            ->title('Einstellungen gespeichert')
+            ->body('Die Einstellungen wurden erfolgreich gespeichert.')
+            ->send();
+    }
+
+    protected function getFormActions(): array
+    {
+        return [
+            Action::make('save')
+                ->label('Speichern')
+                ->submit('save')
+                ->icon('heroicon-o-check'),
+        ];
+    }
+}
