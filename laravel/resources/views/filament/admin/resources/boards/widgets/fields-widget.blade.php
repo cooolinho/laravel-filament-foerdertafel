@@ -64,37 +64,37 @@
                                         @endphp
 
                                         <div class="relative group" style="grid-column: {{ $col }} / span {{ $fieldWidth }}; grid-row: {{ $row }} / span {{ $fieldHeight }};">
-                                            <a href="{{ \App\Filament\Admin\Resources\Fields\FieldResource::getUrl('view', ['record' => $field->id]) }}"
-                                               class="flex flex-col p-4 rounded-lg border-2 transition-all hover:shadow-xl hover:scale-105 h-full {{ $borderColor }}"
-                                               style="min-height: 120px;">
+                                            @if($activeRental)
+                                                {{-- Rented Field - Show Modal on Click --}}
+                                                <div wire:click="mountAction('showRentalDetails', { rentalId: {{ $activeRental->id }}, fieldName: '{{ $field->{\App\Models\Field::name} }}' })"
+                                                     class="flex flex-col p-4 rounded-lg border-2 transition-all hover:shadow-xl hover:scale-105 h-full cursor-pointer {{ $borderColor }}"
+                                                     style="min-height: 120px;">
 
-                                                {{-- Position & Name --}}
-                                                <div class="flex items-start justify-between mb-2">
-                                                    <div class="text-xs font-mono text-gray-500 dark:text-gray-400">
-{{--                                                        [{{ $field->{\App\Models\Field::row} }},{{ $field->{\App\Models\Field::column} }}]--}}
-                                                        [{{ $fieldIdentifier }}]
+                                                    {{-- Position & Name --}}
+                                                    <div class="flex items-start justify-between mb-2">
+                                                        <div class="text-xs font-mono text-gray-500 dark:text-gray-400">
+                                                            [{{ $fieldIdentifier }}]
+                                                        </div>
+                                                        @if($fieldWidth > 1 || $fieldHeight > 1)
+                                                            <x-filament::badge color="gray" size="xs">
+                                                                {{ $fieldWidth }}x{{ $fieldHeight }}
+                                                            </x-filament::badge>
+                                                        @endif
                                                     </div>
-                                                    @if($fieldWidth > 1 || $fieldHeight > 1)
-                                                        <x-filament::badge color="gray" size="xs">
-                                                            {{ $fieldWidth }}x{{ $fieldHeight }}
+
+                                                    {{-- Field Name --}}
+                                                    <div class="font-bold text-sm text-gray-900 dark:text-white mb-2 line-clamp-2">
+                                                        {{ $field->{\App\Models\Field::name} }}
+                                                    </div>
+
+                                                    {{-- Status Badge --}}
+                                                    <div class="mt-auto">
+                                                        <x-filament::badge :color="$this->getFieldStatusColor($fieldStatus)" size="sm">
+                                                            {{ $this->getFieldStatusLabel($fieldStatus) }}
                                                         </x-filament::badge>
-                                                    @endif
-                                                </div>
+                                                    </div>
 
-                                                {{-- Field Name --}}
-                                                <div class="font-bold text-sm text-gray-900 dark:text-white mb-2 line-clamp-2">
-                                                    {{ $field->{\App\Models\Field::name} }}
-                                                </div>
-
-                                                {{-- Status Badge --}}
-                                                <div class="mt-auto">
-                                                    <x-filament::badge :color="$this->getFieldStatusColor($fieldStatus)" size="sm">
-                                                        {{ $this->getFieldStatusLabel($fieldStatus) }}
-                                                    </x-filament::badge>
-                                                </div>
-
-                                                {{-- Rental Info --}}
-                                                @if($activeRental)
+                                                    {{-- Rental Info --}}
                                                     <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                                         <div class="text-xs text-gray-600 dark:text-gray-400 truncate">
                                                             <span class="font-semibold">Mieter:</span> {{ $activeRental->customer->{\App\Models\Customer::name} ?? 'N/A' }}
@@ -102,15 +102,49 @@
                                                         <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
                                                             bis {{ $activeRental->{\App\Models\Rental::end_date}?->format('d.m.Y') }}
                                                         </div>
+                                                        <div class="text-xs text-primary-600 dark:text-primary-400 mt-1 font-medium">
+                                                            Klicken für Details →
+                                                        </div>
                                                     </div>
-                                                @else
+                                                </div>
+                                            @else
+                                                {{-- Available/Reserved Field - Link to Field Resource --}}
+                                                <a href="{{ \App\Filament\Admin\Resources\Fields\FieldResource::getUrl('view', ['record' => $field->id]) }}"
+                                                   class="flex flex-col p-4 rounded-lg border-2 transition-all hover:shadow-xl hover:scale-105 h-full {{ $borderColor }}"
+                                                   style="min-height: 120px;">
+
+                                                    {{-- Position & Name --}}
+                                                    <div class="flex items-start justify-between mb-2">
+                                                        <div class="text-xs font-mono text-gray-500 dark:text-gray-400">
+                                                            [{{ $fieldIdentifier }}]
+                                                        </div>
+                                                        @if($fieldWidth > 1 || $fieldHeight > 1)
+                                                            <x-filament::badge color="gray" size="xs">
+                                                                {{ $fieldWidth }}x{{ $fieldHeight }}
+                                                            </x-filament::badge>
+                                                        @endif
+                                                    </div>
+
+                                                    {{-- Field Name --}}
+                                                    <div class="font-bold text-sm text-gray-900 dark:text-white mb-2 line-clamp-2">
+                                                        {{ $field->{\App\Models\Field::name} }}
+                                                    </div>
+
+                                                    {{-- Status Badge --}}
+                                                    <div class="mt-auto">
+                                                        <x-filament::badge :color="$this->getFieldStatusColor($fieldStatus)" size="sm">
+                                                            {{ $this->getFieldStatusLabel($fieldStatus) }}
+                                                        </x-filament::badge>
+                                                    </div>
+
+                                                    {{-- Price Info --}}
                                                     <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                                                         <div class="text-xs font-semibold text-gray-700 dark:text-gray-300">
                                                             {{ number_format($field->{\App\Models\Field::price_per_month}, 2) }} €/Monat
                                                         </div>
                                                     </div>
-                                                @endif
-                                            </a>
+                                                </a>
+                                            @endif
 
                                             {{-- Quick Actions (on hover) --}}
                                             <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10">

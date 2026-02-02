@@ -124,7 +124,7 @@
                                             $borderColor = "border-white/20 bg-black/5 backdrop-blur-sm";
                                         @endphp
 
-                                        <div class="relative group {{ $fieldStatus === \App\Models\Field::STATUS_AVAILABLE ? 'cursor-pointer' : '' }}"
+                                        <div class="relative group {{ $fieldStatus === \App\Models\Field::STATUS_AVAILABLE ? 'cursor-pointer' : ($activeRental ? 'cursor-pointer' : '') }}"
                                              style="grid-column: {{ $col }} / span {{ $fieldWidth }};
                                                     grid-row: {{ $row }} / span {{ $fieldHeight }};">
 
@@ -132,10 +132,13 @@
                                                  style="min-height: 10px;">
 
                                                 @if($activeRental)
-                                                    {{-- Rented Field - Show Customer --}}
-                                                    <div class="bg-black/70 text-white px-4 py-3 rounded-lg w-full h-full text-center">
-                                                        <div class="flex items-center justify-center gap-2 mb-2 h-full">
-                                                            {{ $activeRental->customer->{\App\Models\Customer::name} ?? 'N/A' }}
+                                                    {{-- Rented Field - Show Customer - Clickable --}}
+                                                    <div class="bg-black/70 hover:bg-black/80 text-white px-4 py-3 rounded-lg w-full h-full text-center transition-all duration-200 cursor-pointer"
+                                                         wire:click="mountAction('showRentalDetails', { rentalId: {{ $activeRental->id }}, fieldName: '{{ $field->{\App\Models\Field::name} }}' })">
+                                                        <div class="flex flex-col items-center justify-center gap-2 h-full">
+                                                            <div class="font-semibold">
+                                                                {{ $activeRental->customer->{\App\Models\Customer::name} ?? 'N/A' }}
+                                                            </div>
                                                         </div>
                                                     </div>
 
@@ -204,4 +207,6 @@
             </div>
         </div>
     @endif
+
+    <x-filament-actions::modals />
 </x-filament-panels::page>

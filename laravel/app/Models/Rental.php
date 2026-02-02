@@ -68,4 +68,14 @@ class Rental extends Model
             && $this->start_date <= now()
             && $this->end_date >= now();
     }
+
+    public function getStatusLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_ACTIVE => 'Active',
+            self::STATUS_COMPLETED => 'Completed',
+            self::STATUS_CANCELLED => 'Cancelled',
+            default => 'Unknown',
+        };
+    }
 }

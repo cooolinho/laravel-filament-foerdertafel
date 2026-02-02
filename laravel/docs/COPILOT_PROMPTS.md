@@ -78,3 +78,7 @@ Auf der InquiryCompletePage wird die Session Variable wieder gelöscht, sodass d
 
 wenn ein Inquiry erstellt wird, sollen die Felder auf reserviert gesetzt werden, sodass diese nicht mehr in der Board Ansicht als verfügbar angezeigt werden.
 Erstelle mir dazu ein Listeners und Subscriber System, welches auf das Erstellen eines Inquiry hört und die entsprechenden Felder auf reserviert setzt.
+
+bei klick auf ein vermietetes feld im FieldsWidget oder in der BoardPage, soll sich ein modal öffnen, welches die details der vermietung anzeigt.
+Dort sollen die wichtigsten Attribute der Vermietung angezeigt werden (Kunde, Startdatum, Enddatum, Gesamtpreis).
+Passe mir das FieldsWidget und die BoardPage entsprechend an.

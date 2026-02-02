@@ -15,7 +15,6 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
-use Illuminate\Support\Collection;
 
 class FieldsWidget extends Widget implements HasForms, HasActions
 {
@@ -356,5 +355,40 @@ class FieldsWidget extends Widget implements HasForms, HasActions
         $this->selectedColumn = $column;
 
         $this->mountAction('createField');
+    }
+
+    /**
+     * Show rental details modal
+     */
+    public function showRentalDetailsAction(): Action
+    {
+        return Action::make('showRentalDetails')
+            ->label('Vermietungsdetails')
+            ->modalHeading(fn (array $arguments) => 'Vermietungsdetails - Feld ' . ($arguments['fieldName'] ?? ''))
+            ->modalContent(function (array $arguments) {
+                $rentalId = $arguments['rentalId'] ?? null;
+
+                if (!$rentalId) {
+                    return view('filament.components.empty-state', [
+                        'message' => 'Keine Vermietungsdaten verfügbar.'
+                    ]);
+                }
+
+                $rental = Rental::with(['customer', 'fields'])->find($rentalId);
+
+                if (!$rental) {
+                    return view('filament.components.empty-state', [
+                        'message' => 'Vermietung nicht gefunden.'
+                    ]);
+                }
+
+                return view('filament.admin.components.rental-details-modal', [
+                    'rental' => $rental,
+                ]);
+            })
+            ->modalWidth(\Filament\Support\Enums\Width::FourExtraLarge)
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Schließen')
+            ->closeModalByClickingAway(true);
     }
 }

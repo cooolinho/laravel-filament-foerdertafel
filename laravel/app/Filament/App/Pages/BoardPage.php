@@ -6,12 +6,16 @@ use App\Models\Board;
 use App\Models\Field;
 use App\Models\Rental;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Pages\Page;
 use Filament\Support\Enums\Width;
-use Illuminate\Support\Facades\Route;
 
-class BoardPage extends Page
+class BoardPage extends Page implements HasActions
 {
+    use InteractsWithActions;
+
     protected string $view = 'filament.app.pages.board-page';
 
     protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-rectangle-group';
@@ -127,5 +131,40 @@ class BoardPage extends Page
     public function getMaxContentWidth(): Width
     {
         return Width::Full;
+    }
+
+    /**
+     * Show rental details modal
+     */
+    public function showRentalDetailsAction(): Action
+    {
+        return Action::make('showRentalDetails')
+            ->label('Vermietungsdetails')
+            ->modalHeading(fn (array $arguments) => 'Vermietungsdetails - Feld ' . ($arguments['fieldName'] ?? ''))
+            ->modalContent(function (array $arguments) {
+                $rentalId = $arguments['rentalId'] ?? null;
+
+                if (!$rentalId) {
+                    return view('filament.components.empty-state', [
+                        'message' => 'Keine Vermietungsdaten verfügbar.'
+                    ]);
+                }
+
+                $rental = Rental::with(['customer', 'fields'])->find($rentalId);
+
+                if (!$rental) {
+                    return view('filament.components.empty-state', [
+                        'message' => 'Vermietung nicht gefunden.'
+                    ]);
+                }
+
+                return view('filament.app.components.rental-details-modal', [
+                    'rental' => $rental,
+                ]);
+            })
+            ->modalWidth(Width::FourExtraLarge)
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Schließen')
+            ->closeModalByClickingAway(true);
     }
 }
