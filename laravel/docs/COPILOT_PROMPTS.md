@@ -88,3 +88,15 @@ Füge alles was man für einen Email-Verkehr braucht hinzu. also passe die Migra
 anschließend passe mir die dazugehörigen filament resourcen an. erweitere die form, table und infolist.
 lasse dir auch eine sinnvolle navigation einfallen und füge icons und badges hinzu.
 ich will einen posteingang und einen postausgang als page haben.
+
+ich habe ein settings model und eine migration und eine filament page erstellt.
+ich möchte dort einstellungen für das gesamte projekt vornehmen können.
+Passe mir die SettingsPage so an, dass ich dort die folgenden einstellungen vornehmen kann:
+- Standard Zahlungsmethode für Kunden (z.B. Kreditkarte, PayPal, Überweisung)
+- Standard Mietdauer (z.B. 1 Monat, 3 Monate, 6 Monate)
+- Maximale Anzahl an Feldern, die ein Kunde mieten kann
+- E-Mail Benachrichtigungen aktivieren/deaktivieren
+- Standard Vorlage für E-Mails (Verknüpfung zu EmailTemplate)
+Die default settings sollten über die migration gesetzt werden, sodass bei der Installation des Projekts bereits sinnvolle Standardwerte vorhanden sind.
+
+
