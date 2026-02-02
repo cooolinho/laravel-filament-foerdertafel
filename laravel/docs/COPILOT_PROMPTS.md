@@ -82,3 +82,9 @@ Erstelle mir dazu ein Listeners und Subscriber System, welches auf das Erstellen
 bei klick auf ein vermietetes feld im FieldsWidget oder in der BoardPage, soll sich ein modal öffnen, welches die details der vermietung anzeigt.
 Dort sollen die wichtigsten Attribute der Vermietung angezeigt werden (Kunde, Startdatum, Enddatum, Gesamtpreis).
 Passe mir das FieldsWidget und die BoardPage entsprechend an.
+
+ich möchte in meinem projekt emails versenden und empfangen können. Ich habe dazu bereits die Models Email und EmailTemplate erstellt.
+Füge alles was man für einen Email-Verkehr braucht hinzu. also passe die Migrations, Models, Resources, Seeder und alles was sonst noch nötig ist an.
+anschließend passe mir die dazugehörigen filament resourcen an. erweitere die form, table und infolist.
+lasse dir auch eine sinnvolle navigation einfallen und füge icons und badges hinzu.
+ich will einen posteingang und einen postausgang als page haben.
