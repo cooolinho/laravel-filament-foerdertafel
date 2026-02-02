@@ -60,9 +60,7 @@
                                             };
                                             $fieldWidth = $field->{\App\Models\Field::width};
                                             $fieldHeight = $field->{\App\Models\Field::height};
-                                            $fieldRow = $field->{\App\Models\Field::row};
-                                            $fieldColumn = $field->{\App\Models\Field::column};
-                                            $fieldIdentifier = chr(64 + $fieldRow) . $fieldColumn;
+                                            $fieldIdentifier = $field->getIdentifier();
                                         @endphp
 
                                         <div class="relative group" style="grid-column: {{ $col }} / span {{ $fieldWidth }}; grid-row: {{ $row }} / span {{ $fieldHeight }};">

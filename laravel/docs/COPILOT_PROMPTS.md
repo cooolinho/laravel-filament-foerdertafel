@@ -67,3 +67,11 @@ passe mir meinen boardseeder und den fieldseeder an. ich will genau 1 board mit 
 Es gib 4 ecken mit einem feld von 1x1 in jeder ecke.
 Es gibt 2 Tore mit jeweils 5 feldern von 1x5. (startend bei (row=7, col=1) und (row=7, col=16))
 Es gibt einen Mittelkreis mit 20 feldern von 4x5. (startend bei (row=7, col=7))
+
+Nach dem der Kunde ein Anfrage abgesendet hat, soll dieser auf einer ConfirmationPage (InquiryCompletePage) weitergeleitet werden.
+Auf dieser Seite soll eine Zusammenfassung der Anfrage angezeigt werden, inklusive der ausgewählten Felder,des Zeitraums und der Kontaktinformationen.
+Passe mir die InquiryCompletePage und alle zugehörigen Dateien entsprechend an.
+
+Die InquiryCompletePage kann nur geöffnet werden wenn eine Session Variable (inquiry_complete) gesetzt ist.
+Passe mir die InquiryPage entsprechend an, sodass nach dem Absenden der Anfrage die Session Variable gesetzt wird und der Nutzer auf die InquiryCompletePage weitergeleitet wird.
+Auf der InquiryCompletePage wird die Session Variable wieder gelöscht, sodass die Seite nicht erneut aufgerufen werden kann ohne eine neue Anfrage zu stellen. mit canView muss geprüft werden ob die Session Variable gesetzt ist, ansonsten wird man auf die Anfrage Seite weitergeleitet.

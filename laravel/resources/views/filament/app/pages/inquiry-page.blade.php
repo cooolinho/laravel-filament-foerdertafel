@@ -112,7 +112,7 @@
                                         $fieldWidth = $field->{\App\Models\Field::width};
                                         $fieldHeight = $field->{\App\Models\Field::height};
                                         $fieldStatus = $field->{\App\Models\Field::status};
-                                        $fieldIdentifier = chr(64 + $fieldRow) . $fieldCol;
+                                        $fieldIdentifier = $field->getIdentifier();
                                         $pricePerMonth = $field->{\App\Models\Field::price_per_month};
                                         $isSelected = in_array($fieldId, $this->selectedFields);
                                         $activeRental = $this->getActiveRental($field);

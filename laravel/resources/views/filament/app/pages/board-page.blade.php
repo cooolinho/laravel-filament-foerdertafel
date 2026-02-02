@@ -118,9 +118,7 @@
                                             $fieldStatus = $field->{\App\Models\Field::status};
                                             $fieldWidth = $field->{\App\Models\Field::width};
                                             $fieldHeight = $field->{\App\Models\Field::height};
-                                            $fieldRow = $field->{\App\Models\Field::row};
-                                            $fieldColumn = $field->{\App\Models\Field::column};
-                                            $fieldIdentifier = chr(64 + $fieldRow) . $fieldColumn;
+                                            $fieldIdentifier = $field->getIdentifier();
 
                                             // Style based on status
                                             $borderColor = "border-white/20 bg-black/5 backdrop-blur-sm";

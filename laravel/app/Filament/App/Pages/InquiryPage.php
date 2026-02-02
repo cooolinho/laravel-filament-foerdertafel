@@ -186,7 +186,7 @@ class InquiryPage extends Page implements HasForms
         }
 
         try {
-            DB::transaction(function () use ($formData) {
+            $inquiry = DB::transaction(function () use ($formData) {
                 $inquiry = Inquiry::create([
                     Inquiry::board_id => $this->board->id,
                     Inquiry::customer_name => $formData['customer_name'],
@@ -201,17 +201,13 @@ class InquiryPage extends Page implements HasForms
 
                 // Attach fields via pivot table
                 $inquiry->fields()->attach($this->selectedFields);
+
+                return $inquiry;
             });
 
-            Notification::make()
-                ->title('Anfrage erfolgreich gesendet!')
-                ->body('Wir werden uns in Kürze bei Ihnen melden.')
-                ->success()
-                ->send();
-
-            // Reset form and selection
-            $this->selectedFields = [];
-            $this->form->fill();
+            // Set session variable and redirect to confirmation page
+            session(['inquiry_complete' => $inquiry->id]);
+            $this->redirect(route('filament.app.pages.inquiry-complete-page'));
 
         } catch (\Exception $e) {
             Notification::make()

@@ -82,4 +82,12 @@ class Field extends Model
     {
         return $this->status === self::STATUS_RENTED;
     }
+
+    /**
+     * Get the field identifier (e.g., "A1", "B3").
+     */
+    public function getIdentifier(): string
+    {
+        return chr(64 + $this->row) . $this->column;
+    }
 }
