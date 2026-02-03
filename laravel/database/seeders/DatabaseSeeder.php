@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             InquirySeeder::class,
             EmailTemplateSeeder::class,
             EmailSeeder::class,
+            RentalAccessCodeEmailTemplateSeeder::class,
         ]);
 
         $this->command->info('✓ Database seeded successfully!');
@@ -39,5 +40,6 @@ class DatabaseSeeder extends Seeder
         $this->command->info('✓ 5 Inquiries created per Board');
         $this->command->info('✓ Email Templates created');
         $this->command->info('✓ Sample Emails created (Inbound & Outbound)');
+        $this->command->info('✓ Rental Access Code Email Template created');
     }
 }

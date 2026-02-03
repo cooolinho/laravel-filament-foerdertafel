@@ -32,4 +32,20 @@ class Customer extends Model
     {
         return $this->hasMany(Rental::class);
     }
+
+    /**
+     * Check if customer is a company.
+     */
+    public function isCompany(): bool
+    {
+        return !empty($this->company_name);
+    }
+
+    /**
+     * Check if customer is a private person.
+     */
+    public function isPrivatePerson(): bool
+    {
+        return empty($this->company_name);
+    }
 }

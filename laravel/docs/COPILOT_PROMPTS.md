@@ -113,4 +113,10 @@ Erstelle mir dazu die folgenden Events, Listener und Subscriber:
       Passe mir die entsprechenden Models, Migrations, Resources und alle zugehörigen Dateien an, um dieses Event System zu integrieren.
       Stelle sicher, dass die Events korrekt ausgelöst werden und die Listener die gewünschten Aktionen ausführen.
 
-
+ich möchte den kunden ein möglichkeit geben, ihre gemieteten felder mit inhalten zu füllen.
+Erstelle mir dazu ein Content Model und eine Migration mit passen inhalten
+Der zugang sollte immer einen einmaligen zugangscode haben, der bei der Erstellung generiert wird.
+Soabald der Kunde sein Feld bezahlt hat, soll ihm der zugangscode per email zugeschickt werden.
+Mit dem Zugangscode kann der Kunde auf eine Seite zugreifen und die dazugehörigen Felder sehen und verwalten.
+Er kann ein Firmenlogo hochladen wenn er nicht als privatperson gekennzeichnet ist.
+Die verwaltetetn Inhalte sind an die Rental gebunden.

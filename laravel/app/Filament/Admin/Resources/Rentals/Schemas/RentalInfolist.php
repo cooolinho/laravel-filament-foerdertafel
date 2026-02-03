@@ -90,8 +90,68 @@ class RentalInfolist
                         TextEntry::make(Rental::notes)
                             ->label('Notes')
                             ->placeholder('No notes'),
+
+                        TextEntry::make(Rental::paid_at)
+                            ->label('Paid At')
+                            ->dateTime()
+                            ->placeholder('Not paid yet'),
                     ])
-                    ->columns(1),
+                    ->columns(2),
+
+                Section::make('Customer Portal Content')
+                    ->schema([
+                        TextEntry::make('content.access_code')
+                            ->label('Access Code')
+                            ->placeholder('No content initialized')
+                            ->copyable()
+                            ->copyMessage('Access code copied!')
+                            ->fontFamily('mono')
+                            ->size('lg')
+                            ->weight('bold'),
+
+                        TextEntry::make('content.is_published')
+                            ->label('Published Status')
+                            ->badge()
+                            ->color(fn ($state): string => $state ? 'success' : 'gray')
+                            ->formatStateUsing(fn ($state): string => $state ? 'Published' : 'Draft')
+                            ->placeholder('No content'),
+
+                        TextEntry::make('content.title')
+                            ->label('Title')
+                            ->placeholder('—'),
+
+                        TextEntry::make('content.website_url')
+                            ->label('Website')
+                            ->placeholder('—')
+                            ->url(fn ($state) => $state)
+                            ->openUrlInNewTab(),
+
+                        TextEntry::make('content.contact_email')
+                            ->label('Contact Email')
+                            ->placeholder('—')
+                            ->copyable(),
+
+                        TextEntry::make('content.contact_phone')
+                            ->label('Contact Phone')
+                            ->placeholder('—')
+                            ->copyable(),
+
+                        TextEntry::make('content.last_accessed_at')
+                            ->label('Last Accessed')
+                            ->dateTime()
+                            ->placeholder('Never accessed')
+                            ->since(),
+
+                        TextEntry::make('content.company_logo')
+                            ->label('Logo')
+                            ->placeholder('No logo')
+                            ->formatStateUsing(fn ($state) => $state ? 'Uploaded' : 'No logo')
+                            ->badge()
+                            ->color(fn ($state) => $state ? 'success' : 'gray'),
+                    ])
+                    ->columns(4)
+                    ->visible(fn ($record) => $record->content !== null)
+                    ->collapsible(),
 
                 Section::make('Timestamps')
                     ->schema([

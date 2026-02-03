@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -18,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $end_date
  * @property float $total_price
  * @property string $status
+ * @property Carbon|null $paid_at
  * @property string|null $notes
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -25,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property-read Customer $customer
  * @property-read Collection|Field[] $fields
  * @property-read Collection|Inquiry[] $inquiries
+ * @property-read RentalContent|null $content
  */
 class Rental extends Model
 {
@@ -33,8 +36,11 @@ class Rental extends Model
     const string end_date = 'end_date';
     const string total_price = 'total_price';
     const string status = 'status';
+    const string paid_at = 'paid_at';
     const string notes = 'notes';
 
+    const string STATUS_PENDING = 'pending';
+    const string STATUS_PAID = 'paid';
     const string STATUS_ACTIVE = 'active';
     const string STATUS_COMPLETED = 'completed';
     const string STATUS_CANCELLED = 'cancelled';
@@ -45,6 +51,7 @@ class Rental extends Model
         self::end_date,
         self::total_price,
         self::status,
+        self::paid_at,
         self::notes,
     ];
 
@@ -52,6 +59,7 @@ class Rental extends Model
         self::start_date => 'date',
         self::end_date => 'date',
         self::total_price => 'decimal:2',
+        self::paid_at => 'datetime',
     ];
 
     /**
@@ -79,6 +87,14 @@ class Rental extends Model
     }
 
     /**
+     * Get the content for the rental.
+     */
+    public function content(): HasOne
+    {
+        return $this->hasOne(RentalContent::class);
+    }
+
+    /**
      * Check if the rental is active.
      */
     public function isActive(): bool
@@ -88,13 +104,23 @@ class Rental extends Model
             && $this->end_date >= now();
     }
 
+    /**
+     * Check if the rental is paid.
+     */
+    public function isPaid(): bool
+    {
+        return $this->status === self::STATUS_PAID || $this->paid_at !== null;
+    }
+
     public function getStatusLabel(): string
     {
         return match ($this->status) {
-            self::STATUS_ACTIVE => 'Active',
-            self::STATUS_COMPLETED => 'Completed',
-            self::STATUS_CANCELLED => 'Cancelled',
-            default => 'Unknown',
+            self::STATUS_PENDING => 'Ausstehend',
+            self::STATUS_PAID => 'Bezahlt',
+            self::STATUS_ACTIVE => 'Aktiv',
+            self::STATUS_COMPLETED => 'Abgeschlossen',
+            self::STATUS_CANCELLED => 'Storniert',
+            default => 'Unbekannt',
         };
     }
 }
