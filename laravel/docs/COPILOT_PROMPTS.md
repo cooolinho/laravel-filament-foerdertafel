@@ -126,3 +126,8 @@ Die Dokumente sollen an verschiedene Entitäten gebunden werden können (Locatio
 Eigtl brauche ich die Dokumente nur für die Kunden. Den Kunden sollen Mietverträge und Rechnungen als PDF Dokumente hochgeladen und zugeordnet werden können.
 Wenn Kunden per Lastschrift zahlen sollen die SEPA Mandate auch als Dokumente hinterlegt werden können. Diese werden dann bspw. per Email an den Kunden geschickt. Da sich diese Dokumente eventuell ändern können (neue Version des Mandats) sollen die Dokumente versioniert werden.
 Passe mir die Document Resource so an, dass ich die Dokumente entsprechend verwalten kann.
+
+ich möchte das jeder benutzer seine dashboard konfigurieren kann.
+Dazu muss jeder Benutzer in seinem User Menu eine Page finden, wo er diese Einstellungen vornehmen kann.
+Die Einstellungen sollen in der Datenbank gespeichert werden und beim laden des Dashboards berücksichtigt werden.
+Erstelle mir dazu eine UserDashboardSettingsPage und passe mir das Dashboard so an, dass die Einstellungen berücksichtigt werden.

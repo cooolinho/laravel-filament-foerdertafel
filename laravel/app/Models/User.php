@@ -3,27 +3,41 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property Carbon|null $email_verified_at
+ * @property string $password
+ * @property string|null $remember_token
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ *
+ * @property-read UserDashboardSetting|null $dashboardSettings
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     // properties
-    const id = 'id';
-    const name = 'name';
-    const email = 'email';
-    const email_verified_at = 'email_verified_at';
-    const password = 'password';
-    const remember_token = 'remember_token';
+    const string id = 'id';
+    const string name = 'name';
+    const string email = 'email';
+    const string email_verified_at = 'email_verified_at';
+    const string password = 'password';
+    const string remember_token = 'remember_token';
 
     // timestamps;
-    const created_at = 'created_at';
-    const updated_at = 'updated_at';
+    const string created_at = 'created_at';
+    const string updated_at = 'updated_at';
 
     /**
      * The attributes that are mass assignable.
@@ -57,5 +71,13 @@ class User extends Authenticatable
             self::email_verified_at => 'datetime',
             self::password => 'hashed',
         ];
+    }
+
+    /**
+     * Get the user's dashboard settings.
+     */
+    public function dashboardSettings(): HasOne
+    {
+        return $this->hasOne(UserDashboardSetting::class);
     }
 }
