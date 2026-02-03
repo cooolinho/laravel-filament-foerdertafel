@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\Emails\Schemas;
 
+use App\Filament\Admin\Resources\Customers\CustomerResource;
 use App\Models\Email;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -70,7 +71,7 @@ class EmailInfolist
                             ->icon('heroicon-o-user-circle')
                             ->placeholder('Kein Kunde verknüpft')
                             ->url(fn ($record) => $record->customer_id
-                                ? route('filament.admin.resources.customers.customers.view', $record->customer_id)
+                                ? CustomerResource::getViewUrl($record->customer)
                                 : null),
 
                         TextEntry::make(Email::to_email)
