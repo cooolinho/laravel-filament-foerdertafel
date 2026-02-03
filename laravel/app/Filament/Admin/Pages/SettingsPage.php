@@ -15,6 +15,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use UnitEnum;
 
 class SettingsPage extends Page implements HasForms
 {
@@ -25,6 +26,10 @@ class SettingsPage extends Page implements HasForms
     protected static ?string $navigationLabel = 'Einstellungen';
 
     protected static ?string $title = 'Einstellungen';
+
+    protected static string|null|UnitEnum $navigationGroup = 'System';
+
+    protected static ?int $navigationSort = 20;
 
     protected string $view = 'filament.admin.pages.settings-page';
 

@@ -7,10 +7,12 @@ use App\Models\Board;
 use App\Models\Field;
 use App\Models\Inquiry;
 use App\Models\Rental;
+use App\Models\Setting;
 use App\Rules\FieldsFormRectangle;
 use App\Rules\MaxFieldsCount;
 use BackedEnum;
-use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -93,24 +95,37 @@ class InquiryPage extends Page implements HasForms
                     ->maxLength(255)
                     ->placeholder('+49 123 456789'),
 
-                DatePicker::make('start_date')
-                    ->label('Startdatum')
+                Select::make('start_month')
+                    ->label('Start-Monat')
+                    ->options($this->getAvailableMonths())
                     ->required()
                     ->native(false)
-                    ->displayFormat('d.m.Y')
-                    ->minDate(now())
                     ->reactive()
-                    ->afterStateUpdated(fn () => $this->dispatch('dates-updated')),
+                    ->afterStateUpdated(fn () => $this->dispatch('dates-updated'))
+                    ->helperText('Wählen Sie den Monat, in dem Ihre Miete beginnen soll. Die Miete startet immer am 1. des Monats.')
+                    ->placeholder('Monat auswählen'),
 
-                DatePicker::make('end_date')
-                    ->label('Enddatum')
-                    ->required()
-                    ->native(false)
-                    ->displayFormat('d.m.Y')
-                    ->minDate(now())
-                    ->afterOrEqual('start_date')
-                    ->reactive()
-                    ->afterStateUpdated(fn () => $this->dispatch('dates-updated')),
+                Placeholder::make('rental_info')
+                    ->label('Mietdauer')
+                    ->content(function ($get) {
+                        $startMonth = $get('start_month');
+                        if (!$startMonth) {
+                            return 'Bitte wählen Sie zunächst einen Start-Monat aus.';
+                        }
+
+                        $duration = Setting::get(Setting::default_rental_duration, 1);
+                        $startDate = \Carbon\Carbon::parse($startMonth);
+                        $endDate = $startDate->copy()->addMonths($duration)->subDay();
+
+                        return sprintf(
+                            'Ihre Miete läuft vom %s bis %s (%d %s).',
+                            $startDate->format('d.m.Y'),
+                            $endDate->format('d.m.Y'),
+                            $duration,
+                            $duration === 1 ? 'Monat' : 'Monate'
+                        );
+                    })
+                    ->columnSpanFull(),
 
                 Textarea::make('message')
                     ->label('Nachricht (optional)')
@@ -144,6 +159,34 @@ class InquiryPage extends Page implements HasForms
         $this->dispatch('fields-updated');
     }
 
+    /**
+     * Get available months for selection (starting 14 days from now)
+     */
+    protected function getAvailableMonths(): array
+    {
+        $months = [];
+
+        // Frühestes Start-Datum ist in 14 Tagen
+        $earliestDate = now()->addDays(14);
+
+        // Wenn wir nicht am Monatsanfang sind, nehmen wir den nächsten Monat
+        if ($earliestDate->day > 1) {
+            $startMonth = $earliestDate->copy()->addMonth()->startOfMonth();
+        } else {
+            $startMonth = $earliestDate->copy()->startOfMonth();
+        }
+
+        // Generiere die nächsten 12 Monate als Optionen
+        for ($i = 0; $i < 12; $i++) {
+            $month = $startMonth->copy()->addMonths($i);
+            $key = $month->format('Y-m-01'); // Immer der 1. des Monats
+            $label = $month->translatedFormat('F Y'); // z.B. "März 2026"
+            $months[$key] = $label;
+        }
+
+        return $months;
+    }
+
     public function submit(): void
     {
         // Validate form data
@@ -167,7 +210,7 @@ class InquiryPage extends Page implements HasForms
                     'required',
                     'array',
                     'min:1',
-                    new MaxFieldsCount(4),
+                    new MaxFieldsCount(Setting::get(Setting::max_fields_per_customer, 4)),
                     new FieldsFormRectangle(),
                 ],
             ],
@@ -188,13 +231,18 @@ class InquiryPage extends Page implements HasForms
 
         try {
             $inquiry = DB::transaction(function () use ($formData) {
+                // Calculate start_date and end_date from start_month
+                $startDate = \Carbon\Carbon::parse($formData['start_month']); // Immer der 1. des Monats
+                $duration = Setting::get(Setting::default_rental_duration, 1);
+                $endDate = $startDate->copy()->addMonths($duration)->subDay(); // Letzter Tag des Miet-Zeitraums
+
                 $inquiry = Inquiry::create([
                     Inquiry::board_id => $this->board->id,
                     Inquiry::customer_name => $formData['customer_name'],
                     Inquiry::customer_email => $formData['customer_email'],
                     Inquiry::customer_phone => $formData['customer_phone'] ?? null,
-                    Inquiry::start_date => $formData['start_date'],
-                    Inquiry::end_date => $formData['end_date'],
+                    Inquiry::start_date => $startDate,
+                    Inquiry::end_date => $endDate,
                     Inquiry::requested_fields => $this->selectedFields,
                     Inquiry::status => Inquiry::STATUS_PENDING,
                     Inquiry::message => $formData['message'] ?? null,
@@ -236,20 +284,13 @@ class InquiryPage extends Page implements HasForms
     {
         $pricePerMonth = $this->getTotalPricePerMonth();
 
-        if (!isset($this->data['start_date']) || !isset($this->data['end_date'])) {
+        if (!isset($this->data['start_month'])) {
             return $pricePerMonth;
         }
 
         try {
-            $startDate = \Carbon\Carbon::parse($this->data['start_date']);
-            $endDate = \Carbon\Carbon::parse($this->data['end_date']);
-
-            // Calculate number of months (rounded up)
-            $months = $startDate->diffInMonths($endDate);
-            if ($startDate->addMonths($months) < $endDate) {
-                $months++;
-            }
-
+            // Get rental duration from settings
+            $months = Setting::get(Setting::default_rental_duration, 1);
             $months = max(1, $months); // Minimum 1 month
 
             return $pricePerMonth * $months;

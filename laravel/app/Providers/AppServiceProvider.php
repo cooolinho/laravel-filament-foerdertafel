@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Document;
 use App\Models\Rental;
+use App\Observers\DocumentObserver;
 use App\Observers\RentalObserver;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Document::observe(DocumentObserver::class);
         Rental::observe(RentalObserver::class);
     }
 }

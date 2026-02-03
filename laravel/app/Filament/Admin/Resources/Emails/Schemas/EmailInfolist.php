@@ -3,13 +3,17 @@
 namespace App\Filament\Admin\Resources\Emails\Schemas;
 
 use App\Filament\Admin\Resources\Customers\CustomerResource;
+use App\Filament\Admin\Resources\Documents\DocumentResource;
+use App\Models\Document;
 use App\Models\Email;
 use Filament\Infolists\Components\KeyValueEntry;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\TextSize;
+use Illuminate\Support\Facades\Storage;
 
 class EmailInfolist
 {
@@ -120,6 +124,48 @@ class EmailInfolist
                             ->columnSpanFull()
                             ->visible(fn ($record) => !empty($record->body_text)),
                     ]),
+
+                Section::make('Anhänge')
+                    ->schema([
+                        RepeatableEntry::make('documents')
+                            ->label('Angehängte Dokumente')
+                            ->schema([
+                                TextEntry::make(Document::type)
+                                    ->label('Typ')
+                                    ->badge()
+                                    ->formatStateUsing(fn (Document $record) => $record->getTypeLabel())
+                                    ->color(fn (string $state) => match ($state) {
+                                        Document::TYPE_CONTRACT => 'success',
+                                        Document::TYPE_INVOICE => 'warning',
+                                        Document::TYPE_SEPA_MANDATE => 'info',
+                                        Document::TYPE_REVOCATION_POLICY => 'primary',
+                                        Document::TYPE_INFO_BROCHURE => 'primary',
+                                        Document::TYPE_TERMS_CONDITIONS => 'primary',
+                                        default => 'gray',
+                                    }),
+
+                                TextEntry::make(Document::title)
+                                    ->label('Titel')
+                                    ->url(fn (Document $record) => DocumentResource::getViewUrl($record))
+                                    ->color('primary'),
+
+                                TextEntry::make(Document::file_size)
+                                    ->label('Größe')
+                                    ->formatStateUsing(fn (Document $record) => $record->getFileSizeHuman()),
+
+                                TextEntry::make(Document::file_path)
+                                    ->label('Download')
+                                    ->formatStateUsing(fn () => 'Herunterladen')
+                                    ->url(fn (Document $record) => Storage::url($record->file_path))
+                                    ->openUrlInNewTab()
+                                    ->icon('heroicon-o-arrow-down-tray')
+                                    ->color('success'),
+                            ])
+                            ->columns(4)
+                            ->columnSpanFull(),
+                    ])
+                    ->visible(fn ($record) => $record->documents()->exists())
+                    ->collapsible(),
 
                 Section::make('Verknüpfungen')
                     ->schema([

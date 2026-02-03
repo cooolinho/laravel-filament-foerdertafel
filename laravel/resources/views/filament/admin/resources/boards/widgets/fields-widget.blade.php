@@ -88,11 +88,11 @@
                                                     </div>
 
                                                     {{-- Status Badge --}}
-                                                    <div class="mt-auto">
-                                                        <x-filament::badge :color="$this->getFieldStatusColor($fieldStatus)" size="sm">
-                                                            {{ $this->getFieldStatusLabel($fieldStatus) }}
-                                                        </x-filament::badge>
-                                                    </div>
+{{--                                                    <div class="mt-auto">--}}
+{{--                                                        <x-filament::badge :color="$this->getFieldStatusColor($fieldStatus)" size="sm">--}}
+{{--                                                            {{ $this->getFieldStatusLabel($fieldStatus) }}--}}
+{{--                                                        </x-filament::badge>--}}
+{{--                                                    </div>--}}
 
                                                     {{-- Rental Info --}}
                                                     <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -131,11 +131,11 @@
                                                     </div>
 
                                                     {{-- Status Badge --}}
-                                                    <div class="mt-auto">
-                                                        <x-filament::badge :color="$this->getFieldStatusColor($fieldStatus)" size="sm">
-                                                            {{ $this->getFieldStatusLabel($fieldStatus) }}
-                                                        </x-filament::badge>
-                                                    </div>
+{{--                                                    <div class="mt-auto">--}}
+{{--                                                        <x-filament::badge :color="$this->getFieldStatusColor($fieldStatus)" size="sm">--}}
+{{--                                                            {{ $this->getFieldStatusLabel($fieldStatus) }}--}}
+{{--                                                        </x-filament::badge>--}}
+{{--                                                    </div>--}}
 
                                                     {{-- Price Info --}}
                                                     <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">

@@ -133,6 +133,20 @@ class SendEmailJob implements ShouldQueue
                         }
                     }
                 }
+
+                // Dokumente aus der documents-Beziehung anhängen
+                foreach ($this->email->documents as $document) {
+                    $fullPath = storage_path('app/public/' . $document->file_path);
+                    if (file_exists($fullPath)) {
+                        $message->attach(
+                            $fullPath,
+                            [
+                                'as' => $document->file_name,
+                                'mime' => $document->mime_type ?? 'application/pdf',
+                            ]
+                        );
+                    }
+                }
             });
 
             // E-Mail als gesendet markieren

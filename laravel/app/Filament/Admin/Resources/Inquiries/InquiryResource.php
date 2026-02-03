@@ -17,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class InquiryResource extends Resource
 {
@@ -31,6 +32,8 @@ class InquiryResource extends Resource
     protected static ?string $modelLabel = 'Anfrage';
 
     protected static ?string $pluralModelLabel = 'Anfragen';
+
+    protected static string|null|UnitEnum $navigationGroup = 'Customer Management';
 
     protected static ?int $navigationSort = 3;
 

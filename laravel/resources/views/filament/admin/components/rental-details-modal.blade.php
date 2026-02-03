@@ -61,7 +61,9 @@
             </div>
             <div>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Enddatum</dt>
-                <dd class="mt-1 text-base text-gray-900 dark:text-white">{{ $rental->{\App\Models\Rental::end_date}->format('d.m.Y') }}</dd>
+                <dd class="mt-1 text-base text-gray-900 dark:text-white">
+                    {{ $rental->{\App\Models\Rental::end_date}?->format('d.m.Y') ?? 'Nicht gesetzt' }}
+                </dd>
             </div>
             <div>
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Dauer</dt>

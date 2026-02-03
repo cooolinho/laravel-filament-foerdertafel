@@ -120,3 +120,9 @@ Soabald der Kunde sein Feld bezahlt hat, soll ihm der zugangscode per email zuge
 Mit dem Zugangscode kann der Kunde auf eine Seite zugreifen und die dazugehörigen Felder sehen und verwalten.
 Er kann ein Firmenlogo hochladen wenn er nicht als privatperson gekennzeichnet ist.
 Die verwaltetetn Inhalte sind an die Rental gebunden.
+
+ich möchte in meinem projekt Dokumente verwalten können. Ich habe dazu schon ein Document Model und eine Migration und die Filament Resource Dateien erstellt.
+Die Dokumente sollen an verschiedene Entitäten gebunden werden können (Location, Board, Field, Customer, Rental).
+Eigtl brauche ich die Dokumente nur für die Kunden. Den Kunden sollen Mietverträge und Rechnungen als PDF Dokumente hochgeladen und zugeordnet werden können.
+Wenn Kunden per Lastschrift zahlen sollen die SEPA Mandate auch als Dokumente hinterlegt werden können. Diese werden dann bspw. per Email an den Kunden geschickt. Da sich diese Dokumente eventuell ändern können (neue Version des Mandats) sollen die Dokumente versioniert werden.
+Passe mir die Document Resource so an, dass ich die Dokumente entsprechend verwalten kann.

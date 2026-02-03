@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\Emails\Schemas;
 
 use App\Models\Customer;
+use App\Models\Document;
 use App\Models\Email;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\KeyValue;
@@ -141,6 +142,30 @@ class EmailForm
                                 'redo',
                             ]),
                     ]),
+
+                Section::make('Anhänge')
+                    ->schema([
+                        Select::make('documents')
+                            ->label('Dokumente anhängen')
+                            ->multiple()
+                            ->relationship(
+                                'documents',
+                                'title',
+                                fn ($query) => $query
+                                    ->general() // Nur allgemeine Dokumente (ohne Zuordnung)
+                                    ->where(Document::is_current_version, true) // Nur aktuelle Versionen
+                                    ->orderBy(Document::type)
+                                    ->orderBy(Document::title)
+                            )
+                            ->getOptionLabelFromRecordUsing(fn (Document $record) =>
+                                $record->getTypeLabel() . ': ' . $record->title . ' (' . $record->getFileSizeHuman() . ')'
+                            )
+                            ->searchable(['title', 'description'])
+                            ->preload()
+                            ->columnSpanFull()
+                            ->helperText('Wählen Sie allgemeine Dokumente aus, die als Anhänge beigefügt werden sollen (z.B. Widerrufsbelehrung, AGB, Info-Broschüren)'),
+                    ])
+                    ->collapsible(),
 
                 Section::make('Verknüpfungen')
                     ->schema([
