@@ -4,13 +4,16 @@ namespace App\Filament\Admin\Resources\Fields\Tables;
 
 use App\Models\Board;
 use App\Models\Field;
+use App\Models\Rental;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class FieldsTable
 {
@@ -83,6 +86,26 @@ class FieldsTable
                         Field::STATUS_RENTED => 'Rented',
                         Field::STATUS_RESERVED => 'Reserved',
                     ]),
+
+                TernaryFilter::make('inconsistent_status')
+                    ->label('Inkonsistenter Status')
+                    ->placeholder('Alle Felder')
+                    ->trueLabel('Nur inkonsistente Felder')
+                    ->falseLabel('Nur konsistente Felder')
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereHas('rentals', function (Builder $subQuery) {
+                            $subQuery->where(Rental::status, Rental::STATUS_ACTIVE)
+                                ->where(Rental::start_date, '<=', now())
+                                ->where(Rental::end_date, '>=', now());
+                        })->where(Field::status, '!=', Field::STATUS_RENTED),
+                        false: fn (Builder $query) => $query->whereDoesntHave('rentals', function (Builder $subQuery) {
+                            $subQuery->where(Rental::status, Rental::STATUS_ACTIVE)
+                                ->where(Rental::start_date, '<=', now())
+                                ->where(Rental::end_date, '>=', now());
+                        })->orWhere(Field::status, Field::STATUS_RENTED),
+                        blank: fn (Builder $query) => $query,
+                    )
+                    ->native(false),
             ])
             ->recordActions([
                 ViewAction::make(),

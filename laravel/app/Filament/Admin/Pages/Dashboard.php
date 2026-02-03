@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Pages;
 use App\Filament\Admin\Widgets\ActiveRentalsWidget;
 use App\Filament\Admin\Widgets\ExpiringRentalsWidget;
 use App\Filament\Admin\Widgets\FieldStatusWidget;
+use App\Filament\Admin\Widgets\InconsistentFieldStatusWidget;
 use App\Filament\Admin\Widgets\RecentInquiriesWidget;
 use App\Filament\Admin\Widgets\RevenueChartWidget;
 use App\Filament\Admin\Widgets\StatsOverviewWidget;
@@ -22,6 +23,7 @@ class Dashboard extends BaseDashboard
             ActiveRentalsWidget::class,
             ExpiringRentalsWidget::class,
             FieldStatusWidget::class,
+            InconsistentFieldStatusWidget::class,
             RevenueChartWidget::class,
         ];
     }
