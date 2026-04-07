@@ -2,10 +2,44 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * App\Models\Customer
+ *
+ * @property int $id
+ * @property string $name
+ * @property string|null $company_name
+ * @property bool $is_company
+ * @property string|null $email
+ * @property string|null $phone
+ * @property string|null $street
+ * @property string|null $street_nr
+ * @property string|null $zip
+ * @property string|null $city
+ * @property string|null $payment_method
+ * @property string|null $notes
+ * @property string|null $account_holder
+ * @property string|null $iban
+ * @property string|null $bic
+ * @property string|null $bank_name
+ * @property bool|null $sepa_mandate_accepted
+ * @property bool|null $billing_use_postal_address
+ * @property string|null $billing_street
+ * @property string|null $billing_address2
+ * @property string|null $billing_zip
+ * @property string|null $billing_city
+ * @property string|null $billing_country
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ *
+ * @property-read Collection|Rental[] $rentals
+ * @property-read Collection|Document[] $documents
+ */
 class Customer extends Model
 {
     const string name = 'name';

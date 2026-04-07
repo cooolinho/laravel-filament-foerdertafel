@@ -19,6 +19,9 @@ class ViewRental extends ViewRecord
 
             RentalActions::markAsPaid(),
 
+            RentalActions::approveContent(),
+            RentalActions::rejectContent(),
+
             ActionGroup::make([
                 RentalActions::viewAccessCode(),
                 RentalActions::regenerateAccessCode(),

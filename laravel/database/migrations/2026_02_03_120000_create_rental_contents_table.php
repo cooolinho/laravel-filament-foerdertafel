@@ -24,6 +24,8 @@ return new class extends Migration
             $table->string(RentalContent::contact_phone)->nullable();
             $table->boolean(RentalContent::is_private_person)->default(false);
             $table->boolean(RentalContent::is_published)->default(false);
+            $table->boolean(RentalContent::needs_review)->default(false);
+            $table->timestamp(RentalContent::review_requested_at)->nullable();
             $table->timestamp(RentalContent::last_accessed_at)->nullable();
             $table->timestamps();
 

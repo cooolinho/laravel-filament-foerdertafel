@@ -342,4 +342,56 @@ class RentalActions
                 ]);
             });
     }
+
+    /**
+     * Action: Content freigeben (nach Kundenänderung)
+     */
+    public static function approveContent(): Action
+    {
+        return Action::make('approveContent')
+            ->label('Inhalt freigeben')
+            ->icon('heroicon-o-check-circle')
+            ->color('success')
+            ->visible(fn (Rental $record) => $record->content !== null && $record->content->hasPendingReview())
+            ->requiresConfirmation()
+            ->modalHeading('Inhalt freigeben')
+            ->modalDescription('Der Inhalt wird freigegeben und als veröffentlicht markiert. Der Kunde kann danach wieder Änderungen einreichen.')
+            ->modalSubmitActionLabel('Freigeben')
+            ->action(function (Rental $record) {
+                $content = $record->content;
+                $content->is_published = true;
+                $content->approve();
+
+                Notification::make()
+                    ->success()
+                    ->title('Inhalt freigegeben')
+                    ->body('Der Inhalt wurde erfolgreich freigegeben und ist nun öffentlich sichtbar.')
+                    ->send();
+            });
+    }
+
+    /**
+     * Action: Content ablehnen (nach Kundenänderung)
+     */
+    public static function rejectContent(): Action
+    {
+        return Action::make('rejectContent')
+            ->label('Inhalt ablehnen')
+            ->icon('heroicon-o-x-circle')
+            ->color('danger')
+            ->visible(fn (Rental $record) => $record->content !== null && $record->content->hasPendingReview())
+            ->requiresConfirmation()
+            ->modalHeading('Inhalt ablehnen')
+            ->modalDescription('Der Inhalt wird abgelehnt. Der Kunde kann danach neue Änderungen einreichen. Der Inhalt bleibt unveröffentlicht.')
+            ->modalSubmitActionLabel('Ablehnen')
+            ->action(function (Rental $record) {
+                $record->content->reject();
+
+                Notification::make()
+                    ->warning()
+                    ->title('Inhalt abgelehnt')
+                    ->body('Der Inhalt wurde abgelehnt. Der Kunde kann nun erneut Änderungen einreichen.')
+                    ->send();
+            });
+    }
 }

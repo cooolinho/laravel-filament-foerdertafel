@@ -78,6 +78,12 @@ class RentalContentController extends Controller
                 ->with('error', 'Ungültiger Zugangscode.');
         }
 
+        // Blockiere neue Änderungen solange eine Prüfung aussteht
+        if ($rentalContent->hasPendingReview()) {
+            return redirect()->route('rental.content.manage', ['code' => $code])
+                ->with('error', 'Ihre letzte Änderung wird gerade vom Administrator geprüft. Bitte warten Sie, bis die Prüfung abgeschlossen ist.');
+        }
+
         $rules = [
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:2000',
@@ -111,10 +117,14 @@ class RentalContentController extends Controller
             $validated['company_logo'] = null;
         }
 
+        // Änderungen speichern und Prüfung anfordern
+        // is_published wird zunächst deaktiviert bis Admin freigibt
+        $validated['is_published'] = false;
         $rentalContent->update($validated);
+        $rentalContent->requestReview();
 
         return redirect()->route('rental.content.manage', ['code' => $code])
-            ->with('success', 'Ihre Inhalte wurden erfolgreich aktualisiert.');
+            ->with('success', 'Ihre Änderungen wurden gespeichert und werden nun vom Administrator geprüft. Nach der Freigabe werden Ihre Inhalte veröffentlicht.');
     }
 
     /**

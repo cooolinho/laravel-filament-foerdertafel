@@ -21,6 +21,8 @@ use Illuminate\Support\Str;
  * @property string|null $contact_phone
  * @property bool $is_private_person
  * @property bool $is_published
+ * @property bool $needs_review
+ * @property Carbon|null $review_requested_at
  * @property Carbon|null $last_accessed_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -39,6 +41,8 @@ class RentalContent extends Model
     const string contact_phone = 'contact_phone';
     const string is_private_person = 'is_private_person';
     const string is_published = 'is_published';
+    const string needs_review = 'needs_review';
+    const string review_requested_at = 'review_requested_at';
     const string last_accessed_at = 'last_accessed_at';
 
     protected $fillable = [
@@ -52,12 +56,16 @@ class RentalContent extends Model
         self::contact_phone,
         self::is_private_person,
         self::is_published,
+        self::needs_review,
+        self::review_requested_at,
         self::last_accessed_at,
     ];
 
     protected $casts = [
         self::is_private_person => 'boolean',
         self::is_published => 'boolean',
+        self::needs_review => 'boolean',
+        self::review_requested_at => 'datetime',
         self::last_accessed_at => 'datetime',
     ];
 
@@ -119,7 +127,7 @@ class RentalContent extends Model
      */
     public function canUploadLogo(): bool
     {
-        return !$this->is_private_person;
+        return !$this->isPrivatePerson();
     }
 
     /**
@@ -136,5 +144,47 @@ class RentalContent extends Model
     public function isRecentlyAccessed(): bool
     {
         return $this->last_accessed_at && $this->last_accessed_at->isAfter(now()->subDays(7));
+    }
+
+    /**
+     * Prüfe ob der Content auf Admin-Prüfung wartet.
+     */
+    public function hasPendingReview(): bool
+    {
+        return (bool) $this->needs_review;
+    }
+
+    /**
+     * Setze den Content auf "Prüfung ausstehend".
+     */
+    public function requestReview(): void
+    {
+        $this->needs_review = true;
+        $this->review_requested_at = now();
+        $this->save();
+    }
+
+    /**
+     * Genehmige den Content (Prüfung abgeschlossen, Inhalt freigegeben).
+     */
+    public function approve(): void
+    {
+        $this->needs_review = false;
+        $this->save();
+    }
+
+    /**
+     * Lehne den Content ab (Prüfung abgeschlossen, Inhalt nicht veröffentlicht).
+     */
+    public function reject(): void
+    {
+        $this->needs_review = false;
+        $this->is_published = false;
+        $this->save();
+    }
+
+    public function isPrivatePerson(): bool
+    {
+        return !$this->rental?->customer?->isCompany();
     }
 }

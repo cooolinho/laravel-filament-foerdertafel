@@ -57,6 +57,35 @@
             </div>
         @endif
 
+        {{-- Hinweis: Prüfung ausstehend --}}
+        @if($rentalContent->hasPendingReview())
+            <div class="mb-6 bg-amber-50 border-l-4 border-amber-500 p-5 rounded-lg shadow-md">
+                <div class="flex items-start">
+                    <i class="fas fa-hourglass-half text-amber-500 text-2xl mr-4 mt-1"></i>
+                    <div>
+                        <h4 class="text-amber-800 font-bold text-lg mb-1">Ihre Änderungen werden geprüft</h4>
+                        <p class="text-amber-700 text-sm">
+                            Ihre letzte Änderung vom <strong>{{ $rentalContent->review_requested_at?->format('d.m.Y') }} um {{ $rentalContent->review_requested_at?->format('H:i') }} Uhr</strong>
+                            wird aktuell vom Administrator geprüft. Sobald die Prüfung abgeschlossen ist, werden Ihre Inhalte veröffentlicht.
+                        </p>
+                        <p class="text-amber-600 text-sm mt-2">
+                            <i class="fas fa-lock mr-1"></i>
+                            Das Formular ist gesperrt, bis die Prüfung abgeschlossen ist.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-400 text-xl mr-3 mt-1"></i>
+                    <p class="text-blue-700 text-sm">
+                        <strong>Hinweis:</strong> Alle Änderungen werden zunächst vom Administrator geprüft, bevor sie veröffentlicht werden.
+                    </p>
+                </div>
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Main Content Form -->
             <div class="lg:col-span-2 space-y-6">
@@ -93,7 +122,7 @@
                     <form action="{{ route('rental.content.update', ['code' => $rentalContent->access_code]) }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
                         @csrf
 
-                        <!-- Title -->
+                        <fieldset {{ $rentalContent->hasPendingReview() ? 'disabled' : '' }} class="{{ $rentalContent->hasPendingReview() ? 'opacity-50 pointer-events-none select-none' : '' }}">
                         <div>
                             <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i class="fas fa-heading text-green-500 mr-2"></i>Titel / Überschrift
@@ -273,14 +302,22 @@
 
                         <!-- Submit Button -->
                         <div class="flex space-x-4 pt-4">
-                            <button
-                                type="submit"
-                                class="flex-1 flex justify-center items-center py-4 px-6 border border-transparent rounded-lg shadow-lg text-lg font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-4 focus:ring-green-500 transition transform hover:scale-105"
-                            >
-                                <i class="fas fa-save mr-2"></i>
-                                Änderungen speichern
-                            </button>
+                            @if($rentalContent->hasPendingReview())
+                                <div class="flex-1 flex justify-center items-center py-4 px-6 border-2 border-amber-300 rounded-lg bg-amber-50 text-amber-700 font-semibold">
+                                    <i class="fas fa-hourglass-half mr-2"></i>
+                                    Prüfung ausstehend – Formular gesperrt
+                                </div>
+                            @else
+                                <button
+                                    type="submit"
+                                    class="flex-1 flex justify-center items-center py-4 px-6 border border-transparent rounded-lg shadow-lg text-lg font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-4 focus:ring-green-500 transition transform hover:scale-105"
+                                >
+                                    <i class="fas fa-paper-plane mr-2"></i>
+                                    Änderungen zur Prüfung einreichen
+                                </button>
+                            @endif
                         </div>
+                        </fieldset>
                     </form>
                 </div>
             </div>
@@ -334,6 +371,20 @@
                         Status
                     </h3>
                     <div class="space-y-4">
+                        <!-- Prüfungs-Status -->
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Prüfung</span>
+                            @if($rentalContent->hasPendingReview())
+                                <span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-semibold">
+                                    <i class="fas fa-hourglass-half mr-1"></i>Ausstehend
+                                </span>
+                            @else
+                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                                    <i class="fas fa-check mr-1"></i>Keine
+                                </span>
+                            @endif
+                        </div>
+
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">Veröffentlicht</span>
                             @if($rentalContent->is_published)
@@ -349,13 +400,21 @@
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">Kontoart</span>
                             <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                                @if($rentalContent->is_private_person)
+                                @if($rentalContent->isPrivatePerson())
                                     <i class="fas fa-user mr-1"></i>Privat
                                 @else
                                     <i class="fas fa-building mr-1"></i>Firma
                                 @endif
                             </span>
                         </div>
+                        @if($rentalContent->review_requested_at)
+                            <div class="pt-4 border-t border-gray-200">
+                                <div class="text-xs text-gray-500">Letzte Prüfungsanfrage</div>
+                                <div class="text-sm font-semibold text-amber-700">
+                                    {{ $rentalContent->review_requested_at->format('d.m.Y H:i') }} Uhr
+                                </div>
+                            </div>
+                        @endif
                         @if($rentalContent->last_accessed_at)
                             <div class="pt-4 border-t border-gray-200">
                                 <div class="text-xs text-gray-500">Letzter Zugriff</div>
