@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Events\InquiryCreated;
 use App\Models\Board;
 use App\Models\Document;
 use App\Models\Field;
@@ -356,16 +357,18 @@ class InquiryPage extends Page implements HasForms
                 Checkbox::make('accept_terms')
                     ->label($this->buildTermsLabel())
                     ->required()
+                    ->rules(['accepted'])
                     ->validationMessages([
-                        'required' => 'Sie müssen alle Pflichtdokumente akzeptieren.',
+                        'accepted' => 'Sie müssen alle Pflichtdokumente akzeptieren.',
                     ])
                     ->columnSpanFull(),
 
                 Checkbox::make('confirm_data_correctness')
                     ->label(Setting::get(Setting::data_confirmation_text, 'Durch Angabe meiner Daten erkläre ich meine Daten als korrekt.'))
                     ->required()
+                    ->rules(['accepted'])
                     ->validationMessages([
-                        'required' => 'Bitte bestätigen Sie die Korrektheit Ihrer Angaben.',
+                        'accepted' => 'Bitte bestätigen Sie die Korrektheit Ihrer Angaben.',
                     ])
                     ->columnSpanFull(),
             ])
@@ -550,6 +553,12 @@ class InquiryPage extends Page implements HasForms
                 }
                 $inquiry->update([Inquiry::attachments => $finalPaths]);
             }
+
+            // Event NACH der Transaktion und nach dem Datei-Verschieben feuern,
+            // damit inquiry->fields vollständig gespeichert sind wenn der
+            // Listener (via Queue + afterCommit) die E-Mail erstellt.
+//            event(new InquiryCreated($inquiry));
+            InquiryCreated::dispatch($inquiry);
 
             session(['inquiry_complete' => $inquiry->id]);
             $this->redirect(route('filament.app.pages.inquiry-complete-page'));

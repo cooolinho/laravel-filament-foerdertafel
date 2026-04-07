@@ -2,14 +2,6 @@
 
 namespace App\Providers;
 
-use App\Events\InquiryCreated;
-use App\Events\InquiryRejected;
-use App\Events\RentalCreated;
-use App\Events\RentalEnded;
-use App\Events\RentalPaid;
-use App\Listeners\ReleaseReservedFields;
-use App\Listeners\ReserveFieldsForInquiry;
-use App\Listeners\SetFieldsToAvailable;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -19,24 +11,7 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array<class-string, array<int, class-string>>
      */
-    protected $listen = [
-        InquiryCreated::class => [
-            ReserveFieldsForInquiry::class,
-//            SendInquiryConfirmationEmail::class,
-        ],
-        InquiryRejected::class => [
-            ReleaseReservedFields::class,
-        ],
-        RentalCreated::class => [
-//            SendRentalConfirmationEmail::class,
-        ],
-        RentalPaid::class => [
-//            SendAccessCodeEmail::class,
-        ],
-        RentalEnded::class => [
-            SetFieldsToAvailable::class,
-        ],
-    ];
+    protected $listen = [];
 
     /**
      * Register any events for your application.

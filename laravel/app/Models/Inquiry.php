@@ -222,4 +222,22 @@ class Inquiry extends Model
             default => $this->status,
         };
     }
+
+    /**
+     * @return float
+     */
+    public function  getTotalPrice(): float
+    {
+        $totalPrice = 0;
+
+        // Berechne Preis basierend auf den angefragten Feldern
+        if (!empty($this->requested_fields)) {
+            $fields = Field::whereIn('id', $this->requested_fields)->get();
+            foreach ($fields as $field) {
+                $totalPrice += $field->price_per_month * $this->rental_months;
+            }
+        }
+
+        return $totalPrice;
+    }
 }

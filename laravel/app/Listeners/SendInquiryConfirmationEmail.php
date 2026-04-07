@@ -3,48 +3,46 @@
 namespace App\Listeners;
 
 use App\Events\InquiryCreated;
-use App\Jobs\SendEmailJob;
 use App\Models\Email;
-use App\Models\EmailTemplate;
-use App\Models\Setting;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
-class SendInquiryConfirmationEmail
+class SendInquiryConfirmationEmail extends BaseEmailNotificationListener
 {
+    public static array $defaultVariables = [
+        'customer_name'  => 'Kundenname (oder Firmenname)',
+        'customer_email' => 'E-Mail-Adresse des Kunden',
+        'customer_phone' => 'Telefonnummer des Kunden',
+        'inquiry_id'     => 'Anfrage-Nummer (ID)',
+        'inquiry_date'   => 'Datum der Anfrage (TT.MM.JJJJ)',
+        'start_date'     => 'Gewünschter Mietbeginn (TT.MM.JJJJ)',
+        'end_date'       => 'Gewünschtes Mietende (TT.MM.JJJJ)',
+        'rental_months'  => 'Mietdauer in Monaten',
+        'field_count'    => 'Anzahl der angefragten Felder',
+        'board_name'     => 'Name der Fördertafel',
+        'location_name'  => 'Standortname der Tafel',
+        'address'        => 'Postanschrift des Kunden',
+        'message'        => 'Optionale Nachricht des Kunden',
+    ];
+
     /**
      * Handle the event.
+     * Wird sowohl für InquiryCreated (automatisch) als auch für
+     * InquiryConfirmationEmailRequested (manueller Wiederversand) verwendet.
+     *
+     * Dank $afterCommit = true läuft dieser Listener erst nach dem vollständigen
+     * DB-Commit, sodass inquiry->fields korrekt geladen werden können.
      */
     public function handle(InquiryCreated $event): void
     {
         $inquiry = $event->inquiry;
 
-        // Prüfe ob E-Mail-Benachrichtigungen aktiviert sind
-        $settings = Setting::current();
-        if ($settings && !$settings->email_notifications_enabled) {
-            Log::info("E-Mail-Benachrichtigungen sind deaktiviert. Keine Bestätigungs-E-Mail für Anfrage #{$inquiry->id} gesendet.");
-            return;
-        }
+        // Beziehungen frisch laden – stellt sicher, dass fields nach dem Commit verfügbar sind
+        $inquiry->loadMissing(['board.location', 'fields']);
 
-        // Hole die E-Mail-Vorlage für Anfrage-Bestätigungen
-        $template = EmailTemplate::where(EmailTemplate::slug, 'inquiry-confirmation')
-            ->where(EmailTemplate::is_active, true)
-            ->first();
-
-        if (!$template) {
-            // Fallback: Verwende Standard-E-Mail-Vorlage aus Settings
-            if ($settings && $settings->default_email_template_id) {
-                $template = EmailTemplate::find($settings->default_email_template_id);
-            }
-
-            if (!$template) {
-                Log::warning("Keine E-Mail-Vorlage für Anfrage-Bestätigung gefunden. Anfrage #{$inquiry->id}");
-                return;
-            }
-        }
-
-        // Bereite die Variablen für die E-Mail-Vorlage vor
-        $board = $inquiry->board;
+        $board    = $inquiry->board;
         $location = $board?->location;
+        $fields   = $inquiry->fields;
 
         $customerName = $inquiry->is_company && $inquiry->company_name
             ? $inquiry->company_name
@@ -60,68 +58,38 @@ class SendInquiryConfirmationEmail
         ])->filter()->join(', ');
 
         $variables = [
-            'customer_name'   => $customerName,
-            'customer_email'  => $inquiry->customer_email,
-            'customer_phone'  => $inquiry->customer_phone ?? 'N/A',
-            'inquiry_id'      => $inquiry->id,
-            'inquiry_date'    => $inquiry->created_at?->format('d.m.Y') ?? now()->format('d.m.Y'),
-            'start_date'      => \Carbon\Carbon::parse($inquiry->start_date)->format('d.m.Y'),
-            'end_date'        => \Carbon\Carbon::parse($inquiry->end_date)->format('d.m.Y'),
-            'rental_months'   => $inquiry->rental_months,
-            'field_count'     => $inquiry->fields()->count(),
-            'board_name'      => $board?->name ?? 'N/A',
-            'location_name'   => $location?->name ?? 'N/A',
-            'address'         => $address ?: 'N/A',
-            'message'         => $inquiry->message ?? '',
+            'customer_name'  => $customerName,
+            'customer_email' => $inquiry->customer_email,
+            'customer_phone' => $inquiry->customer_phone ?? 'N/A',
+            'inquiry_id'     => $inquiry->id,
+            'inquiry_date'   => $inquiry->created_at?->format('d.m.Y') ?? now()->format('d.m.Y'),
+            'start_date'     => Carbon::parse($inquiry->start_date)->format('d.m.Y'),
+            'end_date'       => Carbon::parse($inquiry->end_date)->format('d.m.Y'),
+            'total_price'    => number_format($inquiry->getTotalPrice(), 2, ',', '.'),
+            'rental_months'  => $inquiry->rental_months,
+            'field_count'    => $fields->count(),
+            'board_name'     => $board?->name ?? 'N/A',
+            'location_name'  => $location?->name ?? 'N/A',
+            'address'        => $address ?: 'N/A',
+            'message'        => $inquiry->message ?? '',
         ];
 
-        // Ersetze Variablen im Betreff und Body
-        $subject  = $this->replaceVariables($template->subject, $variables);
-        $bodyHtml = $this->replaceVariables($template->body_html, $variables);
-        $bodyText = $template->body_text ? $this->replaceVariables($template->body_text, $variables) : null;
+        $email = $this->createAndDispatchEmail(
+            templateSlug: 'inquiry-confirmation',
+            toEmail:      $inquiry->customer_email,
+            toName:       $customerName,
+            variables:    $variables,
+            extraData:    [
+                Email::metadata => [
+                    'event'      => 'inquiry_created',
+                    'inquiry_id' => $inquiry->id,
+                ],
+            ]
+        );
 
-        // Erstelle E-Mail-Datensatz
-        $email = Email::create([
-            Email::direction        => Email::DIRECTION_OUTBOUND,
-            Email::status           => Email::STATUS_DRAFT,
-            Email::from_email       => $template->from_email ?? config('mail.from.address'),
-            Email::from_name        => $template->from_name ?? config('mail.from.name'),
-            Email::to_email         => $inquiry->customer_email,
-            Email::to_name          => $customerName,
-            Email::reply_to         => $template->reply_to,
-            Email::subject          => $subject,
-            Email::body_html        => $bodyHtml,
-            Email::body_text        => $bodyText,
-            Email::email_template_id => $template->id,
-            Email::metadata         => [
-                'event'      => 'inquiry_created',
-                'inquiry_id' => $inquiry->id,
-            ],
-        ]);
-
-        // Anhänge aus der Template-Konfiguration verknüpfen
-        $templateDocuments = $template->documents;
-        if ($templateDocuments->isNotEmpty()) {
-            $email->documents()->attach($templateDocuments->pluck('id')->toArray());
+        if ($email) {
+            Log::info("Anfrage-Bestätigungs-E-Mail für Anfrage #{$inquiry->id} an {$inquiry->customer_email} erstellt (ID: {$email->id}).");
         }
-
-        // Versende E-Mail über Queue
-        SendEmailJob::dispatch($email);
-
-        Log::info("Anfrage-Bestätigungs-E-Mail für Anfrage #{$inquiry->id} an {$inquiry->customer_email} erstellt und zur Warteschlange hinzugefügt.");
-    }
-
-    /**
-     * Ersetze Variablen in einem Text durch ihre Werte.
-     */
-    private function replaceVariables(string $text, array $variables): string
-    {
-        foreach ($variables as $key => $value) {
-            $text = str_replace('{{' . $key . '}}', $value, $text);
-            $text = str_replace('{{ ' . $key . ' }}', $value, $text);
-        }
-
-        return $text;
     }
 }
 

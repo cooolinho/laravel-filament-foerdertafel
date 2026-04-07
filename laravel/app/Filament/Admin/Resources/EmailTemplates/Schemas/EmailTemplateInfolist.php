@@ -106,9 +106,23 @@ class EmailTemplateInfolist
                     ->schema([
                         TextEntry::make(EmailTemplate::available_variables)
                             ->label('Verwendete Variablen')
-                            ->badge()
-                            ->separator(',')
-                            ->formatStateUsing(fn (string $state): string => '{{ ' . $state . ' }}')
+                            ->state(function ($record) {
+                                $variables = $record->available_variables ?? [];
+                                // Unterstützt sowohl key=>label als auch reines String-Array
+                                $html = '<div class="flex flex-wrap gap-2">';
+                                foreach ($variables as $key => $label) {
+                                    $placeholder = is_string($key) ? $key : $label;
+                                    $description = is_string($key) ? $label : null;
+                                    $html .= '<span class="inline-flex flex-col gap-0.5">';
+                                    $html .= '<code class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs font-mono text-gray-800 dark:text-gray-200">{{ ' . e($placeholder) . ' }}</code>';
+                                    if ($description) {
+                                        $html .= '<span class="text-xs text-gray-500 px-1">' . e($description) . '</span>';
+                                    }
+                                    $html .= '</span>';
+                                }
+                                $html .= '</div>';
+                                return new \Illuminate\Support\HtmlString($html);
+                            })
                             ->columnSpanFull()
                             ->placeholder('Keine Variablen dokumentiert'),
                     ])

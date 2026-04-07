@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\Emails\Schemas;
 use App\Models\Customer;
 use App\Models\Document;
 use App\Models\Email;
+use App\Models\EmailTemplate;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\RichEditor;
@@ -45,9 +46,37 @@ class EmailForm
                                     ->searchable()
                                     ->preload()
                                     ->nullable()
-                                    ->createOptionForm([
-                                        // Kann bei Bedarf erweitert werden
-                                    ]),
+                                    ->live()
+                                    ->afterStateUpdated(function (?int $state, callable $set) {
+                                        if (!$state) {
+                                            return;
+                                        }
+
+                                        $template = EmailTemplate::find($state);
+                                        if (!$template) {
+                                            return;
+                                        }
+
+                                        // Felder aus dem Template vorausfüllen
+                                        if ($template->subject) {
+                                            $set(Email::subject, $template->subject);
+                                        }
+                                        if ($template->body_html) {
+                                            $set(Email::body_html, $template->body_html);
+                                        }
+                                        if ($template->body_text) {
+                                            $set(Email::body_text, $template->body_text);
+                                        }
+                                        if ($template->from_email) {
+                                            $set(Email::from_email, $template->from_email);
+                                        }
+                                        if ($template->from_name) {
+                                            $set(Email::from_name, $template->from_name);
+                                        }
+                                        if ($template->reply_to) {
+                                            $set(Email::reply_to, $template->reply_to);
+                                        }
+                                    }),
                             ]),
                     ]),
 

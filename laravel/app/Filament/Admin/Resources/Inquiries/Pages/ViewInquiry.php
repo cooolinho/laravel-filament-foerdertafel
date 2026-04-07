@@ -15,7 +15,6 @@ class ViewInquiry extends ViewRecord
     {
         return [
             InquiryActions::convertToRental(),
-            InquiryActions::resendConfirmationEmail(),
 
             EditAction::make(),
         ];

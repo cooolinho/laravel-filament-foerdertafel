@@ -7,6 +7,7 @@ use App\Models\EmailTemplate;
 use App\Models\Setting;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -17,6 +18,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Storage;
 use UnitEnum;
 
 class SettingsPage extends Page implements HasForms
@@ -55,6 +57,7 @@ class SettingsPage extends Page implements HasForms
                 Setting::sepa_mandate_text          => $settings->sepa_mandate_text,
                 Setting::data_confirmation_text     => $settings->data_confirmation_text,
                 Setting::inquiry_overview_info_text => $settings->inquiry_overview_info_text,
+                Setting::logo_path                  => $settings->logo_path ? [$settings->logo_path] : [],
             ]);
         }
     }
@@ -147,6 +150,21 @@ class SettingsPage extends Page implements HasForms
                             ->nullable()
                             ->helperText('Die Vorlage, die standardmäßig für E-Mails verwendet wird')
                             ->native(false),
+
+                        FileUpload::make(Setting::logo_path)
+                            ->label('Organisations-Logo')
+                            ->helperText('Das Logo wird im Header aller ausgehenden E-Mails angezeigt. Empfohlen: PNG mit transparentem Hintergrund, min. 200 px Breite.')
+                            ->image()
+                            ->imagePreviewHeight('80')
+                            ->disk('public')
+                            ->directory('settings/logo')
+                            ->visibility('public')
+                            ->maxSize(2048)
+                            ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'])
+                            ->deleteUploadedFileUsing(function ($file) {
+                                Storage::disk('public')->delete($file);
+                            })
+                            ->columnSpanFull(),
                     ])
                     ->columns(1),
 
@@ -208,13 +226,33 @@ class SettingsPage extends Page implements HasForms
     public function save(): void
     {
         $data = $this->form->getState();
+
+        // FileUpload gibt ein Array zurück – wir brauchen nur den ersten Eintrag (einzelne Datei)
+        if (isset($data[Setting::logo_path]) && is_array($data[Setting::logo_path])) {
+            $data[Setting::logo_path] = !empty($data[Setting::logo_path])
+                ? array_values($data[Setting::logo_path])[0]
+                : null;
+        }
+
         $settings = Setting::current();
 
         if ($settings) {
+            // Altes Logo löschen wenn ein neues hochgeladen wurde
+            if (
+                isset($data[Setting::logo_path])
+                && $settings->logo_path
+                && $data[Setting::logo_path] !== $settings->logo_path
+            ) {
+                Storage::disk('public')->delete($settings->logo_path);
+            }
+
             $settings->update($data);
         } else {
             Setting::create($data);
         }
+
+        // Settings-Cache leeren damit das neue Logo sofort wirksam ist
+        Setting::clearCache();
 
         Notification::make()
             ->success()

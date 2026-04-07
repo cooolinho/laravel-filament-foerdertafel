@@ -6,7 +6,6 @@ use App\Models\Document;
 use App\Models\EmailTemplate;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -65,8 +64,8 @@ class EmailTemplateForm
                     ->schema([
                         TextEntry::make('variables_info')
                             ->label('')
-                            ->state(function () {
-                                $variables = EmailTemplate::getDefaultVariables();
+                            ->state(function (EmailTemplate $template) {
+                                $variables = $template->available_variables;
                                 $html = '<div class="text-sm">';
                                 foreach ($variables as $key => $description) {
                                     $html .= '<div class="mb-2">';
@@ -77,11 +76,6 @@ class EmailTemplateForm
                                 $html .= '</div>';
                                 return new HtmlString($html);
                             }),
-
-                        TagsInput::make(EmailTemplate::available_variables)
-                            ->label('Verwendete Variablen')
-                            ->helperText('Dokumentation der in dieser Vorlage verwendeten Platzhalter')
-                            ->placeholder('Variable hinzufügen'),
                     ])
                     ->columnSpan(1),
 

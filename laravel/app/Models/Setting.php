@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * App\Models\Setting
@@ -45,6 +46,7 @@ class Setting extends Model
     const string sepa_mandate_text = 'sepa_mandate_text';
     const string data_confirmation_text = 'data_confirmation_text';
     const string inquiry_overview_info_text = 'inquiry_overview_info_text';
+    const string logo_path = 'logo_path';
 
 
     // Zahlungsmethoden Konstanten
@@ -70,6 +72,7 @@ class Setting extends Model
         self::sepa_mandate_text,
         self::data_confirmation_text,
         self::inquiry_overview_info_text,
+        self::logo_path,
     ];
 
     protected $casts = [
@@ -89,6 +92,29 @@ class Setting extends Model
     public function defaultEmailTemplate(): BelongsTo
     {
         return $this->belongsTo(EmailTemplate::class, self::default_email_template_id);
+    }
+
+    /**
+     * Gibt die öffentlich zugängliche URL des Logos zurück.
+     * Das Logo wird auf dem public-Disk gespeichert, damit E-Mail-Clients
+     * es direkt per URL einbinden können.
+     */
+    public function getLogoUrl(): ?string
+    {
+        if (!$this->logo_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->logo_path);
+    }
+
+    /**
+     * Gibt die absolute Logo-URL aus den aktuellen Settings zurück.
+     * Statische Hilfsmethode für einfachen Zugriff ohne Model-Instanz.
+     */
+    public static function getLogoUrlFromSettings(): ?string
+    {
+        return self::current()?->getLogoUrl();
     }
 
     /**

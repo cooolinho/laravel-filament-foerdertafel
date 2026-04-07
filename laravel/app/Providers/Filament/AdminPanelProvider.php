@@ -4,6 +4,8 @@ namespace App\Providers\Filament;
 
 use App\Filament\Admin\Pages\Dashboard;
 use App\Filament\Admin\Pages\UserDashboardSettingsPage;
+use App\Http\Middleware\TrustProxies;
+use App\Models\Setting;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -18,6 +20,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\URL;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -33,6 +36,8 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Purple,
             ])
+            ->brandLogo(Setting::getLogoUrlFromSettings())
+            ->brandLogoHeight('60px')
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
             ->pages([
@@ -46,7 +51,7 @@ class AdminPanelProvider extends PanelProvider
             ->userMenuItems([
                 'dashboard-settings' => Action::make('dashboard-settings')
                     ->label('Dashboard Einstellungen')
-                    ->url(fn (): string => UserDashboardSettingsPage::getUrl())
+                    ->url(fn(): string => UserDashboardSettingsPage::getUrl())
                     ->icon('heroicon-o-cog-6-tooth'),
             ])
             ->middleware([
@@ -59,9 +64,23 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                TrustProxies::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
             ]);
+    }
+
+    public function boot(): void
+    {
+        if (config('app.secure', false)) {
+            URL::useOrigin(config('app.url'));
+            URL::forceScheme('https');
+
+            // Zusätzlich für Docker/Proxy Umgebungen:
+            if (request()->server->has('HTTP_X_FORWARDED_PROTO')) {
+                request()->server->set('HTTPS', 'on');
+            }
+        }
     }
 }

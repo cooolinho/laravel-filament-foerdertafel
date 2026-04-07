@@ -23,6 +23,7 @@ return new class extends Migration
             $table->text(Setting::sepa_mandate_text)->nullable();
             $table->text(Setting::data_confirmation_text)->nullable();
             $table->text(Setting::inquiry_overview_info_text)->nullable();
+            $table->string(Setting::logo_path)->nullable();
             $table->decimal(Setting::field_width_cm, 5, 2)->default(8.9);
             $table->decimal(Setting::field_height_cm, 5, 2)->default(5.1);
             $table->decimal(Setting::field_gap_cm, 5, 2)->default(1.2);

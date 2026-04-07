@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Jobs\SendEmailJob;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -43,6 +44,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
+ * @property Collection|Document[] $documents
  * @property-read Customer|null $customer
  * @property-read Rental|null $rental
  *

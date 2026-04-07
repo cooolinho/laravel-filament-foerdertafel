@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Document;
 use App\Models\Email;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -11,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class SendEmailJob implements ShouldQueue
 {
@@ -135,16 +137,26 @@ class SendEmailJob implements ShouldQueue
                 }
 
                 // Dokumente aus der documents-Beziehung anhängen
+                // Dateien liegen auf dem 'local'-Disk (Document::STORAGE)
                 foreach ($this->email->documents as $document) {
-                    $fullPath = storage_path('app/public/' . $document->file_path);
-                    if (file_exists($fullPath)) {
+                    $disk     = Storage::disk(Document::STORAGE);
+                    $fullPath = $disk->path($document->file_path);
+
+                    if ($disk->exists($document->file_path)) {
                         $message->attach(
                             $fullPath,
                             [
-                                'as' => $document->file_name,
-                                'mime' => $document->mime_type ?? 'application/pdf',
+                                'as'   => $document->file_name,
+                                'mime' => $document->mime_type ?? 'application/octet-stream',
                             ]
                         );
+                    } else {
+                        Log::warning("Dokument-Datei nicht gefunden beim E-Mail-Versand", [
+                            'email_id'    => $this->email->id,
+                            'document_id' => $document->id,
+                            'file_path'   => $document->file_path,
+                            'disk'        => Document::STORAGE,
+                        ]);
                     }
                 }
             });

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Admin\Resources\Rentals\Actions;
 
-use App\Events\RentalConfirmationEmailRequested;
 use App\Events\RentalPaid;
 use App\Models\Rental;
 use App\Models\RentalContent;
@@ -15,7 +14,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
-use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Log;
 
 class RentalActions
@@ -34,7 +32,7 @@ class RentalActions
             ->modalHeading('Miete als bezahlt markieren')
             ->modalDescription('Dies markiert die Miete als bezahlt und sendet dem Kunden den Zugangscode per E-Mail.')
             ->modalSubmitActionLabel('Als bezahlt markieren')
-            ->form([
+            ->schema([
                 DateTimePicker::make('paid_at')
                     ->label('Bezahlt am')
                     ->default(now())
@@ -68,40 +66,6 @@ class RentalActions
                     ->body("Zugangscode: {$rentalContent->access_code}")
                     ->persistent()
                     ->send();
-            });
-    }
-
-    /**
-     * Action: Mietbestätigungs-E-Mail erneut senden
-     */
-    public static function resendConfirmationEmail(): Action
-    {
-        return Action::make('resendConfirmationEmail')
-            ->label('Bestätigungs-E-Mail erneut senden')
-            ->icon(Heroicon::ArrowRightCircle)
-            ->color('warning')
-            ->requiresConfirmation()
-            ->modalHeading('Bestätigungs-E-Mail erneut senden')
-            ->modalDescription('Sendet dem Kunden die Mietbestätigungs-E-Mail erneut. Hierbei wird eine neue E-Mail erstellt und versendet.')
-            ->modalSubmitActionLabel('E-Mail senden')
-            ->action(function (Rental $record) {
-                try {
-                    event(new RentalConfirmationEmailRequested($record));
-
-                    Notification::make()
-                        ->success()
-                        ->title('Bestätigungs-E-Mail versendet')
-                        ->body("Die Mietbestätigung wurde erneut an {$record->customer->email} gesendet.")
-                        ->send();
-                } catch (\Exception $e) {
-                    Log::error("Fehler beim erneuten Versenden der Bestätigungs-E-Mail für Rental #{$record->id}: " . $e->getMessage());
-
-                    Notification::make()
-                        ->danger()
-                        ->title('Fehler beim Versenden')
-                        ->body('Die E-Mail konnte nicht versendet werden. Bitte prüfen Sie die Logs.')
-                        ->send();
-                }
             });
     }
 

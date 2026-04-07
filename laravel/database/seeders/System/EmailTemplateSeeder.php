@@ -2,6 +2,9 @@
 
 namespace Database\Seeders\System;
 
+use App\Listeners\SendAccessCodeEmail;
+use App\Listeners\SendInquiryConfirmationEmail;
+use App\Listeners\SendRentalConfirmationEmail;
 use App\Models\EmailTemplate;
 use Illuminate\Database\Seeder;
 
@@ -21,10 +24,7 @@ class EmailTemplateSeeder extends Seeder
                 EmailTemplate::body_text => $this->getRentalConfirmationText(),
                 EmailTemplate::category => EmailTemplate::CATEGORY_RENTAL,
                 EmailTemplate::description => 'Wird nach erfolgreicher Buchung an den Kunden gesendet',
-                EmailTemplate::available_variables => [
-                    'customer_name', 'rental_id', 'rental_start', 'rental_end',
-                    'board_name', 'location_name', 'total_price'
-                ],
+                EmailTemplate::available_variables => SendRentalConfirmationEmail::$defaultVariables,
                 EmailTemplate::is_active => true,
             ],
             [
@@ -35,38 +35,7 @@ class EmailTemplateSeeder extends Seeder
                 EmailTemplate::body_text => $this->getInquiryConfirmationText(),
                 EmailTemplate::category => EmailTemplate::CATEGORY_INQUIRY,
                 EmailTemplate::description => 'Bestätigung für eingegangene Anfragen mit allen Anfragedetails',
-                EmailTemplate::available_variables => [
-                    'customer_name', 'customer_email', 'customer_phone',
-                    'inquiry_id', 'inquiry_date', 'start_date', 'end_date',
-                    'rental_months', 'field_count', 'board_name', 'location_name',
-                    'address', 'message',
-                ],
-                EmailTemplate::is_active => true,
-            ],
-            [
-                EmailTemplate::name => 'Mietende Erinnerung',
-                EmailTemplate::slug => 'rental-ending-reminder',
-                EmailTemplate::subject => 'Ihre Mietzeit endet bald - Reservierung {{ rental_id }}',
-                EmailTemplate::body_html => $this->getRentalEndingReminderHtml(),
-                EmailTemplate::body_text => $this->getRentalEndingReminderText(),
-                EmailTemplate::category => EmailTemplate::CATEGORY_RENTAL,
-                EmailTemplate::description => 'Erinnerung an bevorstehendes Mietende',
-                EmailTemplate::available_variables => [
-                    'customer_name', 'rental_id', 'rental_end', 'board_name', 'location_name'
-                ],
-                EmailTemplate::is_active => true,
-            ],
-            [
-                EmailTemplate::name => 'Rechnung',
-                EmailTemplate::slug => 'invoice',
-                EmailTemplate::subject => 'Ihre Rechnung - Reservierung {{ rental_id }}',
-                EmailTemplate::body_html => $this->getInvoiceHtml(),
-                EmailTemplate::body_text => $this->getInvoiceText(),
-                EmailTemplate::category => EmailTemplate::CATEGORY_RENTAL,
-                EmailTemplate::description => 'Rechnung für abgeschlossene Vermietungen',
-                EmailTemplate::available_variables => [
-                    'customer_name', 'rental_id', 'total_price', 'rental_start', 'rental_end'
-                ],
+                EmailTemplate::available_variables => SendInquiryConfirmationEmail::$defaultVariables,
                 EmailTemplate::is_active => true,
             ],
             [
@@ -77,26 +46,50 @@ class EmailTemplateSeeder extends Seeder
                 EmailTemplate::body_text => $this->getRentalAccessCodeText(),
                 EmailTemplate::category => EmailTemplate::CATEGORY_RENTAL,
                 EmailTemplate::description => 'Wird nach Zahlungseingang mit dem Zugangscode für den Kundenbereich versendet',
-                EmailTemplate::available_variables => [
-                    'customer_name', 'access_code', 'rental_id',
-                    'start_date', 'end_date', 'access_url',
-                    'fields_count', 'fields_list',
-                ],
+                EmailTemplate::available_variables => SendAccessCodeEmail::$defaultVariables,
                 EmailTemplate::is_active => true,
             ],
-            [
-                EmailTemplate::name => 'Willkommens-E-Mail',
-                EmailTemplate::slug => 'welcome',
-                EmailTemplate::subject => 'Willkommen bei {{ company_name }}',
-                EmailTemplate::body_html => $this->getWelcomeHtml(),
-                EmailTemplate::body_text => $this->getWelcomeText(),
-                EmailTemplate::category => EmailTemplate::CATEGORY_SYSTEM,
-                EmailTemplate::description => 'Willkommensnachricht für neue Kunden',
-                EmailTemplate::available_variables => [
-                    'customer_name', 'company_name', 'company_email', 'company_phone'
-                ],
-                EmailTemplate::is_active => true,
-            ],
+
+            // Unbenutzt - kommt später zum Einsatz
+//            [
+//                EmailTemplate::name => 'Mietende Erinnerung',
+//                EmailTemplate::slug => 'rental-ending-reminder',
+//                EmailTemplate::subject => 'Ihre Mietzeit endet bald - Reservierung {{ rental_id }}',
+//                EmailTemplate::body_html => $this->getRentalEndingReminderHtml(),
+//                EmailTemplate::body_text => $this->getRentalEndingReminderText(),
+//                EmailTemplate::category => EmailTemplate::CATEGORY_RENTAL,
+//                EmailTemplate::description => 'Erinnerung an bevorstehendes Mietende',
+//                EmailTemplate::available_variables => [
+//                    'customer_name', 'rental_id', 'rental_end', 'board_name', 'location_name'
+//                ],
+//                EmailTemplate::is_active => true,
+//            ],
+//            [
+//                EmailTemplate::name => 'Rechnung',
+//                EmailTemplate::slug => 'invoice',
+//                EmailTemplate::subject => 'Ihre Rechnung - Reservierung {{ rental_id }}',
+//                EmailTemplate::body_html => $this->getInvoiceHtml(),
+//                EmailTemplate::body_text => $this->getInvoiceText(),
+//                EmailTemplate::category => EmailTemplate::CATEGORY_RENTAL,
+//                EmailTemplate::description => 'Rechnung für abgeschlossene Vermietungen',
+//                EmailTemplate::available_variables => [
+//                    'customer_name', 'rental_id', 'total_price', 'rental_start', 'rental_end'
+//                ],
+//                EmailTemplate::is_active => true,
+//            ],
+//            [
+//                EmailTemplate::name => 'Willkommens-E-Mail',
+//                EmailTemplate::slug => 'welcome',
+//                EmailTemplate::subject => 'Willkommen bei {{ company_name }}',
+//                EmailTemplate::body_html => $this->getWelcomeHtml(),
+//                EmailTemplate::body_text => $this->getWelcomeText(),
+//                EmailTemplate::category => EmailTemplate::CATEGORY_SYSTEM,
+//                EmailTemplate::description => 'Willkommensnachricht für neue Kunden',
+//                EmailTemplate::available_variables => [
+//                    'customer_name', 'company_name', 'company_email', 'company_phone'
+//                ],
+//                EmailTemplate::is_active => true,
+//            ],
         ];
 
         foreach ($templates as $template) {
@@ -178,6 +171,7 @@ TEXT;
             <p><strong>Datum:</strong> {{ inquiry_date }}</p>
             <p><strong>Gewünschter Zeitraum:</strong> {{ start_date }} bis {{ end_date }} ({{ rental_months }} Monat(e))</p>
             <p><strong>Anzahl Felder:</strong> {{ field_count }}</p>
+            <p><strong>Gesamtpreis:</strong> {{ total_price }} €</p>
             <p><strong>Tafel:</strong> {{ board_name }}</p>
             <p><strong>Standort:</strong> {{ location_name }}</p>
         </div>
@@ -212,6 +206,7 @@ Ihre Anfragedetails:
 - Datum: {{ inquiry_date }}
 - Gewünschter Zeitraum: {{ start_date }} bis {{ end_date }} ({{ rental_months }} Monat(e))
 - Anzahl Felder: {{ field_count }}
+- Gesamtpreis: {{ total_price }}
 - Tafel: {{ board_name }}
 - Standort: {{ location_name }}
 

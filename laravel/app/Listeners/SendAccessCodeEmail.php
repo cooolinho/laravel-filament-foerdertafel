@@ -3,88 +3,74 @@
 namespace App\Listeners;
 
 use App\Events\RentalPaid;
-use App\Jobs\SendEmailJob;
 use App\Models\Email;
-use App\Models\EmailTemplate;
 use App\Models\RentalContent;
 use Illuminate\Support\Facades\Log;
 
-class SendAccessCodeEmail
+class SendAccessCodeEmail extends BaseEmailNotificationListener
 {
+    public static array $defaultVariables = [
+        'customer_name' => 'Kundenname',
+        'access_code'   => 'Persönlicher Zugangscode für das Kundenportal',
+        'rental_id'     => 'Reservierungs-Nummer (ID)',
+        'start_date'    => 'Mietbeginn (TT.MM.JJJJ)',
+        'end_date'      => 'Mietende (TT.MM.JJJJ)',
+        'access_url'    => 'Direktlink zum Kundenportal mit eingebettetem Code',
+        'fields_count'  => 'Anzahl gemieteter Felder',
+        'fields_list'   => 'Namen der gemieteten Felder (kommagetrennt)',
+    ];
+
     /**
      * Handle the event.
+     * Sendet nach Zahlungseingang den Zugangscode für das Kunden-Portal.
+     *
+     * Dank $afterCommit = true läuft dieser Listener erst nach dem vollständigen
+     * DB-Commit, sodass alle Beziehungen korrekt geladen werden können.
      */
     public function handle(RentalPaid $event): void
     {
-        $rental = $event->rental;
+        $rental   = $event->rental;
         $customer = $rental->customer;
 
-        try {
-            // Erstelle oder hole den RentalContent für diese Rental
-            $rentalContent = RentalContent::firstOrCreate(
-                [RentalContent::rental_id => $rental->id],
-                [
-                    RentalContent::is_private_person => empty($customer->company_name),
-                ]
-            );
+        // RentalContent erstellen oder laden (generiert ggf. den Access-Code)
+        $rentalContent = RentalContent::firstOrCreate(
+            [RentalContent::rental_id => $rental->id],
+            [
+                RentalContent::is_private_person => empty($customer->company_name),
+            ]
+        );
 
-            // Hole das Email-Template für Zugangscode
-            $template = EmailTemplate::where('slug', 'rental-access-code')->first();
+        // Felder frisch laden
+        $rental->loadMissing('fields');
 
-            if (!$template) {
-                Log::error("Email-Template 'rental-access-code' nicht gefunden");
-                return;
-            }
+        $variables = [
+            'customer_name' => $customer->name,
+            'access_code'   => $rentalContent->access_code,
+            'rental_id'     => $rental->id,
+            'start_date'    => $rental->start_date->format('d.m.Y'),
+            'end_date'      => $rental->end_date->format('d.m.Y'),
+            'access_url'    => route('rental.content.access', ['code' => $rentalContent->access_code]),
+            'fields_count'  => $rental->fields->count(),
+            'fields_list'   => $rental->fields->map(fn ($field) => $field->name)->join(', '),
+        ];
 
-            // Bereite die Template-Variablen vor
-            $variables = [
-                'customer_name' => $customer->name,
-                'access_code' => $rentalContent->access_code,
-                'rental_id' => $rental->id,
-                'start_date' => $rental->start_date->format('d.m.Y'),
-                'end_date' => $rental->end_date->format('d.m.Y'),
-                'access_url' => route('rental.content.access', ['code' => $rentalContent->access_code]),
-                'fields_count' => $rental->fields->count(),
-                'fields_list' => $rental->fields->map(fn($field) => $field->name)->join(', '),
-            ];
+        $email = $this->createAndDispatchEmail(
+            templateSlug: 'rental-access-code',
+            toEmail:      $customer->email,
+            toName:       $customer->name,
+            variables:    $variables,
+            extraData:    [
+                Email::customer_id => $customer->id,
+                Email::rental_id   => $rental->id,
+                Email::metadata    => [
+                    'event'     => 'rental_paid',
+                    'rental_id' => $rental->id,
+                ],
+            ]
+        );
 
-            // Ersetze Platzhalter im Subject und Body
-            $subject = $this->replacePlaceholders($template->subject, $variables);
-            $bodyHtml = $this->replacePlaceholders($template->body_html, $variables);
-            $bodyText = $this->replacePlaceholders($template->body_text ?? '', $variables);
-
-            // Erstelle Email-Eintrag
-            $email = Email::create([
-                Email::from_email => config('mail.from.address'),
-                Email::from_name => config('mail.from.name'),
-                Email::to_email => $customer->email,
-                Email::to_name => $customer->name,
-                Email::subject => $subject,
-                Email::body_html => $bodyHtml,
-                Email::body_text => $bodyText,
-                Email::email_template_id => $template->id,
-                Email::status => Email::STATUS_DRAFT,
-                Email::direction => Email::DIRECTION_OUTBOUND,
-            ]);
-
-            // Versende Email
-            SendEmailJob::dispatch($email);
-
-            Log::info("Zugangscode-Email für Rental #{$rental->id} erstellt und in Queue eingereiht");
-
-        } catch (\Exception $e) {
-            Log::error("Fehler beim Versenden der Zugangscode-Email: " . $e->getMessage());
+        if ($email) {
+            Log::info("Zugangscode-E-Mail für Rental #{$rental->id} an {$customer->email} erstellt (ID: {$email->id}).");
         }
-    }
-
-    /**
-     * Ersetze Platzhalter im Template
-     */
-    private function replacePlaceholders(string $content, array $variables): string
-    {
-        foreach ($variables as $key => $value) {
-            $content = str_replace("{{" . $key . "}}", $value, $content);
-        }
-        return $content;
     }
 }

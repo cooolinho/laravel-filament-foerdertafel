@@ -18,7 +18,6 @@ class ViewRental extends ViewRecord
             EditAction::make(),
 
             RentalActions::markAsPaid(),
-            RentalActions::resendConfirmationEmail(),
 
             ActionGroup::make([
                 RentalActions::viewAccessCode(),
