@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\EmailTemplates\Schemas;
 
+use App\Models\Document;
 use App\Models\EmailTemplate;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -139,6 +140,30 @@ class EmailTemplateForm
                                 'redo',
                             ])
                             ->helperText('Verwenden Sie {{ variable }} für Platzhalter'),
+                    ])
+                    ->columnSpan(3),
+
+                Section::make('Anhänge')
+                    ->description('Dokumente, die bei jeder E-Mail dieser Vorlage automatisch angehängt werden')
+                    ->schema([
+                        Select::make('documents')
+                            ->label('Dokumente')
+                            ->relationship('documents', 'title')
+                            ->options(
+                                Document::query()
+                                    ->where(Document::is_current_version, true)
+                                    ->orderBy(Document::title)
+                                    ->get()
+                                    ->mapWithKeys(fn (Document $doc) => [
+                                        $doc->id => "{$doc->title} ({$doc->getTypeLabel()})",
+                                    ])
+                            )
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->helperText('Diese Dokumente werden automatisch an alle E-Mails dieser Vorlage angehängt.')
+                            ->native(false),
                     ])
                     ->columnSpan(3),
             ]);

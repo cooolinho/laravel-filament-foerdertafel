@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -96,6 +97,15 @@ class EmailTemplate extends Model
     public function emails(): HasMany
     {
         return $this->hasMany(Email::class);
+    }
+
+    /**
+     * Dokumente, die bei E-Mails dieser Vorlage angehängt werden sollen.
+     */
+    public function documents(): BelongsToMany
+    {
+        return $this->belongsToMany(Document::class, 'document_email_template')
+            ->withTimestamps();
     }
 
     // Scopes

@@ -2,6 +2,15 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Demo\BoardSeeder;
+use Database\Seeders\Demo\CustomerSeeder;
+use Database\Seeders\Demo\EmailSeeder;
+use Database\Seeders\Demo\FieldSeeder;
+use Database\Seeders\Demo\InquirySeeder;
+use Database\Seeders\Demo\LocationSeeder;
+use Database\Seeders\Demo\RentalAccessCodeEmailTemplateSeeder;
+use Database\Seeders\Demo\RentalSeeder;
+use Database\Seeders\Demo\UserSeeder;
 use Illuminate\Database\Seeder;
 
 class DemoSeeder extends Seeder
@@ -20,7 +29,6 @@ class DemoSeeder extends Seeder
             CustomerSeeder::class,
             RentalSeeder::class,
             InquirySeeder::class,
-            EmailTemplateSeeder::class,
             EmailSeeder::class,
             RentalAccessCodeEmailTemplateSeeder::class,
         ]);
@@ -32,7 +40,6 @@ class DemoSeeder extends Seeder
         $this->command->info('✓ 12 Kunden erstellt');
         $this->command->info('✓ 10 Vermietungen erstellt (Aktiv, Abgeschlossen, Storniert)');
         $this->command->info('✓ 5 Anfragen pro Board erstellt');
-        $this->command->info('✓ E-Mail-Vorlagen erstellt');
         $this->command->info('✓ Beispiel-E-Mails erstellt (Eingehend & Ausgehend)');
         $this->command->info('✓ Zugangscode-E-Mail-Vorlage erstellt');
     }

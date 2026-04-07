@@ -50,6 +50,7 @@ class ViewInquiry extends ViewRecord
                             Rental::customer_id => $customer->id,
                             Rental::start_date => $record->start_date,
                             Rental::end_date => $record->end_date,
+                            Rental::rental_months => $record->rental_months,
                             Rental::total_price => 0, // Will be calculated based on fields
                             Rental::status => Rental::STATUS_ACTIVE,
                             Rental::notes => $record->message,

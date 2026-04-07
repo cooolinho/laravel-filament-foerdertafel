@@ -14,7 +14,6 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\TextSize;
-use Illuminate\Support\Facades\Storage;
 
 class EmailInfolist
 {
@@ -156,11 +155,11 @@ class EmailInfolist
 
                                 TextEntry::make(Document::file_path)
                                     ->label('Download')
-                                    ->formatStateUsing(fn () => 'Herunterladen')
-                                    ->url(fn (Document $record) => Storage::url($record->file_path))
+                                    ->formatStateUsing(fn () => 'Vorschau')
+                                    ->url(fn (Document $record) => route('documents.show', $record))
                                     ->openUrlInNewTab()
-                                    ->icon('heroicon-o-arrow-down-tray')
-                                    ->color('success'),
+                                    ->icon('heroicon-o-eye')
+                                    ->color('primary'),
                             ])
                             ->columns(4)
                             ->columnSpanFull(),

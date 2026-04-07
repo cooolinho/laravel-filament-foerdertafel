@@ -9,8 +9,6 @@ use App\Events\RentalEnded;
 use App\Events\RentalPaid;
 use App\Listeners\ReleaseReservedFields;
 use App\Listeners\ReserveFieldsForInquiry;
-use App\Listeners\SendAccessCodeEmail;
-use App\Listeners\SendRentalConfirmationEmail;
 use App\Listeners\SetFieldsToAvailable;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -24,15 +22,16 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         InquiryCreated::class => [
             ReserveFieldsForInquiry::class,
+//            SendInquiryConfirmationEmail::class,
         ],
         InquiryRejected::class => [
             ReleaseReservedFields::class,
         ],
         RentalCreated::class => [
-            SendRentalConfirmationEmail::class,
+//            SendRentalConfirmationEmail::class,
         ],
         RentalPaid::class => [
-            SendAccessCodeEmail::class,
+//            SendAccessCodeEmail::class,
         ],
         RentalEnded::class => [
             SetFieldsToAvailable::class,

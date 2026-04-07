@@ -2,7 +2,6 @@
 
 namespace App\Filament\App\Pages;
 
-use App\Events\InquiryCreated;
 use App\Models\Board;
 use App\Models\Document;
 use App\Models\Field;
@@ -339,9 +338,6 @@ class InquiryPage extends Page implements HasForms
                 $inquiry->update([Inquiry::attachments => $finalPaths]);
             }
 
-            // Dispatch event to reserve fields
-            InquiryCreated::dispatch($inquiry);
-
             // Set session variable and redirect to confirmation page
             session(['inquiry_complete' => $inquiry->id]);
             $this->redirect(route('filament.app.pages.inquiry-complete-page'));
@@ -463,9 +459,13 @@ class InquiryPage extends Page implements HasForms
     public function getActiveRental(Field $field): ?Rental
     {
         $rental = $field->rentals()
-            ->where(Rental::status, Rental::STATUS_ACTIVE)
+            ->whereIn(Rental::status, [Rental::STATUS_ACTIVE, Rental::STATUS_PAID])
+
+            // erstmal nicht prüfen da ansonsten doppel buchungen vorkommen können. anschließend muss dann mit dem kunden
+            // kommuniziert werden das das feld nur bis verfügbar ist, bzw. in einem bestimmten zeitraum zur verfügung steht
 //            ->where(Rental::start_date, '<=', now())
 //            ->where(Rental::end_date, '>=', now())
+
             ->with('customer')
             ->first();
 

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
  * @property bool|null $email_notifications_enabled
  * @property int|null $default_email_template_id
  * @property int|null $terms_conditions_document_id
+ * @property array|null $inquiry_confirmation_attachment_ids
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
@@ -84,6 +85,7 @@ class Setting extends Model
     {
         return $this->belongsTo(Document::class, self::terms_conditions_document_id);
     }
+
 
     /**
      * @return int

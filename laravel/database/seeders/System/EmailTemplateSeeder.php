@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Seeders;
+namespace Database\Seeders\System;
 
 use App\Models\EmailTemplate;
 use Illuminate\Database\Seeder;
@@ -28,15 +28,18 @@ class EmailTemplateSeeder extends Seeder
                 EmailTemplate::is_active => true,
             ],
             [
-                EmailTemplate::name => 'Anfrageeingang bestätigen',
-                EmailTemplate::slug => 'inquiry-received',
-                EmailTemplate::subject => 'Ihre Anfrage ist bei uns eingegangen',
-                EmailTemplate::body_html => $this->getInquiryReceivedHtml(),
-                EmailTemplate::body_text => $this->getInquiryReceivedText(),
+                EmailTemplate::name => 'Anfrage-Bestätigung',
+                EmailTemplate::slug => 'inquiry-confirmation',
+                EmailTemplate::subject => 'Ihre Anfrage ist bei uns eingegangen - Anfrage #{{ inquiry_id }}',
+                EmailTemplate::body_html => $this->getInquiryConfirmationHtml(),
+                EmailTemplate::body_text => $this->getInquiryConfirmationText(),
                 EmailTemplate::category => EmailTemplate::CATEGORY_INQUIRY,
-                EmailTemplate::description => 'Bestätigung für eingegangene Anfragen',
+                EmailTemplate::description => 'Bestätigung für eingegangene Anfragen mit allen Anfragedetails',
                 EmailTemplate::available_variables => [
-                    'customer_name', 'customer_email', 'inquiry_date'
+                    'customer_name', 'customer_email', 'customer_phone',
+                    'inquiry_id', 'inquiry_date', 'start_date', 'end_date',
+                    'rental_months', 'field_count', 'board_name', 'location_name',
+                    'address', 'message',
                 ],
                 EmailTemplate::is_active => true,
             ],
@@ -63,6 +66,21 @@ class EmailTemplateSeeder extends Seeder
                 EmailTemplate::description => 'Rechnung für abgeschlossene Vermietungen',
                 EmailTemplate::available_variables => [
                     'customer_name', 'rental_id', 'total_price', 'rental_start', 'rental_end'
+                ],
+                EmailTemplate::is_active => true,
+            ],
+            [
+                EmailTemplate::name => 'Zugangscode',
+                EmailTemplate::slug => 'rental-access-code',
+                EmailTemplate::subject => 'Ihr Zugangscode - Reservierung #{{ rental_id }}',
+                EmailTemplate::body_html => $this->getRentalAccessCodeHtml(),
+                EmailTemplate::body_text => $this->getRentalAccessCodeText(),
+                EmailTemplate::category => EmailTemplate::CATEGORY_RENTAL,
+                EmailTemplate::description => 'Wird nach Zahlungseingang mit dem Zugangscode für den Kundenbereich versendet',
+                EmailTemplate::available_variables => [
+                    'customer_name', 'access_code', 'rental_id',
+                    'start_date', 'end_date', 'access_url',
+                    'fields_count', 'fields_list',
                 ],
                 EmailTemplate::is_active => true,
             ],
@@ -139,20 +157,42 @@ Ihr Team
 TEXT;
     }
 
-    private function getInquiryReceivedHtml(): string
+    private function getInquiryConfirmationHtml(): string
     {
         return <<<HTML
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
+    <title>Anfrage-Bestätigung</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
         <h2 style="color: #2563eb;">Ihre Anfrage ist eingegangen</h2>
         <p>Hallo {{ customer_name }},</p>
         <p>vielen Dank für Ihre Anfrage! Wir haben diese erhalten und werden uns schnellstmöglich bei Ihnen melden.</p>
-        <p>In der Regel antworten wir innerhalb von 24 Stunden.</p>
+
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Ihre Anfragedetails</h3>
+            <p><strong>Anfrage-Nr.:</strong> {{ inquiry_id }}</p>
+            <p><strong>Datum:</strong> {{ inquiry_date }}</p>
+            <p><strong>Gewünschter Zeitraum:</strong> {{ start_date }} bis {{ end_date }} ({{ rental_months }} Monat(e))</p>
+            <p><strong>Anzahl Felder:</strong> {{ field_count }}</p>
+            <p><strong>Tafel:</strong> {{ board_name }}</p>
+            <p><strong>Standort:</strong> {{ location_name }}</p>
+        </div>
+
+        <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Ihre Kontaktdaten</h3>
+            <p><strong>Name:</strong> {{ customer_name }}</p>
+            <p><strong>E-Mail:</strong> {{ customer_email }}</p>
+            <p><strong>Telefon:</strong> {{ customer_phone }}</p>
+            <p><strong>Adresse:</strong> {{ address }}</p>
+        </div>
+
+        {{ message }}
+
+        <p>In der Regel antworten wir innerhalb von 24 Stunden auf Ihre Anfrage.</p>
         <p>Mit freundlichen Grüßen,<br>Ihr Team</p>
     </div>
 </body>
@@ -160,14 +200,30 @@ TEXT;
 HTML;
     }
 
-    private function getInquiryReceivedText(): string
+    private function getInquiryConfirmationText(): string
     {
         return <<<TEXT
 Hallo {{ customer_name }},
 
 vielen Dank für Ihre Anfrage! Wir haben diese erhalten und werden uns schnellstmöglich bei Ihnen melden.
 
-In der Regel antworten wir innerhalb von 24 Stunden.
+Ihre Anfragedetails:
+- Anfrage-Nr.: {{ inquiry_id }}
+- Datum: {{ inquiry_date }}
+- Gewünschter Zeitraum: {{ start_date }} bis {{ end_date }} ({{ rental_months }} Monat(e))
+- Anzahl Felder: {{ field_count }}
+- Tafel: {{ board_name }}
+- Standort: {{ location_name }}
+
+Ihre Kontaktdaten:
+- Name: {{ customer_name }}
+- E-Mail: {{ customer_email }}
+- Telefon: {{ customer_phone }}
+- Adresse: {{ address }}
+
+{{ message }}
+
+In der Regel antworten wir innerhalb von 24 Stunden auf Ihre Anfrage.
 
 Mit freundlichen Grüßen,
 Ihr Team
@@ -250,6 +306,77 @@ Mietzeitraum: {{ rental_start }} bis {{ rental_end }}
 Gesamtbetrag: {{ total_price }} €
 
 Vielen Dank für Ihr Vertrauen!
+
+Mit freundlichen Grüßen,
+Ihr Team
+TEXT;
+    }
+
+    private function getRentalAccessCodeHtml(): string
+    {
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ihr Zugangscode</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2563eb;">Ihr Zugangscode ist bereit</h2>
+        <p>Hallo {{ customer_name }},</p>
+        <p>vielen Dank für Ihre Zahlung! Ihr Zugangscode für den Kundenbereich steht Ihnen nun zur Verfügung.</p>
+
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280;">Ihr persönlicher Zugangscode</p>
+            <p style="margin: 0; font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #1d4ed8;">{{ access_code }}</p>
+        </div>
+
+        <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Ihre Mietdetails</h3>
+            <p><strong>Reservierungs-Nr.:</strong> {{ rental_id }}</p>
+            <p><strong>Mietzeitraum:</strong> {{ start_date }} bis {{ end_date }}</p>
+            <p><strong>Anzahl Felder:</strong> {{ fields_count }}</p>
+            <p><strong>Felder:</strong> {{ fields_list }}</p>
+        </div>
+
+        <p style="text-align: center; margin: 30px 0;">
+            <a href="{{ access_url }}"
+               style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                Zum Kundenbereich
+            </a>
+        </p>
+
+        <p>Oder rufen Sie diesen Link direkt auf:<br>
+            <a href="{{ access_url }}">{{ access_url }}</a>
+        </p>
+
+        <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
+        <p>Mit freundlichen Grüßen,<br>Ihr Team</p>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    private function getRentalAccessCodeText(): string
+    {
+        return <<<TEXT
+Hallo {{ customer_name }},
+
+vielen Dank für Ihre Zahlung! Ihr Zugangscode für den Kundenbereich steht Ihnen nun zur Verfügung.
+
+Ihr Zugangscode: {{ access_code }}
+
+Ihre Mietdetails:
+- Reservierungs-Nr.: {{ rental_id }}
+- Mietzeitraum: {{ start_date }} bis {{ end_date }}
+- Anzahl Felder: {{ fields_count }}
+- Felder: {{ fields_list }}
+
+Zum Kundenbereich: {{ access_url }}
+
+Bei Fragen stehen wir Ihnen gerne zur Verfügung.
 
 Mit freundlichen Grüßen,
 Ihr Team

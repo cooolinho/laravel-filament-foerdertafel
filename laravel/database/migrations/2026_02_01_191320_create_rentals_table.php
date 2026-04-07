@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId(Rental::customer_id)->constrained()->onDelete('cascade');
             $table->date(Rental::start_date);
             $table->date(Rental::end_date)->nullable();
+            $table->unsignedSmallInteger(Rental::rental_months)->nullable();
             $table->decimal(Rental::total_price, 10, 2);
             $table->enum(Rental::status, [
                 Rental::STATUS_ACTIVE,

@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property Carbon|null $paid_at
  * @property string|null $notes
+ * @property int|null $rental_months
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
@@ -34,6 +35,7 @@ class Rental extends Model
     const string customer_id = 'customer_id';
     const string start_date = 'start_date';
     const string end_date = 'end_date';
+    const string rental_months = 'rental_months';
     const string total_price = 'total_price';
     const string status = 'status';
     const string paid_at = 'paid_at';
@@ -49,6 +51,7 @@ class Rental extends Model
         self::customer_id,
         self::start_date,
         self::end_date,
+        self::rental_months,
         self::total_price,
         self::status,
         self::paid_at,
@@ -58,6 +61,7 @@ class Rental extends Model
     protected $casts = [
         self::start_date => 'date',
         self::end_date => 'date',
+        self::rental_months => 'integer',
         self::total_price => 'decimal:2',
         self::paid_at => 'datetime',
     ];

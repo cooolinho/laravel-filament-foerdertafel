@@ -22,6 +22,9 @@ return new class extends Migration
             $table->boolean(Setting::email_notifications_enabled)->default(true);
             $table->foreignId(Setting::default_email_template_id)->nullable()->constrained('email_templates')->nullOnDelete();
             $table->foreignId(Setting::terms_conditions_document_id)->nullable()->constrained('documents')->nullOnDelete();
+            $table->decimal(Setting::field_width_cm, 5, 2)->default(8.9);
+            $table->decimal(Setting::field_height_cm, 5, 2)->default(5.1);
+            $table->decimal(Setting::field_gap_cm, 5, 2)->default(1.2);
             $table->timestamps();
         });
 

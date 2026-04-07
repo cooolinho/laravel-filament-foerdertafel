@@ -44,7 +44,7 @@ class InquiryCompletePage extends Page
         }
 
         // Clear the session variable after loading to prevent page refresh
-//        session()->forget('inquiry_complete');
+        session()->forget('inquiry_complete');
     }
 
     public function getTotalPricePerMonth(): float

@@ -34,20 +34,14 @@ class BoardPage extends Page implements HasActions
         if ($boardId) {
             $this->board = Board::with([
                 'fields.rentals' => function ($query) {
-                    $query->where(Rental::status, Rental::STATUS_ACTIVE)
-//                        ->where(Rental::start_date, '<=', now())
-//                        ->where(Rental::end_date, '>=', now())
-                    ;
+                    $query->whereIn(Rental::status, [Rental::STATUS_ACTIVE, Rental::STATUS_PAID]);
                 },
                 'fields.rentals.customer'
             ])->find($boardId);
         } else {
             $this->board = Board::with([
                 'fields.rentals' => function ($query) {
-                    $query->where(Rental::status, Rental::STATUS_ACTIVE)
-//                        ->where(Rental::start_date, '<=', now())
-//                        ->where(Rental::end_date, '>=', now())
-                    ;
+                    $query->whereIn(Rental::status, [Rental::STATUS_ACTIVE, Rental::STATUS_PAID]);
                 },
                 'fields.rentals.customer'
             ])->first();
@@ -111,9 +105,7 @@ class BoardPage extends Page implements HasActions
     public function getActiveRental(Field $field): ?Rental
     {
         $rental = $field->rentals()
-            ->where(Rental::status, Rental::STATUS_ACTIVE)
-//            ->where(Rental::start_date, '<=', now())
-//            ->where(Rental::end_date, '>=', now())
+            ->whereIn(Rental::status, [Rental::STATUS_ACTIVE, Rental::STATUS_PAID])
             ->with('customer')
             ->first();
 

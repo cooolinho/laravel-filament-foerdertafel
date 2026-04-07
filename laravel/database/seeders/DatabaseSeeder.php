@@ -2,6 +2,16 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\Demo\BoardSeeder;
+use Database\Seeders\Demo\CustomerSeeder;
+use Database\Seeders\Demo\EmailSeeder;
+use Database\Seeders\Demo\FieldSeeder;
+use Database\Seeders\Demo\InquirySeeder;
+use Database\Seeders\Demo\LocationSeeder;
+use Database\Seeders\Demo\RentalAccessCodeEmailTemplateSeeder;
+use Database\Seeders\Demo\RentalSeeder;
+use Database\Seeders\Demo\UserSeeder;
+use Database\Seeders\System\EmailTemplateSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -10,17 +20,18 @@ class DatabaseSeeder extends Seeder
      * Alle verfügbaren Seeder mit Beschreibung.
      */
     protected array $availableSeeders = [
-        'Demo (alle Seeder auf einmal)'   => DemoSeeder::class,
-        'Benutzer (Users)'                => UserSeeder::class,
-        'Standorte (Locations)'           => LocationSeeder::class,
-        'Boards'                          => BoardSeeder::class,
-        'Felder (Fields)'                 => FieldSeeder::class,
-        'Kunden (Customers)'              => CustomerSeeder::class,
-        'Vermietungen (Rentals)'          => RentalSeeder::class,
-        'Anfragen (Inquiries)'            => InquirySeeder::class,
-        'E-Mail-Vorlagen (Templates)'     => EmailTemplateSeeder::class,
-        'E-Mails (Emails)'                => EmailSeeder::class,
-        'Zugangscode-E-Mail-Vorlage'      => RentalAccessCodeEmailTemplateSeeder::class,
+        'System (alle System Seeder auf einmal)' => SystemSeeder::class,
+        'System - E-Mail-Vorlagen (Templates)'   => EmailTemplateSeeder::class,
+        'Demo (alle Demo Seeder auf einmal)'     => DemoSeeder::class,
+        'Demo - Benutzer (Users)'                => UserSeeder::class,
+        'Demo - Standorte (Locations)'           => LocationSeeder::class,
+        'Demo - Boards'                          => BoardSeeder::class,
+        'Demo - Felder (Fields)'                 => FieldSeeder::class,
+        'Demo - Kunden (Customers)'              => CustomerSeeder::class,
+        'Demo - Vermietungen (Rentals)'          => RentalSeeder::class,
+        'Demo - Anfragen (Inquiries)'            => InquirySeeder::class,
+        'Demo - E-Mails (Emails)'                => EmailSeeder::class,
+        'Demo - Zugangscode-E-Mail-Vorlage'      => RentalAccessCodeEmailTemplateSeeder::class,
     ];
 
     /**

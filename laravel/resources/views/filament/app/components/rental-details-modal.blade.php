@@ -54,7 +54,7 @@
                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Dauer</dt>
                 <dd class="mt-1 text-base text-gray-900 dark:text-white">
                     @php
-                        $months = $rental->{\App\Models\Rental::start_date}->diffInMonths($rental->{\App\Models\Rental::end_date}) + 1;
+                        $months = $rental->rental_months;
                     @endphp
                     {{ $months }} {{ $months === 1 ? 'Monat' : 'Monate' }}
                 </dd>
@@ -117,10 +117,7 @@
             <div class="flex justify-between text-sm">
                 <dt class="text-gray-600 dark:text-gray-400">Anzahl Monate</dt>
                 <dd class="font-medium text-gray-900 dark:text-white">
-                    @php
-                        $months = $rental->{\App\Models\Rental::start_date}->diffInMonths($rental->{\App\Models\Rental::end_date}) + 1;
-                    @endphp
-                    {{ $months }}
+                    {{ $rental->rental_months }}
                 </dd>
             </div>
             <div class="border-t border-primary-200 dark:border-primary-500/20 pt-2 mt-2">
