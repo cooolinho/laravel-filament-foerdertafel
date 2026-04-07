@@ -49,26 +49,31 @@ class FieldsFormRectangle implements ValidationRule
             return;
         }
 
-        // Check row/column constraints derived from max_fields_per_customer
-        $minRow = min(array_column($positions, 'row'));
-        $maxRow = max(array_column($positions, 'row'));
-        $minCol = min(array_column($positions, 'col'));
-        $maxCol = max(array_column($positions, 'col'));
+        // Check row/column constraints derived from max_fields_per_customer.
+        // Skip this check when only a single field is selected – a single field
+        // (even a large multi-cell one) is always valid regardless of its dimensions,
+        // because it was intentionally configured that way by an administrator.
+        if (count($value) > 1) {
+            $minRow = min(array_column($positions, 'row'));
+            $maxRow = max(array_column($positions, 'row'));
+            $minCol = min(array_column($positions, 'col'));
+            $maxCol = max(array_column($positions, 'col'));
 
-        $selectionRows = $maxRow - $minRow + 1;
-        $selectionCols = $maxCol - $minCol + 1;
+            $selectionRows = $maxRow - $minRow + 1;
+            $selectionCols = $maxCol - $minCol + 1;
 
-        $maxAllowedRows = Setting::getMaxSelectionRows();
-        $maxAllowedCols = Setting::getMaxSelectionCols();
+            $maxAllowedRows = Setting::getMaxSelectionRows();
+            $maxAllowedCols = Setting::getMaxSelectionCols();
 
-        if ($selectionRows > $maxAllowedRows) {
-            $fail("Die Auswahl darf maximal {$maxAllowedRows} Zeile(n) umfassen (aktuell: {$selectionRows}).");
-            return;
-        }
+            if ($selectionRows > $maxAllowedRows) {
+                $fail("Die Auswahl darf maximal {$maxAllowedRows} Zeile(n) umfassen (aktuell: {$selectionRows}).");
+                return;
+            }
 
-        if ($selectionCols > $maxAllowedCols) {
-            $fail("Die Auswahl darf maximal {$maxAllowedCols} Spalte(n) umfassen (aktuell: {$selectionCols}).");
-            return;
+            if ($selectionCols > $maxAllowedCols) {
+                $fail("Die Auswahl darf maximal {$maxAllowedCols} Spalte(n) umfassen (aktuell: {$selectionCols}).");
+                return;
+            }
         }
     }
 
