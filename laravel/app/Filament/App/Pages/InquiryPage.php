@@ -201,15 +201,17 @@ class InquiryPage extends Page implements HasForms
 
     public function toggleField(int $fieldId): void
     {
+        $maxFields = (int) Setting::get(Setting::max_fields_per_customer, 4);
+
         if (in_array($fieldId, $this->selectedFields)) {
             // Remove field
             $this->selectedFields = array_values(array_diff($this->selectedFields, [$fieldId]));
         } else {
             // Check if max fields limit would be exceeded
-            if (count($this->selectedFields) >= 10) {
+            if (count($this->selectedFields) >= $maxFields) {
                 Notification::make()
                     ->title('Maximale Anzahl erreicht')
-                    ->body('Sie können maximal 10 Felder auswählen.')
+                    ->body("Sie können maximal {$maxFields} Felder auswählen.")
                     ->warning()
                     ->send();
                 return;
@@ -369,6 +371,44 @@ class InquiryPage extends Page implements HasForms
         $months = max(1, (int) Setting::get(Setting::default_rental_duration, 1));
 
         return $pricePerMonth * $months;
+    }
+
+    /**
+     * Gibt die physischen Abmessungen der aktuellen Feldauswahl zurück.
+     * Berechnet Breite/Höhe in cm basierend auf den Einstellungen.
+     *
+     * @return array{rows: int, cols: int, width_cm: float, height_cm: float}|null
+     */
+    public function getSelectedFieldDimensions(): ?array
+    {
+        if (empty($this->selectedFields)) {
+            return null;
+        }
+
+        $fields = Field::whereIn('id', $this->selectedFields)->get();
+
+        if ($fields->isEmpty()) {
+            return null;
+        }
+
+        $minRow = $fields->min(Field::row);
+        $maxRow = $fields->max(Field::row);
+        $minCol = $fields->min(Field::column);
+        $maxCol = $fields->max(Field::column);
+
+        // Berücksichtige die field height/width (multi-cell fields)
+        $maxRowEnd = $fields->map(fn($f) => $f->{Field::row} + $f->{Field::height} - 1)->max();
+        $maxColEnd = $fields->map(fn($f) => $f->{Field::column} + $f->{Field::width} - 1)->max();
+
+        $selectionRows = $maxRowEnd - $minRow + 1;
+        $selectionCols = $maxColEnd - $minCol + 1;
+
+        return [
+            'rows'      => $selectionRows,
+            'cols'      => $selectionCols,
+            'width_cm'  => Setting::calculatePhysicalWidth($selectionCols),
+            'height_cm' => Setting::calculatePhysicalHeight($selectionRows),
+        ];
     }
 
     public function getFieldsGrid(): array

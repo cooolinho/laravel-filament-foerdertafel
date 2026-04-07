@@ -2,7 +2,9 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Models\Field;
 use App\Models\Inquiry;
+use App\Models\Setting;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Enums\Width;
@@ -42,7 +44,7 @@ class InquiryCompletePage extends Page
         }
 
         // Clear the session variable after loading to prevent page refresh
-        session()->forget('inquiry_complete');
+//        session()->forget('inquiry_complete');
     }
 
     public function getTotalPricePerMonth(): float
@@ -69,9 +71,38 @@ class InquiryCompletePage extends Page
         }
     }
 
+    /**
+     * Berechnet die physischen Abmessungen der gebuchten Felder in cm.
+     *
+     * @return array{rows: int, cols: int, width_cm: float, height_cm: float}|null
+     */
+    public function getSelectedFieldDimensions(): ?array
+    {
+        if (!$this->inquiry || $this->inquiry->fields->isEmpty()) {
+            return null;
+        }
+
+        $fields = $this->inquiry->fields;
+
+        $minRow    = $fields->min(Field::row);
+        $minCol    = $fields->min(Field::column);
+        $maxRowEnd = $fields->map(fn($f) => $f->{Field::row} + $f->{Field::height} - 1)->max();
+        $maxColEnd = $fields->map(fn($f) => $f->{Field::column} + $f->{Field::width} - 1)->max();
+
+        $selectionRows = $maxRowEnd - $minRow + 1;
+        $selectionCols = $maxColEnd - $minCol + 1;
+
+        return [
+            'rows'      => $selectionRows,
+            'cols'      => $selectionCols,
+            'width_cm'  => Setting::calculatePhysicalWidth($selectionCols),
+            'height_cm' => Setting::calculatePhysicalHeight($selectionRows),
+        ];
+    }
+
     public function getMaxContentWidth(): Width
     {
-        return Width::Large;
+        return Width::FourExtraLarge;
     }
 
     /**

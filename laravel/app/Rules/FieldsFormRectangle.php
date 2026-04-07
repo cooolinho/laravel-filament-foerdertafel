@@ -3,6 +3,7 @@
 namespace App\Rules;
 
 use App\Models\Field;
+use App\Models\Setting;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -27,7 +28,7 @@ class FieldsFormRectangle implements ValidationRule
             return;
         }
 
-        // Extract all positions
+        // Extract all grid positions (accounting for multi-cell fields)
         $positions = [];
         foreach ($value as $fieldId) {
             $field = $fields->get($fieldId);
@@ -35,7 +36,6 @@ class FieldsFormRectangle implements ValidationRule
                 continue;
             }
 
-            // Get all grid positions this field occupies
             for ($row = $field->row; $row < $field->row + $field->height; $row++) {
                 for ($col = $field->column; $col < $field->column + $field->width; $col++) {
                     $positions[] = ['row' => $row, 'col' => $col];
@@ -46,6 +46,29 @@ class FieldsFormRectangle implements ValidationRule
         // Check if positions form a rectangle
         if (!$this->formRectangle($positions)) {
             $fail('Die ausgewählten Felder müssen ein zusammenhängendes Rechteck bilden.');
+            return;
+        }
+
+        // Check row/column constraints derived from max_fields_per_customer
+        $minRow = min(array_column($positions, 'row'));
+        $maxRow = max(array_column($positions, 'row'));
+        $minCol = min(array_column($positions, 'col'));
+        $maxCol = max(array_column($positions, 'col'));
+
+        $selectionRows = $maxRow - $minRow + 1;
+        $selectionCols = $maxCol - $minCol + 1;
+
+        $maxAllowedRows = Setting::getMaxSelectionRows();
+        $maxAllowedCols = Setting::getMaxSelectionCols();
+
+        if ($selectionRows > $maxAllowedRows) {
+            $fail("Die Auswahl darf maximal {$maxAllowedRows} Zeile(n) umfassen (aktuell: {$selectionRows}).");
+            return;
+        }
+
+        if ($selectionCols > $maxAllowedCols) {
+            $fail("Die Auswahl darf maximal {$maxAllowedCols} Spalte(n) umfassen (aktuell: {$selectionCols}).");
+            return;
         }
     }
 
@@ -58,27 +81,22 @@ class FieldsFormRectangle implements ValidationRule
             return false;
         }
 
-        // Find min/max rows and columns
         $minRow = min(array_column($positions, 'row'));
         $maxRow = max(array_column($positions, 'row'));
         $minCol = min(array_column($positions, 'col'));
         $maxCol = max(array_column($positions, 'col'));
 
-        // Calculate expected number of positions in rectangle
         $expectedCount = ($maxRow - $minRow + 1) * ($maxCol - $minCol + 1);
 
-        // Check if we have the right number of positions
         if (count($positions) !== $expectedCount) {
             return false;
         }
 
-        // Create a set of position strings for quick lookup
         $positionSet = [];
         foreach ($positions as $pos) {
             $positionSet[$pos['row'] . ',' . $pos['col']] = true;
         }
 
-        // Check if all positions in the rectangle are present
         for ($row = $minRow; $row <= $maxRow; $row++) {
             for ($col = $minCol; $col <= $maxCol; $col++) {
                 if (!isset($positionSet[$row . ',' . $col])) {

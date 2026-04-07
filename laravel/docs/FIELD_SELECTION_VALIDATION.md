@@ -4,6 +4,97 @@
 
 Die InquiryPage verwendet zwei Custom Validation Rules, um sicherzustellen, dass die ausgewählten Felder bestimmte Kriterien erfüllen.
 
+Die **Grenzwerte** (maximale Felder, Zeilen, Spalten) sowie die **physischen Maße** (Kachelbreite, Kachelhöhe, Abstand) werden zentral im `Setting`-Model gespeichert und können über die Admin-SettingsPage angepasst werden.
+
+---
+
+## Konfiguration in den Einstellungen (SettingsPage)
+
+### Relevante Settings
+
+| Feld | Konstante | Standardwert | Beschreibung |
+|------|-----------|-------------|--------------|
+| `max_fields_per_customer` | `Setting::max_fields_per_customer` | `10` | Maximale Gesamtanzahl auswählbarer Felder |
+| `field_width_cm` | `Setting::field_width_cm` | `8.9` | Breite einer einzelnen Kachel in cm |
+| `field_height_cm` | `Setting::field_height_cm` | `5.1` | Höhe einer einzelnen Kachel in cm |
+| `field_gap_cm` | `Setting::field_gap_cm` | `1.2` | Abstand zwischen Kacheln in cm |
+
+### Automatische Berechnung von Max-Zeilen und Max-Spalten
+
+Aus `max_fields_per_customer` werden die erlaubten Dimensionen **automatisch** berechnet:
+
+```php
+// Max. Zeilen = floor(sqrt(max_fields))
+Setting::getMaxSelectionRows();
+
+// Max. Spalten = ceil(max_fields / max_rows)
+Setting::getMaxSelectionCols();
+```
+
+#### Beispiele
+
+| `max_fields_per_customer` | Max Zeilen | Max Spalten | Größtes Rechteck |
+|--------------------------|-----------|------------|-----------------|
+| 4 | 2 | 2 | 2×2 |
+| 6 | 2 | 3 | 2×3 |
+| 9 | 3 | 3 | 3×3 |
+| 12 | 3 | 4 | 3×4 |
+| 16 | 4 | 4 | 4×4 |
+
+> **Wichtig:** Eine Auswahl von z. B. 9 Feldern als 1×9-Linie ist **nicht erlaubt**, da max. 3 Spalten (bei `max_fields=9`) gestattet sind. Die Auswahl muss stets ein möglichst quadratisches Rechteck bilden.
+
+---
+
+## Physische Maßberechnung
+
+### Methoden im Setting-Model
+
+```php
+// Physische Breite für X Spalten (inkl. Gaps)
+Setting::calculatePhysicalWidth(int $cols): float
+
+// Physische Höhe für Y Zeilen (inkl. Gaps)
+Setting::calculatePhysicalHeight(int $rows): float
+```
+
+### Formel
+
+```
+Breite = cols × field_width_cm  + (cols - 1) × field_gap_cm
+Höhe   = rows × field_height_cm + (rows - 1) × field_gap_cm
+```
+
+### Beispiele (Standardwerte: 8,9 cm Breite, 5,1 cm Höhe, 1,2 cm Gap)
+
+| Auswahl | Breite (cm) | Höhe (cm) |
+|---------|------------|----------|
+| 1×1 | 8,9 | 5,1 |
+| 1×2 | 19,0 (8,9 + 1,2 + 8,9) | 5,1 |
+| 1×3 | 29,1 | 5,1 |
+| 2×1 | 8,9 | 11,4 (5,1 + 1,2 + 5,1) |
+| 2×2 | 19,0 | 11,4 |
+| 3×3 | 29,1 | 17,7 |
+
+### Alle gültigen Konfigurationen abrufen
+
+```php
+// Gibt alle validen R×C-Kombinationen zurück inkl. physischer Maße
+Setting::getValidRectangles();
+
+// Rückgabe-Struktur (Beispiel bei max_fields=9):
+[
+    ['rows' => 1, 'cols' => 1, 'total' => 1,  'width_cm' => 8.9,  'height_cm' => 5.1],
+    ['rows' => 1, 'cols' => 2, 'total' => 2,  'width_cm' => 19.0, 'height_cm' => 5.1],
+    ['rows' => 1, 'cols' => 3, 'total' => 3,  'width_cm' => 29.1, 'height_cm' => 5.1],
+    ['rows' => 2, 'cols' => 1, 'total' => 2,  'width_cm' => 8.9,  'height_cm' => 11.4],
+    ['rows' => 2, 'cols' => 2, 'total' => 4,  'width_cm' => 19.0, 'height_cm' => 11.4],
+    ['rows' => 2, 'cols' => 3, 'total' => 6,  'width_cm' => 29.1, 'height_cm' => 11.4],
+    ['rows' => 3, 'cols' => 1, 'total' => 3,  'width_cm' => 8.9,  'height_cm' => 17.7],
+    ['rows' => 3, 'cols' => 2, 'total' => 6,  'width_cm' => 19.0, 'height_cm' => 17.7],
+    ['rows' => 3, 'cols' => 3, 'total' => 9,  'width_cm' => 29.1, 'height_cm' => 17.7],
+]
+```
+
 ---
 
 ## 1. FieldsFormRectangle Rule
@@ -11,110 +102,105 @@ Die InquiryPage verwendet zwei Custom Validation Rules, um sicherzustellen, dass
 **Datei**: `app/Rules/FieldsFormRectangle.php`
 
 ### Zweck
-Prüft, ob die ausgewählten Felder ein zusammenhängendes Rechteck bilden.
+Prüft, ob die ausgewählten Felder:
+1. ein **zusammenhängendes Rechteck** bilden
+2. die erlaubten **Zeilen- und Spalten-Grenzen** nicht überschreiten (aus Settings)
 
-### Funktionsweise
+### Validierungsschritte
 
-1. **Positions-Extraktion**
-   - Lädt alle ausgewählten Felder aus der Datenbank
-   - Extrahiert alle Grid-Positionen, die diese Felder einnehmen
-   - Berücksichtigt dabei multi-cell Felder (width × height)
-
-2. **Rechteck-Prüfung**
-   - Findet minimale und maximale Row/Column
-   - Berechnet erwartete Anzahl an Positionen im Rechteck
-   - Prüft ob alle Positionen innerhalb des Rechtecks vorhanden sind
-
-### Beispiele
-
-#### ✅ Gültiges Rechteck
 ```
-Felder: (1,1), (1,2), (2,1), (2,2)
+1. Felder laden & Grid-Positionen extrahieren (inkl. multi-cell)
+2. Rechteck-Prüfung: alle Positionen innerhalb der Bounding-Box vorhanden?
+3. Zeilen-Check:  selectionRows ≤ Setting::getMaxSelectionRows()
+4. Spalten-Check: selectionCols ≤ Setting::getMaxSelectionCols()
+```
 
+### Rechteck-Prüfung
+
+#### ✅ Gültige Beispiele
+
+```
+1×1 (einzelnes Feld):
+┌───┐
+│ X │  → ✓
+└───┘
+
+1×3 (horizontale Linie bei max_cols ≥ 3):
+┌───┬───┬───┐
+│ X │ X │ X │  → ✓
+└───┴───┴───┘
+
+2×2:
 ┌───┬───┐
-│ X │ X │
+│ X │ X │  → ✓
 ├───┼───┤
 │ X │ X │
 └───┴───┘
-
-→ Bildet 2×2 Rechteck ✓
 ```
 
-#### ❌ Ungültiges Rechteck
-```
-Felder: (1,1), (1,2), (2,1)
+#### ❌ Ungültige Beispiele
 
+```
+L-Form:
 ┌───┬───┐
 │ X │ X │
 ├───┼───┤
-│ X │   │  ← Feld (2,2) fehlt!
+│ X │   │  ← (2,2) fehlt  → ✗
 └───┴───┘
 
-→ Kein vollständiges Rechteck ✗
-```
-
-#### ✅ L-Form wird abgelehnt
-```
-Felder: (1,1), (1,2), (2,1), (3,1)
-
-┌───┬───┐
-│ X │ X │
-├───┼───┤
-│ X │   │
-├───┼───┤
-│ X │   │
-└───┴───┘
-
-→ Kein Rechteck ✗
+1×9-Linie bei max_fields=9 (max_cols=3):
+┌───┬───┬───┬───┬───┬───┬───┬───┬───┐
+│ X │ X │ X │ X │ X │ X │ X │ X │ X │
+└───┴───┴───┴───┴───┴───┴───┴───┴───┘
+→ ✗  (9 Spalten > max_cols 3)
 ```
 
 ### Code-Logik
 
 ```php
-// 1. Min/Max Positionen finden
+// 1. Grid-Positionen extrahieren (multi-cell-fähig)
+foreach ($value as $fieldId) {
+    $field = $fields->get($fieldId);
+    for ($row = $field->row; $row < $field->row + $field->height; $row++) {
+        for ($col = $field->column; $col < $field->column + $field->width; $col++) {
+            $positions[] = ['row' => $row, 'col' => $col];
+        }
+    }
+}
+
+// 2. Rechteck-Prüfung
 $minRow = min(array_column($positions, 'row'));
 $maxRow = max(array_column($positions, 'row'));
 $minCol = min(array_column($positions, 'col'));
 $maxCol = max(array_column($positions, 'col'));
 
-// 2. Erwartete Anzahl berechnen
 $expectedCount = ($maxRow - $minRow + 1) * ($maxCol - $minCol + 1);
-
-// 3. Tatsächliche vs. Erwartete Anzahl vergleichen
 if (count($positions) !== $expectedCount) {
-    return false;
+    $fail('Die ausgewählten Felder müssen ein zusammenhängendes Rechteck bilden.');
+    return;
 }
 
-// 4. Alle Positionen im Rechteck prüfen
-for ($row = $minRow; $row <= $maxRow; $row++) {
-    for ($col = $minCol; $col <= $maxCol; $col++) {
-        if (!isset($positionSet[$row . ',' . $col])) {
-            return false; // Position fehlt
-        }
-    }
+// 3. Zeilen/Spalten-Grenzen prüfen
+$selectionRows = $maxRow - $minRow + 1;
+$selectionCols = $maxCol - $minCol + 1;
+
+if ($selectionRows > Setting::getMaxSelectionRows()) {
+    $fail("Die Auswahl darf maximal X Zeile(n) umfassen.");
+    return;
 }
-```
-
-### Multi-Cell Felder
-
-Die Regel berücksichtigt korrekt Felder, die mehrere Grid-Zellen einnehmen:
-
-```php
-// Feld mit width=2, height=1 an Position (1,1)
-// Belegt Positionen: (1,1) und (1,2)
-
-for ($row = $field->row; $row < $field->row + $field->height; $row++) {
-    for ($col = $field->column; $col < $field->column + $field->width; $col++) {
-        $positions[] = ['row' => $row, 'col' => $col];
-    }
+if ($selectionCols > Setting::getMaxSelectionCols()) {
+    $fail("Die Auswahl darf maximal X Spalte(n) umfassen.");
+    return;
 }
 ```
 
-### Fehlermeldung
+### Fehlermeldungen
 
-```
-"Die ausgewählten Felder müssen ein zusammenhängendes Rechteck bilden."
-```
+| Situation | Meldung |
+|-----------|---------|
+| Kein Rechteck | `"Die ausgewählten Felder müssen ein zusammenhängendes Rechteck bilden."` |
+| Zu viele Zeilen | `"Die Auswahl darf maximal X Zeile(n) umfassen (aktuell: Y)."` |
+| Zu viele Spalten | `"Die Auswahl darf maximal X Spalte(n) umfassen (aktuell: Y)."` |
 
 ---
 
@@ -123,45 +209,25 @@ for ($row = $field->row; $row < $field->row + $field->height; $row++) {
 **Datei**: `app/Rules/MaxFieldsCount.php`
 
 ### Zweck
-Begrenzt die Anzahl der auswählbaren Felder auf ein Maximum.
-
-### Parameter
-- `$maxFields`: Maximale Anzahl (Standard: 10)
+Begrenzt die **Gesamtanzahl** der auswählbaren Felder auf `max_fields_per_customer`.
 
 ### Verwendung
 
 ```php
-new MaxFieldsCount(10) // Max 10 Felder
-new MaxFieldsCount(5)  // Max 5 Felder
-```
-
-### Funktionsweise
-
-```php
-if (count($value) > $this->maxFields) {
-    $fail("Sie können maximal {$this->maxFields} Felder auswählen.");
-}
+new MaxFieldsCount(Setting::get(Setting::max_fields_per_customer, 4))
 ```
 
 ### Fehlermeldung
 
 ```
-"Sie können maximal 10 Felder auswählen."
+"Sie können maximal {$maxFields} Felder auswählen."
 ```
 
 ---
 
 ## Integration in InquiryPage
 
-### 1. Import der Rules
-
-```php
-use App\Rules\FieldsFormRectangle;
-use App\Rules\MaxFieldsCount;
-use Illuminate\Support\Facades\Validator;
-```
-
-### 2. Validierung im submit()
+### Validierung im `submit()`
 
 ```php
 $validator = Validator::make(
@@ -171,49 +237,108 @@ $validator = Validator::make(
             'required',
             'array',
             'min:1',
-            new MaxFieldsCount(10),
-            new FieldsFormRectangle(),
+            new MaxFieldsCount(Setting::get(Setting::max_fields_per_customer, 4)),
+            new FieldsFormRectangle(),  // prüft Rechteck + Zeilen/Spalten-Limits
         ],
     ],
     [
         'selected_fields.required' => 'Bitte wählen Sie mindestens ein Feld aus.',
-        'selected_fields.min' => 'Bitte wählen Sie mindestens ein Feld aus.',
+        'selected_fields.min'      => 'Bitte wählen Sie mindestens ein Feld aus.',
     ]
 );
-
-if ($validator->fails()) {
-    Notification::make()
-        ->title('Ungültige Feld-Auswahl')
-        ->body($validator->errors()->first('selected_fields'))
-        ->danger()
-        ->send();
-    return;
-}
 ```
 
-### 3. Live-Feedback in toggleField()
+### Live-Feedback in `toggleField()`
+
+Der Max-Wert kommt ebenfalls aus den Settings (nicht mehr hardcodiert):
 
 ```php
 public function toggleField(int $fieldId): void
 {
+    $maxFields = (int) Setting::get(Setting::max_fields_per_customer, 4);
+
     if (in_array($fieldId, $this->selectedFields)) {
-        // Remove field
         $this->selectedFields = array_values(array_diff($this->selectedFields, [$fieldId]));
     } else {
-        // Check max limit
-        if (count($this->selectedFields) >= 10) {
+        if (count($this->selectedFields) >= $maxFields) {
             Notification::make()
                 ->title('Maximale Anzahl erreicht')
-                ->body('Sie können maximal 10 Felder auswählen.')
+                ->body("Sie können maximal {$maxFields} Felder auswählen.")
                 ->warning()
                 ->send();
             return;
         }
-        
         $this->selectedFields[] = $fieldId;
     }
+
+    $this->dispatch('fields-updated');
 }
 ```
+
+### Maßanzeige nach Auswahl (`getSelectedFieldDimensions()`)
+
+Sobald Felder ausgewählt sind, berechnet die InquiryPage die physischen Abmessungen:
+
+```php
+public function getSelectedFieldDimensions(): ?array
+{
+    // Bounding-Box der ausgewählten Felder ermitteln
+    $minRow = $fields->min(Field::row);
+    $maxRowEnd = $fields->map(fn($f) => $f->row + $f->height - 1)->max();
+    $minCol = $fields->min(Field::column);
+    $maxColEnd = $fields->map(fn($f) => $f->column + $f->width - 1)->max();
+
+    $selectionRows = $maxRowEnd - $minRow + 1;
+    $selectionCols = $maxColEnd - $minCol + 1;
+
+    return [
+        'rows'      => $selectionRows,
+        'cols'      => $selectionCols,
+        'width_cm'  => Setting::calculatePhysicalWidth($selectionCols),
+        'height_cm' => Setting::calculatePhysicalHeight($selectionRows),
+    ];
+}
+```
+
+Das Ergebnis wird in der InquiryPage-Blade als **grüne Info-Box** angezeigt:
+
+```
+┌─────────────────────────────────────────┐
+│ 📐 Maße Ihrer Auswahl (2 × 3 Felder)   │
+│                                         │
+│  Breite: 29,1 cm   │  Höhe: 11,4 cm   │
+│  3×8,9 + 2×1,2     │  2×5,1 + 1×1,2   │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## FieldInformationPage
+
+**Datei**: `app/Filament/App/Pages/FieldInformationPage.php`  
+**View**: `resources/views/filament/app/pages/field-information-page.blade.php`  
+**Navigation**: „Feldgrößen" (Sort: 3)
+
+### Inhalte der Seite
+
+1. **SVG-Diagramm** – Visualisierung des maximalen Rasters (max_rows × max_cols) mit:
+   - Einzelmaße pro Kachel oben/links (z. B. 8,9 | 1,2 | 8,9 | ...)
+   - Kumulative Maße für 2 bis max Kacheln unten/rechts (z. B. 19,0, 29,1)
+
+2. **Konfigurationstabelle** – Alle gültigen R×C-Kombinationen mit Breite, Höhe und Berechnungsformel
+
+3. **Referenz-Box** – Einzelkachelmaße auf einen Blick
+
+### Methoden
+
+| Methode | Rückgabe | Beschreibung |
+|---------|---------|-------------|
+| `getFieldWidth()` | `float` | Kachelbreite aus Settings |
+| `getFieldHeight()` | `float` | Kachelhöhe aus Settings |
+| `getFieldGap()` | `float` | Gap aus Settings |
+| `getMaxRows()` | `int` | `Setting::getMaxSelectionRows()` |
+| `getMaxCols()` | `int` | `Setting::getMaxSelectionCols()` |
+| `getValidRectangles()` | `array` | `Setting::getValidRectangles()` |
 
 ---
 
@@ -221,89 +346,33 @@ public function toggleField(int $fieldId): void
 
 ### Validierungs-Flow
 
-1. **Während Auswahl**:
-   - Bei Klick auf 11. Feld → Warning-Notification: "Maximale Anzahl erreicht"
-   - Feld wird nicht ausgewählt
+```
+Kunde klickt auf Feld
+    │
+    ├─ Anzahl bereits = max_fields? → ⚠️ Warning-Notification, Feld nicht ausgewählt
+    └─ Sonst: Feld zur Auswahl hinzufügen
+           │
+           └─ Maß-Info-Box aktualisiert sich (Breite/Höhe live)
 
-2. **Beim Submit**:
-   - Prüfung auf mindestens 1 Feld
-   - Prüfung auf max. 10 Felder
-   - Prüfung auf Rechteck-Form
-   - Bei Fehler → Danger-Notification mit spezifischer Fehlermeldung
+Kunde klickt „Absenden"
+    │
+    ├─ Kein Feld ausgewählt? → ❌ Danger-Notification
+    ├─ > max_fields Felder? → ❌ Danger-Notification
+    ├─ Kein Rechteck? → ❌ Danger-Notification
+    ├─ Zeilen > max_rows? → ❌ Danger-Notification
+    ├─ Spalten > max_cols? → ❌ Danger-Notification
+    └─ Alles OK → ✅ Anfrage wird erstellt
+```
 
 ### Notifications
 
 | Typ | Titel | Nachricht | Wann |
 |-----|-------|-----------|------|
-| Warning | Maximale Anzahl erreicht | Sie können maximal 10 Felder auswählen. | Bei Klick auf 11. Feld |
+| Warning | Maximale Anzahl erreicht | Sie können maximal N Felder auswählen. | Bei Klick auf (N+1). Feld |
 | Danger | Fehler | Bitte wählen Sie mindestens ein Feld aus. | Submit ohne Auswahl |
-| Danger | Ungültige Feld-Auswahl | Die ausgewählten Felder müssen ein zusammenhängendes Rechteck bilden. | Submit mit ungültigem Rechteck |
-| Danger | Ungültige Feld-Auswahl | Sie können maximal 10 Felder auswählen. | Submit mit >10 Feldern |
-| Success | Anfrage erfolgreich gesendet! | Wir werden uns in Kürze bei Ihnen melden. | Erfolgreicher Submit |
-
----
-
-## Testing
-
-### Test-Szenarien
-
-#### 1. Rechteck-Validierung
-
-**Test 1: Gültiges 2×2 Rechteck**
-```
-Input: Felder (1,1), (1,2), (2,1), (2,2)
-Expected: ✅ Valid
-```
-
-**Test 2: Ungültiges L-Form**
-```
-Input: Felder (1,1), (1,2), (2,1)
-Expected: ❌ "Die ausgewählten Felder müssen ein zusammenhängendes Rechteck bilden."
-```
-
-**Test 3: Einzelnes Feld**
-```
-Input: Feld (1,1)
-Expected: ✅ Valid (1×1 Rechteck)
-```
-
-**Test 4: Horizontale Linie**
-```
-Input: Felder (1,1), (1,2), (1,3)
-Expected: ✅ Valid (1×3 Rechteck)
-```
-
-**Test 5: Vertikale Linie**
-```
-Input: Felder (1,1), (2,1), (3,1)
-Expected: ✅ Valid (3×1 Rechteck)
-```
-
-**Test 6: Diagonal**
-```
-Input: Felder (1,1), (2,2), (3,3)
-Expected: ❌ Invalid (kein Rechteck)
-```
-
-#### 2. Max-Fields-Validierung
-
-**Test 1: Genau 10 Felder**
-```
-Input: 10 Felder als Rechteck
-Expected: ✅ Valid
-```
-
-**Test 2: 11 Felder**
-```
-Input: 11 Felder
-Expected: ❌ "Sie können maximal 10 Felder auswählen."
-```
-
-**Test 3: Live-Limit**
-```
-Action: Klick auf 11. Feld (während Auswahl)
-Expected: ⚠️ Warning-Notification, Feld wird nicht ausgewählt
-```
+| Danger | Ungültige Feld-Auswahl | Die ausgewählten Felder müssen ein zusammenhängendes Rechteck bilden. | Kein Rechteck |
+| Danger | Ungültige Feld-Auswahl | Die Auswahl darf maximal X Zeile(n) umfassen. | Zu viele Zeilen |
+| Danger | Ungültige Feld-Auswahl | Die Auswahl darf maximal X Spalte(n) umfassen. | Zu viele Spalten |
 
 ---
 
@@ -311,80 +380,57 @@ Expected: ⚠️ Warning-Notification, Feld wird nicht ausgewählt
 
 ### Multi-Cell Felder
 
-**Scenario**: Feld A (2×1) an (1,1) und Feld B (1×1) an (2,1)
-
 ```
-┌───────┬───┐
-│   A   │   │  A belegt (1,1) und (1,2)
-├───┬───┼───┤
-│ B │   │   │  B belegt (2,1)
-└───┴───┴───┘
+Feld A (width=2, height=1) an (1,1): belegt (1,1) und (1,2)
+Feld B (width=1, height=1) an (2,1): belegt (2,1)
 
-Felder: [A, B]
-Positionen: [(1,1), (1,2), (2,1)]
+Grid:
+┌───────┐
+│   A   │  (1,1)+(1,2)
+├───┬───┤
+│ B │   │  (2,1) – (2,2) fehlt!
+└───┴───┘
 
-→ Ungültig, da (2,2) fehlt
+→ ✗ Kein vollständiges Rechteck
 ```
 
-### Leere Auswahl
-- Wird bereits vor Validator-Aufruf abgefangen
-- Frühe Rückkehr mit spezifischer Fehlermeldung
+Die Bounding-Box berücksichtigt immer die gesamte Ausdehnung eines Multi-Cell-Felds.
 
-### Ungültige Field-IDs
-- Validator ignoriert fehlende Felder
-- Andere Validierung sollte Existenz-Check durchführen
+### Nicht-quadratische `max_fields`-Werte
+
+Bei `max_fields = 7`:
+- `max_rows = floor(sqrt(7)) = 2`
+- `max_cols = ceil(7 / 2) = 4`
+- Effektiv erreichbar: 2×3 = 6 Felder (da 2×4=8 > 7 von MaxFieldsCount abgefangen wird)
 
 ---
 
-## Konfiguration
+## Datenbank-Migration
 
-### Max-Fields ändern
+Die Feld-Dimensionen werden in der `settings`-Tabelle gespeichert:
 
-In `InquiryPage.php`:
-
-```php
-// Aktuell: Max 10 Felder
-new MaxFieldsCount(10)
-
-// Ändern auf 15 Felder:
-new MaxFieldsCount(15)
+```
+Migration: 2026_04_07_000000_add_field_dimensions_to_settings_table.php
 ```
 
-Vergiss nicht, auch die Live-Validierung anzupassen:
-
 ```php
-if (count($this->selectedFields) >= 15) {
-    // ...
-}
-```
-
-### Custom Fehlermeldungen
-
-```php
-$validator = Validator::make(
-    ['selected_fields' => $this->selectedFields],
-    [
-        'selected_fields' => [
-            new MaxFieldsCount(10),
-            new FieldsFormRectangle(),
-        ],
-    ],
-    [
-        // Custom Messages hier
-    ]
-);
+Schema::table('settings', function (Blueprint $table) {
+    $table->decimal('field_width_cm', 5, 2)->default(8.9);
+    $table->decimal('field_height_cm', 5, 2)->default(5.1);
+    $table->decimal('field_gap_cm', 5, 2)->default(1.2);
+});
 ```
 
 ---
 
 ## Zusammenfassung
 
-Die Validierungsregeln stellen sicher:
-
-✅ **Mindestens 1 Feld** muss ausgewählt sein
-✅ **Maximal 10 Felder** können ausgewählt werden
-✅ **Rechteck-Form** muss gebildet werden
-✅ **Live-Feedback** für bessere UX
-✅ **Multi-Cell Felder** werden korrekt berücksichtigt
-
-Die Implementierung ist **robust** und **produktionsreif**! 🚀
+✅ **Mindestens 1 Feld** muss ausgewählt sein  
+✅ **Maximal N Felder** (aus Settings konfigurierbar, kein Hardcoding)  
+✅ **Rechteck-Form** muss gebildet werden  
+✅ **Max. Zeilen** automatisch aus `floor(sqrt(max_fields))`  
+✅ **Max. Spalten** automatisch aus `ceil(max_fields / max_rows)`  
+✅ **Live-Maßanzeige** (Breite/Höhe in cm) nach Feldauswahl  
+✅ **FieldInformationPage** mit SVG-Diagramm und Konfigurationstabelle  
+✅ **Multi-Cell Felder** werden korrekt berücksichtigt  
+✅ **Alle Grenzwerte** zentral in der SettingsPage pflegbar

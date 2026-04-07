@@ -20,13 +20,14 @@
             {{-- Instructions --}}
             <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div class="flex items-start gap-3">
-                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <div>
                         <h3 class="font-semibold text-blue-900 dark:text-blue-100">So funktioniert's:</h3>
                         <ol class="mt-2 space-y-1 text-sm text-blue-800 dark:text-blue-200 list-decimal list-inside">
-                            <li>Wählen Sie die gewünschten Felder im Raster aus (klicken Sie auf die verfügbaren Felder)</li>
+                            <li>Wählen Sie die gewünschten Felder im Raster aus (klicken Sie auf die verfügbaren Felder, max. <b>{{ \App\Models\Setting::getMaxFieldsPerCustomer() }} Felder</b>)</li>
+                            <li>Die Auswahl muss immer ein zusammenhängendes Rechteck ergeben (max. {{ \App\Models\Setting::getMaxSelectionRows() }} Zeile(n) × {{ \App\Models\Setting::getMaxSelectionCols() }} Spalte(n))</li>
                             <li>Füllen Sie das Formular mit Ihren Kontaktdaten aus</li>
                             <li>Geben Sie den gewünschten Zeitraum an</li>
                             <li>Senden Sie die Anfrage ab - wir melden uns bei Ihnen!</li>
@@ -196,6 +197,49 @@
 
                 {{-- Right Column: Form & Price Summary --}}
                 <div class="space-y-6">
+                    {{-- Maßanzeige --}}
+                    @php $dims = $this->getSelectedFieldDimensions(); @endphp
+                    @if($dims)
+                        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                            <div class="flex items-start gap-2">
+                                <svg class="w-5 h-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                                </svg>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">
+                                        Maße Ihrer Auswahl ({{ $dims['rows'] }} × {{ $dims['cols'] }} Felder)
+                                    </h4>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="bg-white dark:bg-green-900/30 rounded p-2 text-center">
+                                            <div class="text-xs text-green-700 dark:text-green-300">Breite</div>
+                                            <div class="text-lg font-bold text-green-900 dark:text-green-100">
+                                                {{ number_format($dims['width_cm'], 1, ',', '.') }} cm
+                                            </div>
+                                            @if($dims['cols'] > 1)
+                                                <div class="text-xs text-green-600 dark:text-green-400 mt-0.5">
+                                                    {{ $dims['cols'] }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_width_cm, 8.9), 1, ',', '.') }}
+                                                    + {{ $dims['cols'] - 1 }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_gap_cm, 1.2), 1, ',', '.') }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div class="bg-white dark:bg-green-900/30 rounded p-2 text-center">
+                                            <div class="text-xs text-green-700 dark:text-green-300">Höhe</div>
+                                            <div class="text-lg font-bold text-green-900 dark:text-green-100">
+                                                {{ number_format($dims['height_cm'], 1, ',', '.') }} cm
+                                            </div>
+                                            @if($dims['rows'] > 1)
+                                                <div class="text-xs text-green-600 dark:text-green-400 mt-0.5">
+                                                    {{ $dims['rows'] }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_height_cm, 5.1), 1, ',', '.') }}
+                                                    + {{ $dims['rows'] - 1 }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_gap_cm, 1.2), 1, ',', '.') }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Price Summary --}}
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 sticky top-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Preisübersicht</h3>
