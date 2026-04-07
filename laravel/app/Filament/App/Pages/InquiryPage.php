@@ -46,13 +46,19 @@ class InquiryPage extends Page implements HasForms
 
     public ?Board $board = null;
 
-    public ?array $data = [];
+    /** Aktueller Schritt (1–6) */
+    public int $currentStep = 1;
+
+    // Formular-Daten je Schritt
+    public array $contactData    = [];
+    public array $rentalData     = [];
+    public array $paymentData    = [];
+    public array $attachmentsData = [];
 
     public array $selectedFields = [];
 
     public function mount(): void
     {
-        // Lade das Board mit allen Feldern
         $boardId = request()->query('board');
 
         if ($boardId) {
@@ -75,10 +81,30 @@ class InquiryPage extends Page implements HasForms
             ])->first();
         }
 
-        $this->form->fill();
+        // Alle Teilformulare initialisieren
+        $this->contactForm->fill();
+        $this->rentalForm->fill();
+        $this->paymentForm->fill();
+        $this->attachmentsForm->fill();
     }
 
-    public function form(Schema $schema): Schema
+    // ── Schritt-Titel ────────────────────────────────────────────────────────
+
+    public function getStepTitles(): array
+    {
+        return [
+            1 => 'Felder',
+            2 => 'Kontaktdaten',
+            3 => 'Mietdetails',
+            4 => 'Zahlung',
+            5 => 'AGB',
+            6 => 'Übersicht',
+        ];
+    }
+
+    // ── Schritt 2: Kontaktdaten ──────────────────────────────────────────────
+
+    public function contactForm(Schema $schema): Schema
     {
         return $schema
             ->schema([
@@ -99,18 +125,21 @@ class InquiryPage extends Page implements HasForms
                     ->label('Ihre Telefonnummer')
                     ->tel()
                     ->maxLength(255)
-                    ->placeholder('+49 123 456789'),
+                    ->placeholder('+49 123 456789')
+                    ->columnSpanFull(),
 
                 Checkbox::make('is_company')
                     ->label('Anfrage als Unternehmen')
-                    ->reactive(),
+                    ->reactive()
+                    ->columnSpanFull(),
 
                 TextInput::make('company_name')
                     ->label('Unternehmensname')
                     ->maxLength(255)
                     ->placeholder('Musterfirma GmbH')
                     ->visible(fn ($get) => (bool) $get('is_company'))
-                    ->required(fn ($get) => (bool) $get('is_company')),
+                    ->required(fn ($get) => (bool) $get('is_company'))
+                    ->columnSpanFull(),
 
                 TextInput::make('street')
                     ->label('Straße')
@@ -135,7 +164,17 @@ class InquiryPage extends Page implements HasForms
                     ->required()
                     ->maxLength(255)
                     ->placeholder('Berlin'),
+            ])
+            ->columns(2)
+            ->statePath('contactData');
+    }
 
+    // ── Schritt 3: Mietdetails ───────────────────────────────────────────────
+
+    public function rentalForm(Schema $schema): Schema
+    {
+        return $schema
+            ->schema([
                 Select::make('start_month')
                     ->label('Start-Monat')
                     ->options($this->getAvailableMonths())
@@ -144,7 +183,8 @@ class InquiryPage extends Page implements HasForms
                     ->reactive()
                     ->afterStateUpdated(fn () => $this->dispatch('dates-updated'))
                     ->helperText('Wählen Sie den Monat, in dem Ihre Miete beginnen soll. Die Miete startet immer am 1. des Monats.')
-                    ->placeholder('Monat auswählen'),
+                    ->placeholder('Monat auswählen')
+                    ->columnSpanFull(),
 
                 TextEntry::make('rental_info')
                     ->label('Mietdauer')
@@ -170,67 +210,68 @@ class InquiryPage extends Page implements HasForms
 
                 Textarea::make('message')
                     ->label('Nachricht (optional)')
-                    ->rows(3)
+                    ->rows(4)
                     ->placeholder('Ihre Nachricht an uns...')
                     ->columnSpanFull(),
+            ])
+            ->statePath('rentalData');
+    }
 
-                // Rechnungsinformationen
-                Section::make('Rechnungsinformationen')
-                    ->schema([
-                        Radio::make('payment_method')
-                            ->label('Bevorzugte Zahlungsmethode')
-                            ->options([
-                                'sepa' => 'SEPA',
-                            ])
-                            ->default('sepa')
-                            ->required()
-                            ->reactive()
-                            ->helperText(fn ($get) => $get('payment_method') === 'sepa'
-                                ? 'TSV von 1908 Großenkneten e.V. akzeptiert nur SEPA Zahlungen.'
-                                : null)
-                            ->columnSpanFull(),
+    // ── Schritt 4: Zahlungsinformationen ─────────────────────────────────────
 
-                        TextInput::make('account_holder')
-                            ->label('Kontoinhaber')
-                            ->required()
-                            ->maxLength(255)
-                            ->visible(fn ($get) => $get('payment_method') === 'sepa')
-                            ->columnSpanFull(),
-
-                        TextInput::make('iban')
-                            ->label('IBAN')
-                            ->required()
-                            ->maxLength(34)
-                            ->visible(fn ($get) => $get('payment_method') === 'sepa')
-                            ->columnSpanFull(),
-
-                        TextInput::make('bic')
-                            ->label('BIC')
-                            ->maxLength(11)
-                            ->visible(fn ($get) => $get('payment_method') === 'sepa'),
-
-                        TextInput::make('bank_name')
-                            ->label('Bankname')
-                            ->maxLength(255)
-                            ->visible(fn ($get) => $get('payment_method') === 'sepa')
-                            ->helperText(new HtmlString(
-                                '<p class="text-sm text-primary-600">BIC oder Bankname sind unbekannt? Du kannst diese Felder freilassen und wir ermitteln sie aus der IBAN.</p>'
-                            )),
-
-                        Checkbox::make('sepa_mandate_accepted')
-                            ->label('Sepa-Mandat akzeptieren')
-                            ->required()
-                            ->rules(['accepted'])
-                            ->validationMessages([
-                                'accepted' => 'Sie müssen das SEPA-Mandat akzeptieren, um eine Anfrage stellen zu können.',
-                            ])
-                            ->helperText('Durch Klicken des \'SEPA-Mandat akzeptieren\'-Buttons und Absenden des Formulars unterschreiben Sie das Mandatsformular. Somit ermächtigen Sie (A) Ihren Verein, Ihrer Bank Anweisungen zur Belastung Ihres Kontos zu senden und (B) Ihre Bank, Ihr Konto gemäß den Anweisungen Ihres Vereins zu belasten. Als Teil Ihrer Rechte haben Sie gemäß den Bedingungen Ihrer Vereinbarung mit Ihrer Bank Anspruch auf eine Rückerstattung durch Ihre Bank. Eine Rückerstattung muss innerhalb von 8 Wochen ab dem Datum der Belastung Ihres Kontos beantragt werden.')
-                            ->visible(fn ($get) => $get('payment_method') === 'sepa')
-                            ->columnSpanFull(),
-                    ])
+    public function paymentForm(Schema $schema): Schema
+    {
+        return $schema
+            ->schema([
+                Radio::make('payment_method')
+                    ->label('Bevorzugte Zahlungsmethode')
+                    ->options(['sepa' => 'SEPA'])
+                    ->default('sepa')
+                    ->required()
+                    ->reactive()
+                    ->helperText(fn ($get) => $get('payment_method') === 'sepa'
+                        ? 'TSV von 1908 Großenkneten e.V. akzeptiert nur SEPA Zahlungen.'
+                        : null)
                     ->columnSpanFull(),
 
-                // Rechnungsanschrift
+                TextInput::make('account_holder')
+                    ->label('Kontoinhaber')
+                    ->required()
+                    ->maxLength(255)
+                    ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                    ->columnSpanFull(),
+
+                TextInput::make('iban')
+                    ->label('IBAN')
+                    ->required()
+                    ->maxLength(34)
+                    ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                    ->columnSpanFull(),
+
+                TextInput::make('bic')
+                    ->label('BIC')
+                    ->maxLength(11)
+                    ->visible(fn ($get) => $get('payment_method') === 'sepa'),
+
+                TextInput::make('bank_name')
+                    ->label('Bankname')
+                    ->maxLength(255)
+                    ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                    ->helperText(new HtmlString(
+                        '<p class="text-sm text-primary-600">BIC oder Bankname sind unbekannt? Du kannst diese Felder freilassen und wir ermitteln sie aus der IBAN.</p>'
+                    )),
+
+                Checkbox::make('sepa_mandate_accepted')
+                    ->label('SEPA-Mandat akzeptieren')
+                    ->required()
+                    ->rules(['accepted'])
+                    ->validationMessages([
+                        'accepted' => 'Sie müssen das SEPA-Mandat akzeptieren, um eine Anfrage stellen zu können.',
+                    ])
+                    ->helperText('Durch Klicken des \'SEPA-Mandat akzeptieren\'-Buttons und Absenden des Formulars unterschreiben Sie das Mandatsformular. Somit ermächtigen Sie (A) Ihren Verein, Ihrer Bank Anweisungen zur Belastung Ihres Kontos zu senden und (B) Ihre Bank, Ihr Konto gemäß den Anweisungen Ihres Vereins zu belasten. Als Teil Ihrer Rechte haben Sie gemäß den Bedingungen Ihrer Vereinbarung mit Ihrer Bank Anspruch auf eine Rückerstattung durch Ihre Bank. Eine Rückerstattung muss innerhalb von 8 Wochen ab dem Datum der Belastung Ihres Kontos beantragt werden.')
+                    ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                    ->columnSpanFull(),
+
                 Section::make('Rechnungsanschrift')
                     ->schema([
                         Checkbox::make('billing_use_postal_address')
@@ -240,7 +281,7 @@ class InquiryPage extends Page implements HasForms
                             ->columnSpanFull(),
 
                         TextInput::make('billing_street')
-                            ->label('Straße Und Hausnummer')
+                            ->label('Straße und Hausnummer')
                             ->placeholder('Torstraße 177')
                             ->maxLength(255)
                             ->required(fn ($get) => !(bool) $get('billing_use_postal_address'))
@@ -248,7 +289,7 @@ class InquiryPage extends Page implements HasForms
 
                         TextInput::make('billing_address2')
                             ->label('Adresszeile 2')
-                            ->placeholder('C/O, Firma, Gebäude, zusätzliche Informationen')
+                            ->placeholder('C/O, Firma, Gebäude, ...')
                             ->maxLength(255)
                             ->visible(fn ($get) => !(bool) $get('billing_use_postal_address')),
 
@@ -276,9 +317,19 @@ class InquiryPage extends Page implements HasForms
                             ->required(fn ($get) => !(bool) $get('billing_use_postal_address'))
                             ->visible(fn ($get) => !(bool) $get('billing_use_postal_address')),
                     ])
+                    ->columns(2)
                     ->columnSpanFull(),
+            ])
+            ->columns(2)
+            ->statePath('paymentData');
+    }
 
+    // ── Schritt 5: Anhänge & AGB ─────────────────────────────────────────────
 
+    public function attachmentsForm(Schema $schema): Schema
+    {
+        return $schema
+            ->schema([
                 FileUpload::make('attachments')
                     ->label('Anhänge (optional)')
                     ->helperText('Laden Sie Dokumente oder Bilder hoch, die Ihre Anfrage ergänzen (z. B. Design-Vorlage für Ihre Kachel). PDF, JPG, PNG – max. 10 MB pro Datei.')
@@ -299,10 +350,66 @@ class InquiryPage extends Page implements HasForms
                         'accepted' => 'Sie müssen die AGB akzeptieren, um eine Anfrage stellen zu können.',
                     ])
                     ->columnSpanFull(),
-
-
             ])
-            ->statePath('data');
+            ->statePath('attachmentsData');
+    }
+
+    public function nextStep(): void
+    {
+        if ($this->currentStep === 1) {
+            // Feldauswahl validieren
+            if (empty($this->selectedFields)) {
+                Notification::make()
+                    ->title('Felder auswählen')
+                    ->body('Bitte wählen Sie mindestens ein Feld aus.')
+                    ->warning()
+                    ->send();
+                return;
+            }
+
+            $validator = Validator::make(
+                ['selected_fields' => $this->selectedFields],
+                [
+                    'selected_fields' => [
+                        'required', 'array', 'min:1',
+                        new MaxFieldsCount(Setting::get(Setting::max_fields_per_customer, 4)),
+                        new FieldsFormRectangle(),
+                    ],
+                ],
+                [
+                    'selected_fields.required' => 'Bitte wählen Sie mindestens ein Feld aus.',
+                    'selected_fields.min'      => 'Bitte wählen Sie mindestens ein Feld aus.',
+                ]
+            );
+
+            if ($validator->fails()) {
+                Notification::make()
+                    ->title('Ungültige Feld-Auswahl')
+                    ->body($validator->errors()->first('selected_fields'))
+                    ->danger()
+                    ->send();
+                return;
+            }
+        } elseif ($this->currentStep === 2) {
+            $this->contactForm->getState();     // wirft ValidationException bei Fehler
+        } elseif ($this->currentStep === 3) {
+            $this->rentalForm->getState();
+        } elseif ($this->currentStep === 4) {
+            $this->paymentForm->getState();
+        } elseif ($this->currentStep === 5) {
+            $this->attachmentsForm->getState();
+        }
+
+        if ($this->currentStep < 6) {
+            $this->currentStep++;
+        }
+    }
+
+    public function previousStep(): void
+    {
+        if ($this->currentStep > 1) {
+            $this->currentStep--;
+        }
     }
 
     public function toggleField(int $fieldId): void
@@ -360,98 +467,64 @@ class InquiryPage extends Page implements HasForms
 
     public function submit(): void
     {
-        // Validate form data
-        $formData = $this->form->getState();
+        // Alle Formulardaten mit finaler Validierung abrufen
+        $contactData     = $this->contactForm->getState();
+        $rentalData      = $this->rentalForm->getState();
+        $paymentData     = $this->paymentForm->getState();
+        $attachmentsData = $this->attachmentsForm->getState();
 
-        // Validate that at least one field is selected
-        if (empty($this->selectedFields)) {
-            Notification::make()
-                ->title('Fehler')
-                ->body('Bitte wählen Sie mindestens ein Feld aus.')
-                ->danger()
-                ->send();
-            return;
-        }
-
-        // Validate selected fields with custom rules
-        $validator = Validator::make(
-            ['selected_fields' => $this->selectedFields],
-            [
-                'selected_fields' => [
-                    'required',
-                    'array',
-                    'min:1',
-                    new MaxFieldsCount(Setting::get(Setting::max_fields_per_customer, 4)),
-                    new FieldsFormRectangle(),
-                ],
-            ],
-            [
-                'selected_fields.required' => 'Bitte wählen Sie mindestens ein Feld aus.',
-                'selected_fields.min' => 'Bitte wählen Sie mindestens ein Feld aus.',
-            ]
-        );
-
-        if ($validator->fails()) {
-            Notification::make()
-                ->title('Ungültige Feld-Auswahl')
-                ->body($validator->errors()->first('selected_fields'))
-                ->danger()
-                ->send();
-            return;
-        }
+        $billingDifferent = !(bool) ($paymentData['billing_use_postal_address'] ?? true);
 
         try {
-            $inquiry = DB::transaction(function () use ($formData) {
-                // Calculate start_date and end_date from start_month
-                $startDate = \Carbon\Carbon::parse($formData['start_month']); // Immer der 1. des Monats
-                $duration = Setting::get(Setting::default_rental_duration, 1);
-                $endDate = $startDate->copy()->addMonths($duration)->subDay(); // Letzter Tag des Miet-Zeitraums
+            $inquiry = DB::transaction(function () use ($contactData, $rentalData, $paymentData, $billingDifferent) {
+                $startDate = \Carbon\Carbon::parse($rentalData['start_month']);
+                $duration  = Setting::get(Setting::default_rental_duration, 1);
+                $endDate   = $startDate->copy()->addMonths($duration)->subDay();
 
                 $inquiry = Inquiry::create([
-                    Inquiry::board_id => $this->board->id,
-                    Inquiry::customer_name => $formData['customer_name'],
-                    Inquiry::customer_email => $formData['customer_email'],
-                    Inquiry::customer_phone => $formData['customer_phone'] ?? null,
-                    Inquiry::is_company => (bool) ($formData['is_company'] ?? false),
-                    Inquiry::company_name => ($formData['is_company'] ?? false) ? ($formData['company_name'] ?? null) : null,
-                    Inquiry::street => $formData['street'],
-                    Inquiry::street_nr => $formData['street_nr'],
-                    Inquiry::zip => $formData['zip'],
-                    Inquiry::city => $formData['city'],
-                    Inquiry::start_date => $startDate,
-                    Inquiry::end_date => $endDate,
-                    Inquiry::rental_months => $duration,
-                    Inquiry::requested_fields => $this->selectedFields,
-                    Inquiry::status => Inquiry::STATUS_PENDING,
-                    Inquiry::message => $formData['message'] ?? null,
+                    Inquiry::board_id             => $this->board->id,
+                    Inquiry::customer_name        => $contactData['customer_name'],
+                    Inquiry::customer_email       => $contactData['customer_email'],
+                    Inquiry::customer_phone       => $contactData['customer_phone'] ?? null,
+                    Inquiry::is_company           => (bool) ($contactData['is_company'] ?? false),
+                    Inquiry::company_name         => ($contactData['is_company'] ?? false) ? ($contactData['company_name'] ?? null) : null,
+                    Inquiry::street               => $contactData['street'],
+                    Inquiry::street_nr            => $contactData['street_nr'],
+                    Inquiry::zip                  => $contactData['zip'],
+                    Inquiry::city                 => $contactData['city'],
+                    Inquiry::start_date           => $startDate,
+                    Inquiry::end_date             => $endDate,
+                    Inquiry::rental_months        => $duration,
+                    Inquiry::requested_fields     => $this->selectedFields,
+                    Inquiry::status               => Inquiry::STATUS_PENDING,
+                    Inquiry::message              => $rentalData['message'] ?? null,
                     // Zahlungsdaten
-                    Inquiry::payment_method => $formData['payment_method'] ?? 'sepa',
-                    Inquiry::account_holder => $formData['account_holder'] ?? null,
-                    Inquiry::iban => $formData['iban'] ?? null,
-                    Inquiry::bic => $formData['bic'] ?? null,
-                    Inquiry::bank_name => $formData['bank_name'] ?? null,
-                    Inquiry::sepa_mandate_accepted => (bool) ($formData['sepa_mandate_accepted'] ?? false),
+                    Inquiry::payment_method       => $paymentData['payment_method'] ?? 'sepa',
+                    Inquiry::account_holder       => $paymentData['account_holder'] ?? null,
+                    Inquiry::iban                 => $paymentData['iban'] ?? null,
+                    Inquiry::bic                  => $paymentData['bic'] ?? null,
+                    Inquiry::bank_name            => $paymentData['bank_name'] ?? null,
+                    Inquiry::sepa_mandate_accepted => (bool) ($paymentData['sepa_mandate_accepted'] ?? false),
                     // Rechnungsanschrift
-                    Inquiry::billing_use_postal_address => (bool) ($formData['billing_use_postal_address'] ?? true),
-                    Inquiry::billing_street => !(bool) ($formData['billing_use_postal_address'] ?? true) ? ($formData['billing_street'] ?? null) : null,
-                    Inquiry::billing_address2 => !(bool) ($formData['billing_use_postal_address'] ?? true) ? ($formData['billing_address2'] ?? null) : null,
-                    Inquiry::billing_zip => !(bool) ($formData['billing_use_postal_address'] ?? true) ? ($formData['billing_zip'] ?? null) : null,
-                    Inquiry::billing_city => !(bool) ($formData['billing_use_postal_address'] ?? true) ? ($formData['billing_city'] ?? null) : null,
-                    Inquiry::billing_country => !(bool) ($formData['billing_use_postal_address'] ?? true) ? ($formData['billing_country'] ?? 'Deutschland') : null,
+                    Inquiry::billing_use_postal_address => !$billingDifferent,
+                    Inquiry::billing_street       => $billingDifferent ? ($paymentData['billing_street'] ?? null) : null,
+                    Inquiry::billing_address2     => $billingDifferent ? ($paymentData['billing_address2'] ?? null) : null,
+                    Inquiry::billing_zip          => $billingDifferent ? ($paymentData['billing_zip'] ?? null) : null,
+                    Inquiry::billing_city         => $billingDifferent ? ($paymentData['billing_city'] ?? null) : null,
+                    Inquiry::billing_country      => $billingDifferent ? ($paymentData['billing_country'] ?? 'Deutschland') : null,
                 ]);
 
-                // Attach fields via pivot table
                 $inquiry->fields()->attach($this->selectedFields);
 
                 return $inquiry;
             });
 
             // Dateien von tmp in inquiry/{id}/ verschieben
-            $tmpFiles = $formData['attachments'] ?? [];
+            $tmpFiles = $attachmentsData['attachments'] ?? [];
             if (!empty($tmpFiles)) {
                 $finalPaths = [];
                 foreach ($tmpFiles as $tmpPath) {
-                    $filename = basename($tmpPath);
+                    $filename  = basename($tmpPath);
                     $finalPath = "inquiry/{$inquiry->id}/{$filename}";
                     Storage::disk('local')->move($tmpPath, $finalPath);
                     $finalPaths[] = $finalPath;
@@ -459,7 +532,6 @@ class InquiryPage extends Page implements HasForms
                 $inquiry->update([Inquiry::attachments => $finalPaths]);
             }
 
-            // Set session variable and redirect to confirmation page
             session(['inquiry_complete' => $inquiry->id]);
             $this->redirect(route('filament.app.pages.inquiry-complete-page'));
 
