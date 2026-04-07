@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\Inquiries\Schemas;
 
 use App\Filament\Admin\Resources\Boards\BoardResource;
 use App\Models\Inquiry;
+use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -48,7 +49,11 @@ class InquiryInfolist
                             TextEntry::make(Inquiry::end_date)
                                 ->label('Enddatum')
                                 ->date('d.m.Y'),
-                        ])->columns(2),
+
+                            TextEntry::make(Inquiry::rental_months)
+                                ->label('Mietdauer')
+                                ->suffix(fn ($state) => $state === 1 ? ' Monat' : ' Monate'),
+                        ])->columns(3),
                     ]),
 
                 Section::make('Gewünschte Felder')
@@ -73,8 +78,33 @@ class InquiryInfolist
                             ->label('Telefon')
                             ->copyable()
                             ->icon('heroicon-o-phone'),
+
+                        IconEntry::make(Inquiry::is_company)
+                            ->label('Unternehmen')
+                            ->boolean(),
+
+                        TextEntry::make(Inquiry::company_name)
+                            ->label('Unternehmensname')
+                            ->default('—')
+                            ->visible(fn ($record) => (bool) $record->{Inquiry::is_company}),
                     ])
                     ->columns(3),
+
+                Section::make('Adresse')
+                    ->schema([
+                        TextEntry::make(Inquiry::street)
+                            ->label('Straße'),
+
+                        TextEntry::make(Inquiry::street_nr)
+                            ->label('Hausnummer'),
+
+                        TextEntry::make(Inquiry::zip)
+                            ->label('PLZ'),
+
+                        TextEntry::make(Inquiry::city)
+                            ->label('Stadt'),
+                    ])
+                    ->columns(4),
 
                 Section::make('Nachrichten')
                     ->schema([
@@ -88,6 +118,26 @@ class InquiryInfolist
                             ->default('Keine Notizen')
                             ->columnSpanFull(),
                     ]),
+
+                Section::make('Anhänge')
+                    ->schema([
+                        TextEntry::make(Inquiry::attachments)
+                            ->label('Hochgeladene Dateien')
+                            ->default('Keine Anhänge vorhanden')
+                            ->formatStateUsing(fn ($state) => basename($state))
+                            ->listWithLineBreaks()
+                            ->bulleted()
+                            ->url(fn ($state, $record) => $state
+                                ? route('inquiry.attachment.download', [
+                                    'inquiry' => $record->id,
+                                    'filename' => basename($state),
+                                ])
+                                : null
+                            )
+                            ->openUrlInNewTab()
+                            ->columnSpanFull(),
+                    ])
+                    ->visible(fn ($record) => !empty($record->{Inquiry::attachments})),
 
                 Section::make('Vermietung')
                     ->schema([

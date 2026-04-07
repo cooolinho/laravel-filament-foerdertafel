@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Storage;
  * @property int $version
  * @property int|null $parent_document_id
  * @property bool $is_current_version
+ * @property bool $is_public
  * @property string $documentable_type
  * @property int $documentable_id
  * @property array|null $metadata
@@ -39,6 +40,8 @@ use Illuminate\Support\Facades\Storage;
 class Document extends Model
 {
     use SoftDeletes;
+
+    const string STORAGE = 'local';
 
     // Dokumententypen
     const string TYPE_CONTRACT = 'contract';
@@ -60,6 +63,7 @@ class Document extends Model
     const string version = 'version';
     const string parent_document_id = 'parent_document_id';
     const string is_current_version = 'is_current_version';
+    const string is_public = 'is_public';
     const string documentable_type = 'documentable_type';
     const string documentable_id = 'documentable_id';
     const string metadata = 'metadata';
@@ -76,6 +80,7 @@ class Document extends Model
         self::version,
         self::parent_document_id,
         self::is_current_version,
+        self::is_public,
         self::documentable_type,
         self::documentable_id,
         self::metadata,
@@ -86,6 +91,7 @@ class Document extends Model
         self::version => 'integer',
         self::file_size => 'integer',
         self::is_current_version => 'boolean',
+        self::is_public => 'boolean',
         self::metadata => 'array',
     ];
 
@@ -225,6 +231,14 @@ class Document extends Model
     {
         return $query->whereNotNull(self::documentable_type)
                     ->whereNotNull(self::documentable_id);
+    }
+
+    /**
+     * Scope to get only public documents.
+     */
+    public function scopePublic($query)
+    {
+        return $query->where(self::is_public, true);
     }
 
     /**

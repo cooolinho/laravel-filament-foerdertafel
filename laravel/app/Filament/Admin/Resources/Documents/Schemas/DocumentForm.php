@@ -11,6 +11,7 @@ use Filament\Forms\Components\MorphToSelect;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -34,6 +35,13 @@ class DocumentForm
                             ->maxLength(255)
                             ->columnSpanFull(),
 
+                        TextInput::make(Document::file_name)
+                            ->label('Dateiname (URL & Download)')
+                            ->maxLength(255)
+                            ->placeholder('z.B. agb.pdf oder widerrufsbelehrung.pdf')
+                            ->helperText('Wird als URL-Pfad (/documents/dateiname) und als Dateiname beim Download verwendet. Leer lassen um den Namen automatisch aus der Datei zu übernehmen.')
+                            ->columnSpanFull(),
+
                         Textarea::make(Document::description)
                             ->label('Beschreibung')
                             ->rows(3)
@@ -48,6 +56,13 @@ class DocumentForm
                             ->searchable()
                             ->preload()
                             ->columnSpanFull(),
+
+                        Toggle::make(Document::is_public)
+                            ->label('Öffentlich zugänglich')
+                            ->helperText('Öffentliche Dokumente können im Kundenportal angezeigt und heruntergeladen werden (z.B. AGB, Widerrufsbelehrung)')
+                            ->default(false)
+                            ->inline(false)
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
 
@@ -57,7 +72,7 @@ class DocumentForm
                             ->label('Dokument')
                             ->acceptedFileTypes(['application/pdf'])
                             ->maxSize(10240) // 10 MB
-                            ->disk('public')
+                            ->disk('local')
                             ->directory('documents')
                             ->required()
                             ->downloadable()

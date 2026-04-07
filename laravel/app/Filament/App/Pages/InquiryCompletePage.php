@@ -58,23 +58,12 @@ class InquiryCompletePage extends Page
     {
         $pricePerMonth = $this->getTotalPricePerMonth();
 
-        if (!$this->inquiry || !$this->inquiry->start_date || !$this->inquiry->end_date) {
+        if (!$this->inquiry || !$this->inquiry->rental_months) {
             return $pricePerMonth;
         }
 
         try {
-            $startDate = $this->inquiry->start_date;
-            $endDate = $this->inquiry->end_date;
-
-            // Calculate number of months (rounded up)
-            $months = $startDate->diffInMonths($endDate);
-            if ($startDate->copy()->addMonths($months) < $endDate) {
-                $months++;
-            }
-
-            $months = max(1, $months); // Minimum 1 month
-
-            return $pricePerMonth * $months;
+            return $pricePerMonth * $this->inquiry->rental_months;
         } catch (\Exception $e) {
             return $pricePerMonth;
         }

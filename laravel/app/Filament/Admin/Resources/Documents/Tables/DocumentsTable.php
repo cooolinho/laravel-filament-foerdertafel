@@ -9,11 +9,11 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Storage;
 
 class DocumentsTable
 {
@@ -72,6 +72,9 @@ class DocumentsTable
                     ->color(fn ($state) => $state ? 'success' : 'gray')
                     ->sortable(),
 
+                IconColumn::make(Document::is_public)
+                    ->label('Public'),
+
                 TextColumn::make('uploadedBy.name')
                     ->label('Hochgeladen von')
                     ->sortable()
@@ -113,17 +116,17 @@ class DocumentsTable
                 ViewAction::make(),
                 EditAction::make(),
                 Action::make('download')
-                    ->label('Herunterladen')
-                    ->icon('heroicon-o-arrow-down-tray')
+                    ->label('Vorschau')
+                    ->icon('heroicon-o-eye')
                     ->color('primary')
-                    ->url(fn ($record) => Storage::disk('public')->url($record->file_path))
+                    ->url(fn (Document $record) => route('documents.show', $record))
                     ->openUrlInNewTab(),
                 Action::make('newVersion')
                     ->label('Neue Version')
                     ->icon('heroicon-o-document-plus')
                     ->color('info')
                     ->visible(fn ($record) => $record->is_current_version)
-                    ->form([
+                    ->schema([
                         FileUpload::make('file')
                             ->label('Neue Dateiversion')
                             ->acceptedFileTypes(['application/pdf'])

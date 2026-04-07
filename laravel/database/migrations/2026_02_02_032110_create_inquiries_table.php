@@ -18,8 +18,16 @@ return new class extends Migration
             $table->string(Inquiry::customer_name);
             $table->string(Inquiry::customer_email);
             $table->string(Inquiry::customer_phone)->nullable();
+            $table->boolean(Inquiry::is_company)->default(false);
+            $table->string(Inquiry::company_name)->nullable();
+            $table->string(Inquiry::street)->nullable();
+            $table->string(Inquiry::street_nr)->nullable();
+            $table->string(Inquiry::zip)->nullable();
+            $table->string(Inquiry::city)->nullable();
+            $table->json(Inquiry::attachments)->nullable();
             $table->date(Inquiry::start_date);
             $table->date(Inquiry::end_date);
+            $table->unsignedTinyInteger(Inquiry::rental_months)->default(1);
             $table->json(Inquiry::requested_fields); // Array of field IDs
             $table->enum(Inquiry::status, [
                 Inquiry::STATUS_PENDING,

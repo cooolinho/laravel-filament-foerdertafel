@@ -18,7 +18,14 @@ return new class extends Migration
             $table->date(Rental::start_date);
             $table->date(Rental::end_date)->nullable();
             $table->decimal(Rental::total_price, 10, 2);
-            $table->enum(Rental::status, [Rental::STATUS_ACTIVE, Rental::STATUS_COMPLETED, Rental::STATUS_CANCELLED])->default(Rental::STATUS_ACTIVE);
+            $table->enum(Rental::status, [
+                Rental::STATUS_ACTIVE,
+                Rental::STATUS_COMPLETED,
+                Rental::STATUS_CANCELLED,
+                Rental::STATUS_PAID,
+                Rental::STATUS_PENDING,
+            ])->default(Rental::STATUS_ACTIVE);
+            $table->timestamp(Rental::paid_at)->nullable();
             $table->text(Rental::notes)->nullable();
             $table->timestamps();
         });

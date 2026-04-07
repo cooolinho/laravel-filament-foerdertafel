@@ -4,6 +4,7 @@ namespace App\Filament\App\Pages;
 
 use App\Events\InquiryCreated;
 use App\Models\Board;
+use App\Models\Document;
 use App\Models\Field;
 use App\Models\Inquiry;
 use App\Models\Rental;
@@ -11,18 +12,22 @@ use App\Models\Setting;
 use App\Rules\FieldsFormRectangle;
 use App\Rules\MaxFieldsCount;
 use BackedEnum;
-use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\HtmlString;
 
 class InquiryPage extends Page implements HasForms
 {
@@ -95,6 +100,41 @@ class InquiryPage extends Page implements HasForms
                     ->maxLength(255)
                     ->placeholder('+49 123 456789'),
 
+                Checkbox::make('is_company')
+                    ->label('Anfrage als Unternehmen')
+                    ->reactive(),
+
+                TextInput::make('company_name')
+                    ->label('Unternehmensname')
+                    ->maxLength(255)
+                    ->placeholder('Musterfirma GmbH')
+                    ->visible(fn ($get) => (bool) $get('is_company'))
+                    ->required(fn ($get) => (bool) $get('is_company')),
+
+                TextInput::make('street')
+                    ->label('Straße')
+                    ->required()
+                    ->maxLength(255)
+                    ->placeholder('Musterstraße'),
+
+                TextInput::make('street_nr')
+                    ->label('Hausnummer')
+                    ->required()
+                    ->maxLength(20)
+                    ->placeholder('12a'),
+
+                TextInput::make('zip')
+                    ->label('PLZ')
+                    ->required()
+                    ->maxLength(10)
+                    ->placeholder('12345'),
+
+                TextInput::make('city')
+                    ->label('Stadt')
+                    ->required()
+                    ->maxLength(255)
+                    ->placeholder('Berlin'),
+
                 Select::make('start_month')
                     ->label('Start-Monat')
                     ->options($this->getAvailableMonths())
@@ -105,9 +145,9 @@ class InquiryPage extends Page implements HasForms
                     ->helperText('Wählen Sie den Monat, in dem Ihre Miete beginnen soll. Die Miete startet immer am 1. des Monats.')
                     ->placeholder('Monat auswählen'),
 
-                Placeholder::make('rental_info')
+                TextEntry::make('rental_info')
                     ->label('Mietdauer')
-                    ->content(function ($get) {
+                    ->state(function ($get) {
                         $startMonth = $get('start_month');
                         if (!$startMonth) {
                             return 'Bitte wählen Sie zunächst einen Start-Monat aus.';
@@ -132,6 +172,29 @@ class InquiryPage extends Page implements HasForms
                     ->rows(3)
                     ->placeholder('Ihre Nachricht an uns...')
                     ->columnSpanFull(),
+
+                FileUpload::make('attachments')
+                    ->label('Anhänge (optional)')
+                    ->helperText('Laden Sie Dokumente oder Bilder hoch, die Ihre Anfrage ergänzen (z. B. Design-Vorlage für Ihre Kachel). PDF, JPG, PNG – max. 10 MB pro Datei.')
+                    ->multiple()
+                    ->disk('local')
+                    ->directory('inquiry/tmp')
+                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                    ->maxSize(10240)
+                    ->reorderable()
+                    ->appendFiles()
+                    ->columnSpanFull(),
+
+                Checkbox::make('accept_terms')
+                    ->label($this->buildTermsLabel())
+                    ->required()
+                    ->rules(['accepted'])
+                    ->validationMessages([
+                        'accepted' => 'Sie müssen die AGB akzeptieren, um eine Anfrage stellen zu können.',
+                    ])
+                    ->columnSpanFull(),
+
+
             ])
             ->statePath('data');
     }
@@ -241,8 +304,15 @@ class InquiryPage extends Page implements HasForms
                     Inquiry::customer_name => $formData['customer_name'],
                     Inquiry::customer_email => $formData['customer_email'],
                     Inquiry::customer_phone => $formData['customer_phone'] ?? null,
+                    Inquiry::is_company => (bool) ($formData['is_company'] ?? false),
+                    Inquiry::company_name => ($formData['is_company'] ?? false) ? ($formData['company_name'] ?? null) : null,
+                    Inquiry::street => $formData['street'],
+                    Inquiry::street_nr => $formData['street_nr'],
+                    Inquiry::zip => $formData['zip'],
+                    Inquiry::city => $formData['city'],
                     Inquiry::start_date => $startDate,
                     Inquiry::end_date => $endDate,
+                    Inquiry::rental_months => $duration,
                     Inquiry::requested_fields => $this->selectedFields,
                     Inquiry::status => Inquiry::STATUS_PENDING,
                     Inquiry::message => $formData['message'] ?? null,
@@ -253,6 +323,19 @@ class InquiryPage extends Page implements HasForms
 
                 return $inquiry;
             });
+
+            // Dateien von tmp in inquiry/{id}/ verschieben
+            $tmpFiles = $formData['attachments'] ?? [];
+            if (!empty($tmpFiles)) {
+                $finalPaths = [];
+                foreach ($tmpFiles as $tmpPath) {
+                    $filename = basename($tmpPath);
+                    $finalPath = "inquiry/{$inquiry->id}/{$filename}";
+                    Storage::disk('local')->move($tmpPath, $finalPath);
+                    $finalPaths[] = $finalPath;
+                }
+                $inquiry->update([Inquiry::attachments => $finalPaths]);
+            }
 
             // Dispatch event to reserve fields
             InquiryCreated::dispatch($inquiry);
@@ -283,20 +366,9 @@ class InquiryPage extends Page implements HasForms
     public function getTotalPrice(): float
     {
         $pricePerMonth = $this->getTotalPricePerMonth();
+        $months = max(1, (int) Setting::get(Setting::default_rental_duration, 1));
 
-        if (!isset($this->data['start_month'])) {
-            return $pricePerMonth;
-        }
-
-        try {
-            // Get rental duration from settings
-            $months = Setting::get(Setting::default_rental_duration, 1);
-            $months = max(1, $months); // Minimum 1 month
-
-            return $pricePerMonth * $months;
-        } catch (\Exception $e) {
-            return $pricePerMonth;
-        }
+        return $pricePerMonth * $months;
     }
 
     public function getFieldsGrid(): array
@@ -375,5 +447,28 @@ class InquiryPage extends Page implements HasForms
     public function getMaxContentWidth(): Width
     {
         return Width::Full;
+    }
+
+    /**
+     * Erstellt das Label für die AGB-Checkbox.
+     * Enthält einen Link zum Dokument, falls in den Einstellungen konfiguriert.
+     */
+    protected function buildTermsLabel(): string|HtmlString
+    {
+        $termsId = Setting::get(Setting::terms_conditions_document_id);
+
+        if ($termsId) {
+            $document = Document::find($termsId);
+            if ($document) {
+                $url = route('documents.show', ['document' => $document->{Document::file_name}]);
+                return new HtmlString(
+                    'Ich habe die <a href="' . e($url) . '" target="_blank" rel="noopener noreferrer" '
+                    . 'class="underline font-medium text-primary-600 hover:text-primary-500">'
+                    . 'Allgemeinen Geschäftsbedingungen (AGB)</a> gelesen und akzeptiere sie.'
+                );
+            }
+        }
+
+        return 'Ich akzeptiere die Allgemeinen Geschäftsbedingungen (AGB).';
     }
 }

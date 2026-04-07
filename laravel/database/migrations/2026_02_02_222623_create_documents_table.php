@@ -33,6 +33,9 @@ return new class extends Migration
             $table->foreignId(Document::parent_document_id)->nullable()->constrained('documents')->cascadeOnDelete();
             $table->boolean(Document::is_current_version)->default(true);
 
+            // Öffentlichkeit
+            $table->boolean(Document::is_public)->default(false);
+
             // Polymorphe Beziehung (optional - für Zuordnung zu Customer, Location, etc.)
             $table->nullableMorphs('documentable');
 

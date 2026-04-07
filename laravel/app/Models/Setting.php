@@ -4,8 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * App\Models\Setting
+ *
+ * @property int $id
+ * @property string|null $default_payment_method
+ * @property int|null $default_rental_duration
+ * @property int|null $max_fields_per_customer
+ * @property bool|null $email_notifications_enabled
+ * @property int|null $default_email_template_id
+ * @property int|null $terms_conditions_document_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ *
+ * @property-read EmailTemplate|null $defaultEmailTemplate
+ * @property-read Document|null $termsConditionsDocument
+ */
 class Setting extends Model
 {
     // Konstanten für Felder
@@ -14,6 +31,7 @@ class Setting extends Model
     const string max_fields_per_customer = 'max_fields_per_customer';
     const string email_notifications_enabled = 'email_notifications_enabled';
     const string default_email_template_id = 'default_email_template_id';
+    const string terms_conditions_document_id = 'terms_conditions_document_id';
 
     // Zahlungsmethoden Konstanten
     const string PAYMENT_METHOD_BANK_TRANSFER = 'bank_transfer';
@@ -31,12 +49,15 @@ class Setting extends Model
         self::max_fields_per_customer,
         self::email_notifications_enabled,
         self::default_email_template_id,
+        self::terms_conditions_document_id,
     ];
 
     protected $casts = [
         self::email_notifications_enabled => 'boolean',
         self::default_rental_duration => 'integer',
         self::max_fields_per_customer => 'integer',
+        self::default_email_template_id => 'integer',
+        self::terms_conditions_document_id => 'integer',
     ];
 
     /**
@@ -45,6 +66,14 @@ class Setting extends Model
     public function defaultEmailTemplate(): BelongsTo
     {
         return $this->belongsTo(EmailTemplate::class, self::default_email_template_id);
+    }
+
+    /**
+     * Beziehung zum AGB-Dokument
+     */
+    public function termsConditionsDocument(): BelongsTo
+    {
+        return $this->belongsTo(Document::class, self::terms_conditions_document_id);
     }
 
     /**

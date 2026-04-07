@@ -2,11 +2,11 @@
 
 namespace App\Filament\Admin\Resources\Inquiries\Schemas;
 
-use App\Models\Board;
 use App\Models\Field;
 use App\Models\Inquiry;
-use App\Models\Rental;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -58,6 +58,36 @@ class InquiryForm
                     ->tel()
                     ->maxLength(255),
 
+                Checkbox::make(Inquiry::is_company)
+                    ->label('Unternehmen')
+                    ->reactive(),
+
+                TextInput::make(Inquiry::company_name)
+                    ->label('Unternehmensname')
+                    ->maxLength(255)
+                    ->visible(fn ($get) => (bool) $get(Inquiry::is_company))
+                    ->required(fn ($get) => (bool) $get(Inquiry::is_company)),
+
+                TextInput::make(Inquiry::street)
+                    ->label('Straße')
+                    ->required()
+                    ->maxLength(255),
+
+                TextInput::make(Inquiry::street_nr)
+                    ->label('Hausnummer')
+                    ->required()
+                    ->maxLength(20),
+
+                TextInput::make(Inquiry::zip)
+                    ->label('PLZ')
+                    ->required()
+                    ->maxLength(10),
+
+                TextInput::make(Inquiry::city)
+                    ->label('Stadt')
+                    ->required()
+                    ->maxLength(255),
+
                 DatePicker::make(Inquiry::start_date)
                     ->label('Startdatum')
                     ->required()
@@ -70,6 +100,13 @@ class InquiryForm
                     ->native(false)
                     ->displayFormat('d.m.Y')
                     ->afterOrEqual(Inquiry::start_date),
+
+                TextInput::make(Inquiry::rental_months)
+                    ->label('Mietdauer (Monate)')
+                    ->numeric()
+                    ->minValue(1)
+                    ->required()
+                    ->suffix('Monat(e)'),
 
                 Select::make(Inquiry::status)
                     ->label('Status')
@@ -90,6 +127,19 @@ class InquiryForm
                 Textarea::make(Inquiry::admin_notes)
                     ->label('Admin Notizen')
                     ->rows(3)
+                    ->columnSpanFull(),
+
+                FileUpload::make(Inquiry::attachments)
+                    ->label('Anhänge')
+                    ->multiple()
+                    ->disk('local')
+                    ->directory(fn ($record) => $record ? "inquiry/{$record->id}" : 'inquiry/tmp')
+                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                    ->maxSize(10240)
+                    ->downloadable()
+                    ->openable()
+                    ->reorderable()
+                    ->appendFiles()
                     ->columnSpanFull(),
 
                 Select::make(Inquiry::rental_id)

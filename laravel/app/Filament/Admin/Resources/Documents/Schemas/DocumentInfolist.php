@@ -8,7 +8,6 @@ use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Storage;
 
 class DocumentInfolist
 {
@@ -67,11 +66,11 @@ class DocumentInfolist
 
                         TextEntry::make(Document::file_path)
                             ->label('Aktionen')
-                            ->formatStateUsing(fn () => 'Herunterladen')
-                            ->url(fn ($record) => Storage::disk('public')->url($record->file_path))
+                            ->formatStateUsing(fn () => 'Vorschau')
+                            ->url(fn (Document $record) => route('documents.show', $record))
                             ->openUrlInNewTab()
                             ->color('primary')
-                            ->icon('heroicon-o-arrow-down-tray'),
+                            ->icon('heroicon-o-eye'),
                     ])
                     ->columns(3),
 

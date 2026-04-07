@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Models\Document;
 use App\Models\EmailTemplate;
 use App\Models\Setting;
 use BackedEnum;
@@ -46,6 +47,7 @@ class SettingsPage extends Page implements HasForms
                 Setting::max_fields_per_customer => $settings->max_fields_per_customer,
                 Setting::email_notifications_enabled => $settings->email_notifications_enabled,
                 Setting::default_email_template_id => $settings->default_email_template_id,
+                Setting::terms_conditions_document_id => $settings->terms_conditions_document_id,
             ]);
         }
     }
@@ -106,6 +108,27 @@ class SettingsPage extends Page implements HasForms
                     ])
                     ->columns(1),
 
+                Section::make('Anfrage Einstellungen')
+                    ->description('Einstellungen für den Anfrage-Prozess (Kundenportal)')
+                    ->schema([
+                        Select::make(Setting::terms_conditions_document_id)
+                            ->label('AGB Dokument')
+                            ->options(
+                                Document::query()
+                                    ->where(Document::type, Document::TYPE_TERMS_CONDITIONS)
+                                    ->where(Document::is_current_version, true)
+                                    ->orderBy(Document::title)
+                                    ->pluck(Document::title, 'id')
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->helperText('Das AGB-Dokument, welches Kunden bei der Anfrage akzeptieren müssen. Nur Dokumente vom Typ „AGB" werden angezeigt.')
+                            ->native(false),
+                    ])
+                    ->columns(1),
+
+
                 Action::make('save')
                     ->label('Einstellungen speichern')
                     ->button()
@@ -119,7 +142,6 @@ class SettingsPage extends Page implements HasForms
     public function save(): void
     {
         $data = $this->form->getState();
-
         $settings = Setting::current();
 
         if ($settings) {

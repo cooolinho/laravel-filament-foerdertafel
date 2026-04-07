@@ -20,10 +20,7 @@ class DocumentObserver
      */
     public function updating(Document $document): void
     {
-        // Nur aktualisieren wenn file_path geändert wurde
-        if ($document->isDirty(Document::file_path)) {
-            $this->setFileMetadata($document);
-        }
+        $this->setFileMetadata($document);
     }
 
     /**
@@ -36,20 +33,28 @@ class DocumentObserver
         }
 
         $filePath = $document->{Document::file_path};
+        $extension = pathinfo($filePath, PATHINFO_EXTENSION);
+
+        if (empty($document->{Document::file_name})) {
+            $document->{Document::file_name} = basename($filePath);
+        } elseif ($extension && !str_ends_with($document->{Document::file_name}, '.' . $extension)) {
+            // Extension anhängen falls am Ende des file_name fehlend
+            $document->{Document::file_name} .= '.' . $extension;
+        }
+
+        // Nur fortfahren wenn file_path geändert wurde
+        if (!$document->isDirty(Document::file_path)) {
+            return;
+        }
 
         // MIME-Type setzen falls noch nicht gesetzt
         if (empty($document->{Document::mime_type})) {
-            $document->{Document::mime_type} = Storage::disk('public')->mimeType($filePath) ?? 'application/pdf';
+            $document->{Document::mime_type} = Storage::disk(Document::STORAGE)->mimeType($filePath) ?? 'application/pdf';
         }
 
         // Dateigröße setzen falls noch nicht gesetzt
         if (empty($document->{Document::file_size})) {
-            $document->{Document::file_size} = Storage::disk('public')->size($filePath) ?? 0;
-        }
-
-        // Dateiname setzen falls noch nicht gesetzt (aus dem Pfad extrahieren)
-        if (empty($document->{Document::file_name})) {
-            $document->{Document::file_name} = basename($filePath);
+            $document->{Document::file_size} = Storage::disk(Document::STORAGE)->size($filePath) ?? 0;
         }
     }
 }

@@ -91,7 +91,7 @@ class FieldSeeder extends Seeder
             Field::width => 1,
             Field::height => 5,
             Field::price_per_month => 50.00,
-            Field::status => Field::STATUS_RENTED,
+            Field::status => Field::STATUS_AVAILABLE,
             Field::description => 'Premium-Position am rechten Tor mit höchster Aufmerksamkeit. Ideal für Hauptsponsoren.',
         ]);
 
@@ -111,7 +111,7 @@ class FieldSeeder extends Seeder
             Field::width => 4,
             Field::height => 5,
             Field::price_per_month => 100.00,
-            Field::status => Field::STATUS_RENTED,
+            Field::status => Field::STATUS_AVAILABLE,
             Field::description => 'Herz des Spielfelds - wird zu Spielbeginn und bei jedem Anstoß gesehen. Premium-Position mit maximaler Sichtbarkeit.',
         ]);
 

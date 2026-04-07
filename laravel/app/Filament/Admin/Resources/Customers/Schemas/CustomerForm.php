@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\Customers\Schemas;
 
 use App\Models\Customer;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -14,53 +15,71 @@ class CustomerForm
     {
         return $schema
             ->components([
-                Section::make('Customer Information')
+                Section::make('Kundeninformationen')
                     ->schema([
                         TextInput::make(Customer::name)
                             ->label('Name')
                             ->required()
-                            ->maxLength(255)
-                            ->placeholder('Full name'),
+                            ->maxLength(255),
+
+                        Checkbox::make(Customer::is_company)
+                            ->label('Unternehmen')
+                            ->reactive(),
 
                         TextInput::make(Customer::company_name)
-                            ->label('Company Name')
+                            ->label('Unternehmensname')
                             ->maxLength(255)
-                            ->placeholder('Optional'),
+                            ->visible(fn ($get) => (bool) $get(Customer::is_company))
+                            ->required(fn ($get) => (bool) $get(Customer::is_company)),
                     ])
                     ->columns(2),
 
-                Section::make('Contact Information')
+                Section::make('Kontaktdaten')
                     ->schema([
                         TextInput::make(Customer::email)
-                            ->label('Email')
+                            ->label('E-Mail')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
 
                         TextInput::make(Customer::phone)
-                            ->label('Phone')
+                            ->label('Telefon')
                             ->tel()
                             ->maxLength(255),
-
-                        Textarea::make(Customer::address)
-                            ->label('Address')
-                            ->rows(3)
-                            ->columnSpanFull(),
                     ])
                     ->columns(2),
 
-                Section::make('Payment & Notes')
+                Section::make('Adresse')
+                    ->schema([
+                        TextInput::make(Customer::street)
+                            ->label('Straße')
+                            ->maxLength(255),
+
+                        TextInput::make(Customer::street_nr)
+                            ->label('Hausnummer')
+                            ->maxLength(20),
+
+                        TextInput::make(Customer::zip)
+                            ->label('PLZ')
+                            ->maxLength(10),
+
+                        TextInput::make(Customer::city)
+                            ->label('Stadt')
+                            ->maxLength(255),
+                    ])
+                    ->columns(2),
+
+                Section::make('Zahlung & Notizen')
                     ->schema([
                         TextInput::make(Customer::payment_method)
-                            ->label('Payment Method')
+                            ->label('Zahlungsmethode')
                             ->maxLength(255)
                             ->placeholder('z.B. Überweisung, Lastschrift'),
 
                         Textarea::make(Customer::notes)
-                            ->label('Notes')
+                            ->label('Notizen')
                             ->rows(4)
-                            ->placeholder('Additional notes about the customer...')
                             ->columnSpanFull(),
                     ])
                     ->columns(1)

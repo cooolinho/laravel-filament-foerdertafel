@@ -36,7 +36,12 @@ class ViewInquiry extends ViewRecord
                             [
                                 Customer::name => $record->customer_name,
                                 Customer::phone => $record->customer_phone,
-                                Customer::address => null,
+                                Customer::is_company => $record->is_company,
+                                Customer::company_name => $record->company_name,
+                                Customer::street => $record->street,
+                                Customer::street_nr => $record->street_nr,
+                                Customer::zip => $record->zip,
+                                Customer::city => $record->city,
                             ]
                         );
 

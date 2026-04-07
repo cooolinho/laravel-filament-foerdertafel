@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\Emails\Schemas;
 
 use App\Filament\Admin\Resources\Customers\CustomerResource;
 use App\Filament\Admin\Resources\Documents\DocumentResource;
+use App\Filament\Admin\Resources\Rentals\RentalResource;
 use App\Models\Document;
 use App\Models\Email;
 use Filament\Infolists\Components\KeyValueEntry;
@@ -173,7 +174,7 @@ class EmailInfolist
                             ->label('Vermietung')
                             ->placeholder('Keine Vermietung verknüpft')
                             ->url(fn ($record) => $record->rental_id
-                                ? route('filament.admin.resources.rentals.rentals.view', $record->rental_id)
+                                ? RentalResource::getViewUrl($record->rental)
                                 : null),
 
                         TextEntry::make('user.name')

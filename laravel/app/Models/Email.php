@@ -43,6 +43,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
+ * @property-read Customer|null $customer
+ * @property-read Rental|null $rental
  *
  * @method static Builder|Email inbound()
  * @method static Builder|Email outbound()

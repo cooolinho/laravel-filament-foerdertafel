@@ -1,3 +1,6 @@
+@php
+    $duration = \App\Models\Setting::get(\App\Models\Setting::default_rental_duration);
+@endphp
 <x-filament-panels::page>
     @if($inquiry)
         <div class="space-y-6">
@@ -79,8 +82,7 @@
                         <div>
                             <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Dauer</dt>
                             <dd class="mt-1 text-sm text-gray-900 dark:text-white">
-                                {{ $inquiry->start_date->diffInMonths($inquiry->end_date) + 1 }}
-                                {{ $inquiry->start_date->diffInMonths($inquiry->end_date) + 1 === 1 ? 'Monat' : 'Monate' }}
+                                {{ $inquiry->rental_months }} Monate
                             </dd>
                         </div>
                     </dl>
@@ -153,7 +155,7 @@
                     <div class="flex justify-between text-sm">
                         <dt class="text-gray-600 dark:text-gray-400">Anzahl Monate</dt>
                         <dd class="font-medium text-gray-900 dark:text-white">
-                            {{ $inquiry->start_date->diffInMonths($inquiry->end_date) + 1 }}
+                            {{ $inquiry->rental_months }}
                         </dd>
                     </div>
                     <div class="border-t border-primary-200 dark:border-primary-500/20 pt-2 mt-2">

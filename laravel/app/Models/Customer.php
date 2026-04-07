@@ -10,20 +10,32 @@ class Customer extends Model
 {
     const string name = 'name';
     const string company_name = 'company_name';
+    const string is_company = 'is_company';
     const string email = 'email';
     const string phone = 'phone';
-    const string address = 'address';
+    const string street = 'street';
+    const string street_nr = 'street_nr';
+    const string zip = 'zip';
+    const string city = 'city';
     const string payment_method = 'payment_method';
     const string notes = 'notes';
 
     protected $fillable = [
         self::name,
         self::company_name,
+        self::is_company,
         self::email,
         self::phone,
-        self::address,
+        self::street,
+        self::street_nr,
+        self::zip,
+        self::city,
         self::payment_method,
         self::notes,
+    ];
+
+    protected $casts = [
+        self::is_company => 'boolean',
     ];
 
     /**
@@ -47,7 +59,7 @@ class Customer extends Model
      */
     public function isCompany(): bool
     {
-        return !empty($this->company_name);
+        return (bool) $this->is_company;
     }
 
     /**
@@ -55,6 +67,6 @@ class Customer extends Model
      */
     public function isPrivatePerson(): bool
     {
-        return empty($this->company_name);
+        return !$this->is_company;
     }
 }

@@ -25,6 +25,14 @@ use Illuminate\Support\Carbon;
  * @property string|null $message
  * @property string|null $admin_notes
  * @property int|null $rental_id
+ * @property int $rental_months
+ * @property bool $is_company
+ * @property string|null $company_name
+ * @property string|null $street
+ * @property string|null $street_nr
+ * @property string|null $zip
+ * @property string|null $city
+ * @property array|null $attachments
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Board $board
@@ -56,8 +64,16 @@ class Inquiry extends Model
     const string customer_name = 'customer_name';
     const string customer_email = 'customer_email';
     const string customer_phone = 'customer_phone';
+    const string is_company = 'is_company';
+    const string company_name = 'company_name';
+    const string street = 'street';
+    const string street_nr = 'street_nr';
+    const string zip = 'zip';
+    const string city = 'city';
+    const string attachments = 'attachments';
     const string start_date = 'start_date';
     const string end_date = 'end_date';
+    const string rental_months = 'rental_months';
     const string requested_fields = 'requested_fields';
     const string status = 'status';
     const string message = 'message';
@@ -74,8 +90,16 @@ class Inquiry extends Model
         self::customer_name,
         self::customer_email,
         self::customer_phone,
+        self::is_company,
+        self::company_name,
+        self::street,
+        self::street_nr,
+        self::zip,
+        self::city,
+        self::attachments,
         self::start_date,
         self::end_date,
+        self::rental_months,
         self::requested_fields,
         self::status,
         self::message,
@@ -84,8 +108,11 @@ class Inquiry extends Model
     ];
 
     protected $casts = [
+        self::is_company => 'boolean',
+        self::attachments => 'array',
         self::start_date => 'date',
         self::end_date => 'date',
+        self::rental_months => 'integer',
         self::requested_fields => 'array',
     ];
 

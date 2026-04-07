@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Board;
-use App\Models\Field;
 use App\Models\Inquiry;
+use App\Models\Setting;
 use Illuminate\Database\Seeder;
 
 class InquirySeeder extends Seeder
@@ -28,8 +28,6 @@ class InquirySeeder extends Seeder
 
             // Create 5 sample inquiries per board
             for ($i = 1; $i <= 5; $i++) {
-                $startDate = now()->addDays(rand(1, 30));
-                $endDate = (clone $startDate)->addDays(rand(30, 90));
 
                 // Randomly select 1-3 fields
                 $selectedFields = $board->fields->random(rand(1, min(3, $board->fields->count())));
@@ -40,13 +38,25 @@ class InquirySeeder extends Seeder
                     Inquiry::STATUS_REJECTED,
                 ];
 
+                $isCompany = fake()->boolean(40);
+                $rentalMonths = max(1, (int) Setting::get(Setting::default_rental_duration, 1));
+                $startDate = now()->addDays(rand(1, 30))->startOfMonth();
+                $endDate = (clone $startDate)->addMonths($rentalMonths)->subDay();
+
                 $inquiry = Inquiry::create([
                     Inquiry::board_id => $board->id,
                     Inquiry::customer_name => fake()->name(),
                     Inquiry::customer_email => fake()->unique()->safeEmail(),
                     Inquiry::customer_phone => fake()->phoneNumber(),
+                    Inquiry::is_company => $isCompany,
+                    Inquiry::company_name => $isCompany ? fake()->company() : null,
+                    Inquiry::street => fake()->streetName(),
+                    Inquiry::street_nr => fake()->buildingNumber(),
+                    Inquiry::zip => fake()->postcode(),
+                    Inquiry::city => fake()->city(),
                     Inquiry::start_date => $startDate,
                     Inquiry::end_date => $endDate,
+                    Inquiry::rental_months => $rentalMonths,
                     Inquiry::requested_fields => $selectedFields->pluck('id')->toArray(),
                     Inquiry::status => $statuses[array_rand($statuses)],
                     Inquiry::message => fake()->boolean(70) ? fake()->paragraph() : null,

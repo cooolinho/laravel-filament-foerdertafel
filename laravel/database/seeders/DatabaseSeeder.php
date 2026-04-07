@@ -2,44 +2,71 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     /**
+     * Alle verfügbaren Seeder mit Beschreibung.
+     */
+    protected array $availableSeeders = [
+        'Demo (alle Seeder auf einmal)'   => DemoSeeder::class,
+        'Benutzer (Users)'                => UserSeeder::class,
+        'Standorte (Locations)'           => LocationSeeder::class,
+        'Boards'                          => BoardSeeder::class,
+        'Felder (Fields)'                 => FieldSeeder::class,
+        'Kunden (Customers)'              => CustomerSeeder::class,
+        'Vermietungen (Rentals)'          => RentalSeeder::class,
+        'Anfragen (Inquiries)'            => InquirySeeder::class,
+        'E-Mail-Vorlagen (Templates)'     => EmailTemplateSeeder::class,
+        'E-Mails (Emails)'                => EmailSeeder::class,
+        'Zugangscode-E-Mail-Vorlage'      => RentalAccessCodeEmailTemplateSeeder::class,
+    ];
+
+    /**
      * Seed the application's database.
      */
     public function run(): void
     {
-        // Create default user
-        User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-        ]);
+        $choices = $this->command->choice(
+            'Welche Seeder sollen ausgeführt werden? (Mehrfachauswahl mit Komma möglich, z.B. 0,1,2)',
+            array_keys($this->availableSeeders),
+            null,
+            null,
+            true // Mehrfachauswahl aktivieren
+        );
 
-        // Seed all board-related data in correct order
-        $this->call([
-            LocationSeeder::class,
-            BoardSeeder::class,
-            FieldSeeder::class,
-            CustomerSeeder::class,
-            RentalSeeder::class,
-            InquirySeeder::class,
-            EmailTemplateSeeder::class,
-            EmailSeeder::class,
-            RentalAccessCodeEmailTemplateSeeder::class,
-        ]);
+        $selectedSeeders = [];
 
-        $this->command->info('✓ Database seeded successfully!');
-        $this->command->info('✓ 1 Locations created');
-        $this->command->info('✓ 1 Boards created');
-        $this->command->info('✓ Multiple Fields created per Board');
-        $this->command->info('✓ 12 Customers created');
-        $this->command->info('✓ 10 Rentals created (Active, Completed, Cancelled)');
-        $this->command->info('✓ 5 Inquiries created per Board');
-        $this->command->info('✓ Email Templates created');
-        $this->command->info('✓ Sample Emails created (Inbound & Outbound)');
-        $this->command->info('✓ Rental Access Code Email Template created');
+        foreach ((array) $choices as $choice) {
+            $seederClass = $this->availableSeeders[$choice] ?? null;
+
+            if ($seederClass === null) {
+                $this->command->warn("Unbekannte Auswahl übersprungen: {$choice}");
+                continue;
+            }
+
+            // DemoSeeder enthält bereits alle anderen → direkt aufrufen und abbrechen
+            if ($seederClass === DemoSeeder::class) {
+                $this->command->info('▶ Führe Demo-Seeder aus (alle Seeder)...');
+                $this->call(DemoSeeder::class);
+                return;
+            }
+
+            $selectedSeeders[$choice] = $seederClass;
+        }
+
+        if (empty($selectedSeeders)) {
+            $this->command->warn('Keine Seeder ausgewählt. Abbruch.');
+            return;
+        }
+
+
+        foreach ($selectedSeeders as $label => $seederClass) {
+            $this->command->info("▶ Führe aus: {$label}");
+            $this->call($seederClass);
+        }
+
+        $this->command->info('✓ Ausgewählte Seeder erfolgreich ausgeführt!');
     }
 }

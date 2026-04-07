@@ -16,9 +16,13 @@ return new class extends Migration
             $table->id();
             $table->string(Customer::name);
             $table->string(Customer::company_name)->nullable();
+            $table->boolean(Customer::is_company)->default(false);
+            $table->string(Customer::street)->nullable();
+            $table->string(Customer::street_nr)->nullable();
+            $table->string(Customer::zip)->nullable();
+            $table->string(Customer::city)->nullable();
             $table->string(Customer::email)->unique();
             $table->string(Customer::phone)->nullable();
-            $table->text(Customer::address)->nullable();
             $table->string(Customer::payment_method)->nullable();
             $table->text(Customer::notes)->nullable();
             $table->timestamps();
