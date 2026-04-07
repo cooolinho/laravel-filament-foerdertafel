@@ -24,6 +24,25 @@ return new class extends Migration
             $table->string(Inquiry::street_nr)->nullable();
             $table->string(Inquiry::zip)->nullable();
             $table->string(Inquiry::city)->nullable();
+
+            // Zahlungsmethode
+            $table->string(Inquiry::payment_method)->default('sepa');
+
+            // SEPA-Bankdaten
+            $table->string(Inquiry::account_holder)->nullable();
+            $table->string(Inquiry::iban)->nullable();
+            $table->string(Inquiry::bic)->nullable();
+            $table->string(Inquiry::bank_name)->nullable();
+            $table->boolean(Inquiry::sepa_mandate_accepted)->default(false);
+
+            // Rechnungsanschrift
+            $table->boolean(Inquiry::billing_use_postal_address)->default(true);
+            $table->string(Inquiry::billing_street)->nullable();
+            $table->string(Inquiry::billing_address2)->nullable();
+            $table->string(Inquiry::billing_zip)->nullable();
+            $table->string(Inquiry::billing_city)->nullable();
+            $table->string(Inquiry::billing_country)->nullable()->default('Deutschland');
+
             $table->json(Inquiry::attachments)->nullable();
             $table->date(Inquiry::start_date);
             $table->date(Inquiry::end_date);

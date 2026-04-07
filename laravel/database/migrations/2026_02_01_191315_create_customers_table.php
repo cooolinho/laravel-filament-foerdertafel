@@ -24,6 +24,22 @@ return new class extends Migration
             $table->string(Customer::email)->unique();
             $table->string(Customer::phone)->nullable();
             $table->string(Customer::payment_method)->nullable();
+
+            // SEPA-Bankdaten
+            $table->string(Customer::account_holder)->nullable();
+            $table->string(Customer::iban)->nullable();
+            $table->string(Customer::bic)->nullable();
+            $table->string(Customer::bank_name)->nullable();
+            $table->boolean(Customer::sepa_mandate_accepted)->default(false);
+
+            // Rechnungsanschrift
+            $table->boolean(Customer::billing_use_postal_address)->default(true);
+            $table->string(Customer::billing_street)->nullable();
+            $table->string(Customer::billing_address2)->nullable();
+            $table->string(Customer::billing_zip)->nullable();
+            $table->string(Customer::billing_city)->nullable();
+            $table->string(Customer::billing_country)->nullable();
+
             $table->text(Customer::notes)->nullable();
             $table->timestamps();
         });

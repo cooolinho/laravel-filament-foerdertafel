@@ -261,12 +261,12 @@
                 </form>
             @endif
 
-            {{-- ══ SCHRITT 5: Anhänge & AGB ══ --}}
+            {{-- ══ SCHRITT 5: Anhänge ══ --}}
             @if($currentStep === 5)
                 <form wire:submit="nextStep">
                     <div class="max-w-2xl mx-auto">
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Anhänge & AGB</h2>
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Anhänge</h2>
                             {{ $this->attachmentsForm }}
                         </div>
                     </div>
@@ -453,10 +453,14 @@
                         </div>
                     @endif
 
+                    {{-- Pflichtdokumente & Datenkorrektheit --}}
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                        {{ $this->overviewForm }}
+                    </div>
+
                     {{-- Hinweis --}}
                     <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 text-sm text-amber-800 dark:text-amber-200">
-                        <strong>Bitte prüfen Sie Ihre Angaben sorgfältig.</strong>
-                        Nach dem Absenden erhalten Sie eine Bestätigung per E-Mail. Wir melden uns in Kürze bei Ihnen.
+                        {!! nl2br(e(\App\Models\Setting::get(\App\Models\Setting::inquiry_overview_info_text, 'Bitte prüfen Sie Ihre Angaben sorgfältig. Nach dem Absenden erhalten Sie eine Bestätigung per E-Mail. Wir melden uns in Kürze bei Ihnen.'))) !!}
                     </div>
 
                     {{-- Navigation --}}

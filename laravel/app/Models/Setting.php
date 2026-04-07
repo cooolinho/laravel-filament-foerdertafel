@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -16,13 +17,18 @@ use Illuminate\Support\Facades\Cache;
  * @property int|null $max_fields_per_customer
  * @property bool|null $email_notifications_enabled
  * @property int|null $default_email_template_id
- * @property int|null $terms_conditions_document_id
+ * @property array|null $required_document_ids
+ * @property string|null $sepa_mandate_text
+ * @property string|null $data_confirmation_text
+ * @property string|null $inquiry_overview_info_text
  * @property array|null $inquiry_confirmation_attachment_ids
+ * @property float|null $field_width_cm
+ * @property float|null $field_height_cm
+ * @property float|null $field_gap_cm
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
  * @property-read EmailTemplate|null $defaultEmailTemplate
- * @property-read Document|null $termsConditionsDocument
  */
 class Setting extends Model
 {
@@ -35,10 +41,14 @@ class Setting extends Model
     const string field_gap_cm = 'field_gap_cm';
     const string email_notifications_enabled = 'email_notifications_enabled';
     const string default_email_template_id = 'default_email_template_id';
-    const string terms_conditions_document_id = 'terms_conditions_document_id';
+    const string required_document_ids = 'required_document_ids';
+    const string sepa_mandate_text = 'sepa_mandate_text';
+    const string data_confirmation_text = 'data_confirmation_text';
+    const string inquiry_overview_info_text = 'inquiry_overview_info_text';
+
 
     // Zahlungsmethoden Konstanten
-    const string PAYMENT_METHOD_BANK_TRANSFER = 'bank_transfer';
+    const string PAYMENT_METHOD_SEPA = 'sepa';
     const string PAYMENT_METHOD_CREDIT_CARD = 'credit_card';
     const string PAYMENT_METHOD_PAYPAL = 'paypal';
     const string PAYMENT_METHOD_CASH = 'cash';
@@ -56,7 +66,10 @@ class Setting extends Model
         self::field_gap_cm,
         self::email_notifications_enabled,
         self::default_email_template_id,
-        self::terms_conditions_document_id,
+        self::required_document_ids,
+        self::sepa_mandate_text,
+        self::data_confirmation_text,
+        self::inquiry_overview_info_text,
     ];
 
     protected $casts = [
@@ -67,7 +80,7 @@ class Setting extends Model
         self::field_height_cm => 'float',
         self::field_gap_cm => 'float',
         self::default_email_template_id => 'integer',
-        self::terms_conditions_document_id => 'integer',
+        self::required_document_ids => 'array',
     ];
 
     /**
@@ -79,11 +92,22 @@ class Setting extends Model
     }
 
     /**
-     * Beziehung zum AGB-Dokument
+     * Gibt alle Pflicht-Dokumente zurück, die bei der Anfrage akzeptiert werden müssen.
+     *
+     * @return Collection<int, Document>
      */
-    public function termsConditionsDocument(): BelongsTo
+    public static function getRequiredDocuments(): Collection
     {
-        return $this->belongsTo(Document::class, self::terms_conditions_document_id);
+        $ids = self::get(self::required_document_ids, []);
+
+        if (empty($ids)) {
+            return new Collection();
+        }
+
+        return Document::whereIn('id', $ids)
+            ->where(Document::is_current_version, true)
+            ->orderBy(Document::title)
+            ->get();
     }
 
 
@@ -173,7 +197,7 @@ class Setting extends Model
     public static function getPaymentMethods(): array
     {
         return [
-            self::PAYMENT_METHOD_BANK_TRANSFER => 'Überweisung',
+            self::PAYMENT_METHOD_SEPA => 'Überweisung',
             self::PAYMENT_METHOD_CREDIT_CARD => 'Kreditkarte',
             self::PAYMENT_METHOD_PAYPAL => 'PayPal',
             self::PAYMENT_METHOD_CASH => 'Bar',

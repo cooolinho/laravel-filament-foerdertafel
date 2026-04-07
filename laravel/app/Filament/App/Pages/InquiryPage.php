@@ -54,6 +54,7 @@ class InquiryPage extends Page implements HasForms
     public array $rentalData     = [];
     public array $paymentData    = [];
     public array $attachmentsData = [];
+    public array $overviewData    = [];
 
     public array $selectedFields = [];
 
@@ -86,6 +87,7 @@ class InquiryPage extends Page implements HasForms
         $this->rentalForm->fill();
         $this->paymentForm->fill();
         $this->attachmentsForm->fill();
+        $this->overviewForm->fill();
     }
 
     // ── Schritt-Titel ────────────────────────────────────────────────────────
@@ -97,7 +99,7 @@ class InquiryPage extends Page implements HasForms
             2 => 'Kontaktdaten',
             3 => 'Mietdetails',
             4 => 'Zahlung',
-            5 => 'AGB',
+            5 => 'Anhänge & Dokumente',
             6 => 'Übersicht',
         ];
     }
@@ -268,7 +270,7 @@ class InquiryPage extends Page implements HasForms
                     ->validationMessages([
                         'accepted' => 'Sie müssen das SEPA-Mandat akzeptieren, um eine Anfrage stellen zu können.',
                     ])
-                    ->helperText('Durch Klicken des \'SEPA-Mandat akzeptieren\'-Buttons und Absenden des Formulars unterschreiben Sie das Mandatsformular. Somit ermächtigen Sie (A) Ihren Verein, Ihrer Bank Anweisungen zur Belastung Ihres Kontos zu senden und (B) Ihre Bank, Ihr Konto gemäß den Anweisungen Ihres Vereins zu belasten. Als Teil Ihrer Rechte haben Sie gemäß den Bedingungen Ihrer Vereinbarung mit Ihrer Bank Anspruch auf eine Rückerstattung durch Ihre Bank. Eine Rückerstattung muss innerhalb von 8 Wochen ab dem Datum der Belastung Ihres Kontos beantragt werden.')
+                    ->helperText(Setting::get(Setting::sepa_mandate_text))
                     ->visible(fn ($get) => $get('payment_method') === 'sepa')
                     ->columnSpanFull(),
 
@@ -341,17 +343,33 @@ class InquiryPage extends Page implements HasForms
                     ->reorderable()
                     ->appendFiles()
                     ->columnSpanFull(),
+            ])
+            ->statePath('attachmentsData');
+    }
 
+    // ── Schritt 6: Übersicht – Checkboxen & Absenden ────────────────────────
+
+    public function overviewForm(Schema $schema): Schema
+    {
+        return $schema
+            ->schema([
                 Checkbox::make('accept_terms')
                     ->label($this->buildTermsLabel())
                     ->required()
-                    ->rules(['accepted'])
                     ->validationMessages([
-                        'accepted' => 'Sie müssen die AGB akzeptieren, um eine Anfrage stellen zu können.',
+                        'required' => 'Sie müssen alle Pflichtdokumente akzeptieren.',
+                    ])
+                    ->columnSpanFull(),
+
+                Checkbox::make('confirm_data_correctness')
+                    ->label(Setting::get(Setting::data_confirmation_text, 'Durch Angabe meiner Daten erkläre ich meine Daten als korrekt.'))
+                    ->required()
+                    ->validationMessages([
+                        'required' => 'Bitte bestätigen Sie die Korrektheit Ihrer Angaben.',
                     ])
                     ->columnSpanFull(),
             ])
-            ->statePath('attachmentsData');
+            ->statePath('overviewData');
     }
 
     public function nextStep(): void
@@ -472,6 +490,7 @@ class InquiryPage extends Page implements HasForms
         $rentalData      = $this->rentalForm->getState();
         $paymentData     = $this->paymentForm->getState();
         $attachmentsData = $this->attachmentsForm->getState();
+        $this->overviewForm->getState(); // Checkboxen validieren
 
         $billingDifferent = !(bool) ($paymentData['billing_use_postal_address'] ?? true);
 
@@ -683,25 +702,36 @@ class InquiryPage extends Page implements HasForms
     }
 
     /**
-     * Erstellt das Label für die AGB-Checkbox.
-     * Enthält einen Link zum Dokument, falls in den Einstellungen konfiguriert.
+     * Erstellt das Label für die Pflichtdokumente-Checkbox.
+     * Enthält Links zu allen konfigurierten Dokumenten.
      */
     protected function buildTermsLabel(): string|HtmlString
     {
-        $termsId = Setting::get(Setting::terms_conditions_document_id);
+        $documents = Setting::getRequiredDocuments();
 
-        if ($termsId) {
-            $document = Document::find($termsId);
-            if ($document) {
-                $url = route('documents.show', ['document' => $document->{Document::file_name}]);
-                return new HtmlString(
-                    'Ich habe die <a href="' . e($url) . '" target="_blank" rel="noopener noreferrer" '
-                    . 'class="underline font-medium text-primary-600 hover:text-primary-500">'
-                    . 'Allgemeinen Geschäftsbedingungen (AGB)</a> gelesen und akzeptiere sie.'
-                );
-            }
+        if ($documents->isEmpty()) {
+            return 'Ich akzeptiere die Allgemeinen Geschäftsbedingungen.';
         }
 
-        return 'Ich akzeptiere die Allgemeinen Geschäftsbedingungen (AGB).';
+        $links = $documents->map(function (Document $document) {
+            $url = route('documents.show', ['document' => $document->{Document::file_name}]);
+            return '<a href="' . e($url) . '" target="_blank" rel="noopener noreferrer" '
+                . 'class="underline font-medium text-primary-600 hover:text-primary-500">'
+                . e($document->title)
+                . '</a>';
+        })->all();
+
+        $count = count($links);
+
+        if ($count === 1) {
+            $linkString = $links[0];
+        } elseif ($count === 2) {
+            $linkString = $links[0] . ' und ' . $links[1];
+        } else {
+            $last = array_pop($links);
+            $linkString = implode(', ', $links) . ' und ' . $last;
+        }
+
+        return new HtmlString('Ich habe ' . $linkString . ' gelesen und akzeptiere sie.');
     }
 }

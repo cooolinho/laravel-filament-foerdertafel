@@ -14,7 +14,7 @@ class DocumentViewController extends Controller
     /**
      * Prüft, ob ein Dokument zugänglich ist.
      * Angemeldete Benutzer dürfen jedes Dokument sehen.
-     * Gäste dürfen nur: is_public = true ODER das AGB-Dokument aus den Einstellungen.
+     * Gäste dürfen nur: is_public = true ODER eines der konfigurierten Pflichtdokumente.
      */
     private function isAccessible(Document $document): bool
     {
@@ -26,9 +26,9 @@ class DocumentViewController extends Controller
             return true;
         }
 
-        $termsId = (int) Setting::get(Setting::terms_conditions_document_id);
+        $requiredIds = Setting::get(Setting::required_document_ids, []);
 
-        return $termsId > 0 && $termsId === $document->id;
+        return is_array($requiredIds) && in_array($document->id, $requiredIds);
     }
 
     /**

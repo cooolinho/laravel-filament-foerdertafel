@@ -1,10 +1,8 @@
 <?php
 
 use App\Models\Setting;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -16,29 +14,20 @@ return new class extends Migration
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
-            $table->string(Setting::default_payment_method)->default(Setting::PAYMENT_METHOD_BANK_TRANSFER);
+            $table->string(Setting::default_payment_method)->default(Setting::PAYMENT_METHOD_SEPA);
             $table->integer(Setting::default_rental_duration)->default(1); // in Monaten
             $table->integer(Setting::max_fields_per_customer)->default(10);
             $table->boolean(Setting::email_notifications_enabled)->default(true);
             $table->foreignId(Setting::default_email_template_id)->nullable()->constrained('email_templates')->nullOnDelete();
-            $table->foreignId(Setting::terms_conditions_document_id)->nullable()->constrained('documents')->nullOnDelete();
+            $table->json(Setting::required_document_ids)->nullable();
+            $table->text(Setting::sepa_mandate_text)->nullable();
+            $table->text(Setting::data_confirmation_text)->nullable();
+            $table->text(Setting::inquiry_overview_info_text)->nullable();
             $table->decimal(Setting::field_width_cm, 5, 2)->default(8.9);
             $table->decimal(Setting::field_height_cm, 5, 2)->default(5.1);
             $table->decimal(Setting::field_gap_cm, 5, 2)->default(1.2);
             $table->timestamps();
         });
-
-        // Standardwerte in die Tabelle einfügen
-        DB::table('settings')->insert([
-            Setting::default_payment_method => Setting::PAYMENT_METHOD_BANK_TRANSFER,
-            Setting::default_rental_duration => 1,
-            Setting::max_fields_per_customer => 10,
-            Setting::email_notifications_enabled => true,
-            Setting::default_email_template_id => null,
-            Setting::terms_conditions_document_id => null,
-            Model::CREATED_AT => now(),
-            Model::UPDATED_AT => now(),
-        ]);
     }
 
     /**

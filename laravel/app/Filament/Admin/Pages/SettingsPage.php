@@ -8,6 +8,7 @@ use App\Models\Setting;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -50,7 +51,10 @@ class SettingsPage extends Page implements HasForms
                 Setting::field_gap_cm               => $settings->field_gap_cm,
                 Setting::email_notifications_enabled => $settings->email_notifications_enabled,
                 Setting::default_email_template_id  => $settings->default_email_template_id,
-                Setting::terms_conditions_document_id => $settings->terms_conditions_document_id,
+                Setting::required_document_ids      => $settings->required_document_ids ?? [],
+                Setting::sepa_mandate_text          => $settings->sepa_mandate_text,
+                Setting::data_confirmation_text     => $settings->data_confirmation_text,
+                Setting::inquiry_overview_info_text => $settings->inquiry_overview_info_text,
             ]);
         }
     }
@@ -149,20 +153,44 @@ class SettingsPage extends Page implements HasForms
                 Section::make('Anfrage Einstellungen')
                     ->description('Einstellungen für den Anfrage-Prozess (Kundenportal)')
                     ->schema([
-                        Select::make(Setting::terms_conditions_document_id)
-                            ->label('AGB Dokument')
+                        Select::make(Setting::required_document_ids)
+                            ->label('Pflichtdokumente')
+                            ->multiple()
                             ->options(
                                 Document::query()
-                                    ->where(Document::type, Document::TYPE_TERMS_CONDITIONS)
                                     ->where(Document::is_current_version, true)
                                     ->orderBy(Document::title)
-                                    ->pluck(Document::title, 'id')
+                                    ->get()
+                                    ->mapWithKeys(fn (Document $doc) => [
+                                        $doc->id => $doc->getTypeLabel() . ' – ' . $doc->title,
+                                    ])
                             )
                             ->searchable()
                             ->preload()
                             ->nullable()
-                            ->helperText('Das AGB-Dokument, welches Kunden bei der Anfrage akzeptieren müssen. Nur Dokumente vom Typ „AGB" werden angezeigt.')
+                            ->helperText('Dokumente, die Kunden bei der Anfrage akzeptieren müssen (z. B. AGB, Beitragsordnung, Datenschutzerklärung). Es werden nur aktuelle Versionen angezeigt.')
                             ->native(false),
+
+                        Textarea::make(Setting::sepa_mandate_text)
+                            ->label('SEPA-Mandat Hinweistext')
+                            ->rows(6)
+                            ->helperText('Dieser Text wird dem Kunden beim Akzeptieren des SEPA-Mandats angezeigt.')
+                            ->placeholder('SEPA-Mandat Hinweistext eingeben...')
+                            ->columnSpanFull(),
+
+                        Textarea::make(Setting::data_confirmation_text)
+                            ->label('Datenkorrektheit-Bestätigungstext')
+                            ->rows(3)
+                            ->helperText('Dieser Text wird dem Kunden als Bestätigung der Datenkorrektheit im letzten Schritt der Anfrage angezeigt.')
+                            ->placeholder('Bestätigungstext eingeben...')
+                            ->columnSpanFull(),
+
+                        Textarea::make(Setting::inquiry_overview_info_text)
+                            ->label('Hinweistext Übersichtsseite')
+                            ->rows(3)
+                            ->helperText('Dieser Hinweistext wird im Übersichts-Schritt (Schritt 6) vor dem Absenden angezeigt.')
+                            ->placeholder('Hinweistext eingeben...')
+                            ->columnSpanFull(),
                     ])
                     ->columns(1),
 
