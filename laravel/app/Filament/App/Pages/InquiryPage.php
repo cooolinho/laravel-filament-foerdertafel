@@ -13,6 +13,7 @@ use App\Rules\MaxFieldsCount;
 use BackedEnum;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -21,6 +22,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
 use Illuminate\Support\Facades\DB;
@@ -172,6 +174,111 @@ class InquiryPage extends Page implements HasForms
                     ->placeholder('Ihre Nachricht an uns...')
                     ->columnSpanFull(),
 
+                // Rechnungsinformationen
+                Section::make('Rechnungsinformationen')
+                    ->schema([
+                        Radio::make('payment_method')
+                            ->label('Bevorzugte Zahlungsmethode')
+                            ->options([
+                                'sepa' => 'SEPA',
+                            ])
+                            ->default('sepa')
+                            ->required()
+                            ->reactive()
+                            ->helperText(fn ($get) => $get('payment_method') === 'sepa'
+                                ? 'TSV von 1908 Großenkneten e.V. akzeptiert nur SEPA Zahlungen.'
+                                : null)
+                            ->columnSpanFull(),
+
+                        TextInput::make('account_holder')
+                            ->label('Kontoinhaber')
+                            ->required()
+                            ->maxLength(255)
+                            ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                            ->columnSpanFull(),
+
+                        TextInput::make('iban')
+                            ->label('IBAN')
+                            ->required()
+                            ->maxLength(34)
+                            ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                            ->columnSpanFull(),
+
+                        TextInput::make('bic')
+                            ->label('BIC')
+                            ->maxLength(11)
+                            ->visible(fn ($get) => $get('payment_method') === 'sepa'),
+
+                        TextInput::make('bank_name')
+                            ->label('Bankname')
+                            ->maxLength(255)
+                            ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                            ->helperText(new HtmlString(
+                                '<p class="text-sm text-primary-600">BIC oder Bankname sind unbekannt? Du kannst diese Felder freilassen und wir ermitteln sie aus der IBAN.</p>'
+                            )),
+
+                        Checkbox::make('sepa_mandate_accepted')
+                            ->label('Sepa-Mandat akzeptieren')
+                            ->required()
+                            ->rules(['accepted'])
+                            ->validationMessages([
+                                'accepted' => 'Sie müssen das SEPA-Mandat akzeptieren, um eine Anfrage stellen zu können.',
+                            ])
+                            ->helperText('Durch Klicken des \'SEPA-Mandat akzeptieren\'-Buttons und Absenden des Formulars unterschreiben Sie das Mandatsformular. Somit ermächtigen Sie (A) Ihren Verein, Ihrer Bank Anweisungen zur Belastung Ihres Kontos zu senden und (B) Ihre Bank, Ihr Konto gemäß den Anweisungen Ihres Vereins zu belasten. Als Teil Ihrer Rechte haben Sie gemäß den Bedingungen Ihrer Vereinbarung mit Ihrer Bank Anspruch auf eine Rückerstattung durch Ihre Bank. Eine Rückerstattung muss innerhalb von 8 Wochen ab dem Datum der Belastung Ihres Kontos beantragt werden.')
+                            ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                            ->columnSpanFull(),
+                    ])
+                    ->columnSpanFull(),
+
+                // Rechnungsanschrift
+                Section::make('Rechnungsanschrift')
+                    ->schema([
+                        Checkbox::make('billing_use_postal_address')
+                            ->label('Postadresse verwenden')
+                            ->default(true)
+                            ->reactive()
+                            ->columnSpanFull(),
+
+                        TextInput::make('billing_street')
+                            ->label('Straße Und Hausnummer')
+                            ->placeholder('Torstraße 177')
+                            ->maxLength(255)
+                            ->required(fn ($get) => !(bool) $get('billing_use_postal_address'))
+                            ->visible(fn ($get) => !(bool) $get('billing_use_postal_address')),
+
+                        TextInput::make('billing_address2')
+                            ->label('Adresszeile 2')
+                            ->placeholder('C/O, Firma, Gebäude, zusätzliche Informationen')
+                            ->maxLength(255)
+                            ->visible(fn ($get) => !(bool) $get('billing_use_postal_address')),
+
+                        TextInput::make('billing_zip')
+                            ->label('PLZ')
+                            ->maxLength(10)
+                            ->required(fn ($get) => !(bool) $get('billing_use_postal_address'))
+                            ->visible(fn ($get) => !(bool) $get('billing_use_postal_address')),
+
+                        TextInput::make('billing_city')
+                            ->label('Stadt')
+                            ->maxLength(255)
+                            ->required(fn ($get) => !(bool) $get('billing_use_postal_address'))
+                            ->visible(fn ($get) => !(bool) $get('billing_use_postal_address')),
+
+                        Select::make('billing_country')
+                            ->label('Rechnungsland')
+                            ->options([
+                                'Deutschland' => 'Deutschland',
+                                'Österreich'  => 'Österreich',
+                                'Schweiz'     => 'Schweiz',
+                            ])
+                            ->default('Deutschland')
+                            ->native(false)
+                            ->required(fn ($get) => !(bool) $get('billing_use_postal_address'))
+                            ->visible(fn ($get) => !(bool) $get('billing_use_postal_address')),
+                    ])
+                    ->columnSpanFull(),
+
+
                 FileUpload::make('attachments')
                     ->label('Anhänge (optional)')
                     ->helperText('Laden Sie Dokumente oder Bilder hoch, die Ihre Anfrage ergänzen (z. B. Design-Vorlage für Ihre Kachel). PDF, JPG, PNG – max. 10 MB pro Datei.')
@@ -317,6 +424,20 @@ class InquiryPage extends Page implements HasForms
                     Inquiry::requested_fields => $this->selectedFields,
                     Inquiry::status => Inquiry::STATUS_PENDING,
                     Inquiry::message => $formData['message'] ?? null,
+                    // Zahlungsdaten
+                    Inquiry::payment_method => $formData['payment_method'] ?? 'sepa',
+                    Inquiry::account_holder => $formData['account_holder'] ?? null,
+                    Inquiry::iban => $formData['iban'] ?? null,
+                    Inquiry::bic => $formData['bic'] ?? null,
+                    Inquiry::bank_name => $formData['bank_name'] ?? null,
+                    Inquiry::sepa_mandate_accepted => (bool) ($formData['sepa_mandate_accepted'] ?? false),
+                    // Rechnungsanschrift
+                    Inquiry::billing_use_postal_address => (bool) ($formData['billing_use_postal_address'] ?? true),
+                    Inquiry::billing_street => !(bool) ($formData['billing_use_postal_address'] ?? true) ? ($formData['billing_street'] ?? null) : null,
+                    Inquiry::billing_address2 => !(bool) ($formData['billing_use_postal_address'] ?? true) ? ($formData['billing_address2'] ?? null) : null,
+                    Inquiry::billing_zip => !(bool) ($formData['billing_use_postal_address'] ?? true) ? ($formData['billing_zip'] ?? null) : null,
+                    Inquiry::billing_city => !(bool) ($formData['billing_use_postal_address'] ?? true) ? ($formData['billing_city'] ?? null) : null,
+                    Inquiry::billing_country => !(bool) ($formData['billing_use_postal_address'] ?? true) ? ($formData['billing_country'] ?? 'Deutschland') : null,
                 ]);
 
                 // Attach fields via pivot table

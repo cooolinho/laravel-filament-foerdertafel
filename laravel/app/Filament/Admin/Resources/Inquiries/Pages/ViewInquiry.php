@@ -42,8 +42,38 @@ class ViewInquiry extends ViewRecord
                                 Customer::street_nr => $record->street_nr,
                                 Customer::zip => $record->zip,
                                 Customer::city => $record->city,
+                                Customer::payment_method => $record->payment_method,
+                                Customer::account_holder => $record->account_holder,
+                                Customer::iban => $record->iban,
+                                Customer::bic => $record->bic,
+                                Customer::bank_name => $record->bank_name,
+                                Customer::sepa_mandate_accepted => $record->sepa_mandate_accepted,
+                                Customer::billing_use_postal_address => $record->billing_use_postal_address,
+                                Customer::billing_street => $record->billing_street,
+                                Customer::billing_address2 => $record->billing_address2,
+                                Customer::billing_zip => $record->billing_zip,
+                                Customer::billing_city => $record->billing_city,
+                                Customer::billing_country => $record->billing_country,
                             ]
                         );
+
+                        // Wenn der Kunde bereits existiert, Zahlungsdaten aktualisieren
+                        if (!$customer->wasRecentlyCreated) {
+                            $customer->update([
+                                Customer::payment_method => $record->payment_method,
+                                Customer::account_holder => $record->account_holder,
+                                Customer::iban => $record->iban,
+                                Customer::bic => $record->bic,
+                                Customer::bank_name => $record->bank_name,
+                                Customer::sepa_mandate_accepted => $record->sepa_mandate_accepted,
+                                Customer::billing_use_postal_address => $record->billing_use_postal_address,
+                                Customer::billing_street => $record->billing_street,
+                                Customer::billing_address2 => $record->billing_address2,
+                                Customer::billing_zip => $record->billing_zip,
+                                Customer::billing_city => $record->billing_city,
+                                Customer::billing_country => $record->billing_country,
+                            ]);
+                        }
 
                         // Create rental
                         $rental = Rental::create([

@@ -33,6 +33,18 @@ use Illuminate\Support\Carbon;
  * @property string|null $zip
  * @property string|null $city
  * @property array|null $attachments
+ * @property string $payment_method
+ * @property string|null $account_holder
+ * @property string|null $iban
+ * @property string|null $bic
+ * @property string|null $bank_name
+ * @property bool $sepa_mandate_accepted
+ * @property bool $billing_use_postal_address
+ * @property string|null $billing_street
+ * @property string|null $billing_address2
+ * @property string|null $billing_zip
+ * @property string|null $billing_city
+ * @property string|null $billing_country
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Board $board
@@ -80,10 +92,28 @@ class Inquiry extends Model
     const string admin_notes = 'admin_notes';
     const string rental_id = 'rental_id';
 
+    // Zahlungsdaten
+    const string payment_method = 'payment_method';
+    const string account_holder = 'account_holder';
+    const string iban = 'iban';
+    const string bic = 'bic';
+    const string bank_name = 'bank_name';
+    const string sepa_mandate_accepted = 'sepa_mandate_accepted';
+
+    // Rechnungsanschrift
+    const string billing_use_postal_address = 'billing_use_postal_address';
+    const string billing_street = 'billing_street';
+    const string billing_address2 = 'billing_address2';
+    const string billing_zip = 'billing_zip';
+    const string billing_city = 'billing_city';
+    const string billing_country = 'billing_country';
+
     const string STATUS_PENDING = 'pending';
     const string STATUS_APPROVED = 'approved';
     const string STATUS_REJECTED = 'rejected';
     const string STATUS_CONVERTED = 'converted';
+
+    const string PAYMENT_METHOD_SEPA = 'sepa';
 
     protected $fillable = [
         self::board_id,
@@ -105,6 +135,18 @@ class Inquiry extends Model
         self::message,
         self::admin_notes,
         self::rental_id,
+        self::payment_method,
+        self::account_holder,
+        self::iban,
+        self::bic,
+        self::bank_name,
+        self::sepa_mandate_accepted,
+        self::billing_use_postal_address,
+        self::billing_street,
+        self::billing_address2,
+        self::billing_zip,
+        self::billing_city,
+        self::billing_country,
     ];
 
     protected $casts = [
@@ -114,6 +156,8 @@ class Inquiry extends Model
         self::end_date => 'date',
         self::rental_months => 'integer',
         self::requested_fields => 'array',
+        self::sepa_mandate_accepted => 'boolean',
+        self::billing_use_postal_address => 'boolean',
     ];
 
     /**
