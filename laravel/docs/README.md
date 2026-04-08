@@ -48,7 +48,15 @@ Willkommen zur Dokumentation des Laravel Filament Fördertafel Projekts!
   - RentalSeeder (10 Szenarien)
   - Verwendung und Beispiele
 
-### 4. Entwickler-Referenz
+### 4. Server & Deployment
+- **[SERVER_SETUP.md](SERVER_SETUP.md)** - Server-Einrichtung & Deployment
+  - server-setup.sh konfigurieren und ausführen
+  - Docker installieren
+  - GitHub-Verknüpfung via SSH-Key (ssh-keygen)
+  - git pull von privatem Repository
+  - Deployment-Workflow & Automatisierung
+
+### 5. Entwickler-Referenz
 - **[COPILOT_PROMPTS.md](COPILOT_PROMPTS.md)** - AI Assistant Prompts
   - Hilfreiche Prompts für die Entwicklung
   - Best Practices
