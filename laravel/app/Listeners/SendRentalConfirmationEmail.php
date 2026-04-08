@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\RentalCreated;
+use App\Jobs\SendEmailJob;
 use App\Models\Email;
 use Illuminate\Support\Facades\Log;
 
@@ -54,7 +55,7 @@ class SendRentalConfirmationEmail extends BaseEmailNotificationListener
             'location_name'  => $location?->name ?? 'N/A',
         ];
 
-        $email = $this->createAndDispatchEmail(
+        $email = $this->createEmail(
             templateSlug: 'rental-confirmation',
             toEmail:      $customer->email,
             toName:       $customerName,
@@ -72,5 +73,8 @@ class SendRentalConfirmationEmail extends BaseEmailNotificationListener
         if ($email) {
             Log::info("Mietbestätigungs-E-Mail für Rental #{$rental->id} an {$customer->email} erstellt (ID: {$email->id}).");
         }
+
+        // E-Mail in die Queue einreihen
+        SendEmailJob::dispatch($email);
     }
 }

@@ -20,5 +20,18 @@ return new class extends SettingsMigration
         $this->migrator->add('general.field_height_cm', 5.1);
         $this->migrator->add('general.field_gap_cm', 1.2);
         $this->migrator->add('general.initial_setup_cost', 10);
+
+        $this->migrator->add('general.invoice_organisation_name', null);
+        $this->migrator->add('general.invoice_organisation_address', null);
+        $this->migrator->add('general.invoice_bank_account_holder', null);
+        $this->migrator->add('general.invoice_bank_iban', null);
+        $this->migrator->add('general.invoice_bank_bic', null);
+        $this->migrator->add('general.invoice_bank_name', null);
+        $this->migrator->add('general.invoice_number_prefix', 'RE-');
+        $this->migrator->add('general.invoice_vat_rate', 19.0);
+
+        // 'inclusive' = MwSt. ist im Preis enthalten (Standard)
+        // 'exclusive' = MwSt. wird auf den Preis aufgeschlagen
+        $this->migrator->add('general.invoice_vat_mode', 'inclusive');
     }
 };

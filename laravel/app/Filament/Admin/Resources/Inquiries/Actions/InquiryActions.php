@@ -88,7 +88,7 @@ class InquiryActions
                     if (!empty($record->requested_fields)) {
                         $rental->fields()->attach($record->requested_fields);
 
-                        $totalPrice = $rental->fields()->sum('price_per_month');
+                        $totalPrice = $record->calculateGrossTotal();
                         $rental->update([Rental::total_price => $totalPrice]);
 
                         $rental->fields()->update([Field::status => Field::STATUS_RENTED]);

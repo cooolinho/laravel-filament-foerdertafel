@@ -146,7 +146,7 @@ class RentalActions
                     'company_logo' => $content->company_logo,
                 ];
             })
-            ->form([
+            ->schema([
                 Section::make('Grundinformationen')
                     ->schema([
                         TextInput::make('title')

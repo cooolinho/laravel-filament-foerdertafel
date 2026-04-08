@@ -1,5 +1,5 @@
 @php
-    $duration = app(\App\Settings\GeneralSettings::class)->default_rental_duration;
+    $duration = $inquiry?->rental_months ?? app(\App\Settings\GeneralSettings::class)->default_rental_duration;
 @endphp
 <x-filament-panels::page>
     @if($inquiry)
@@ -135,7 +135,7 @@
                             </div>
                             <div class="text-right">
                                 <p class="text-sm font-semibold text-gray-900 dark:text-white">
-                                    {{ number_format($field->price_per_month, 2, ',', '.') }} €
+                                    {{ $this->getFormattedFieldPricePerMonth($field) }}
                                 </p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">pro Monat</p>
                             </div>
@@ -160,24 +160,24 @@
                                     <div class="bg-white dark:bg-green-900/30 rounded-lg p-3 text-center">
                                         <div class="text-xs text-green-700 dark:text-green-300 mb-1">Breite</div>
                                         <div class="text-xl font-bold text-green-900 dark:text-green-100">
-                                            {{ number_format($dims['width_cm'], 1, ',', '.') }} cm
+                                            {{ $dims['width_fmt'] }}
                                         </div>
                                         @if($dims['cols'] > 1)
                                             <div class="text-xs text-green-600 dark:text-green-400 mt-1">
-                                                {{ $dims['cols'] }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_width_cm, 1, ',', '.') }}
-                                                + {{ $dims['cols'] - 1 }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_gap_cm, 1, ',', '.') }}
+                                                {{ $dims['cols'] }} × {{ $this->getFormattedFieldWidthCm() }}
+                                                + {{ $dims['cols'] - 1 }} × {{ $this->getFormattedFieldGapCm() }}
                                             </div>
                                         @endif
                                     </div>
                                     <div class="bg-white dark:bg-green-900/30 rounded-lg p-3 text-center">
                                         <div class="text-xs text-green-700 dark:text-green-300 mb-1">Höhe</div>
                                         <div class="text-xl font-bold text-green-900 dark:text-green-100">
-                                            {{ number_format($dims['height_cm'], 1, ',', '.') }} cm
+                                            {{ $dims['height_fmt'] }}
                                         </div>
                                         @if($dims['rows'] > 1)
                                             <div class="text-xs text-green-600 dark:text-green-400 mt-1">
-                                                {{ $dims['rows'] }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_height_cm, 1, ',', '.') }}
-                                                + {{ $dims['rows'] - 1 }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_gap_cm, 1, ',', '.') }}
+                                                {{ $dims['rows'] }} × {{ $this->getFormattedFieldHeightCm() }}
+                                                + {{ $dims['rows'] - 1 }} × {{ $this->getFormattedFieldGapCm() }}
                                             </div>
                                         @endif
                                     </div>
@@ -202,19 +202,33 @@
                 <dl class="space-y-2">
                     <div class="flex justify-between text-sm">
                         <dt class="text-gray-600 dark:text-gray-400">Preis pro Monat</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">{{ number_format($this->getTotalPricePerMonth(), 2, ',', '.') }} €</dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $this->getFormattedPricePerMonth() }}</dd>
                     </div>
                     <div class="flex justify-between text-sm">
                         <dt class="text-gray-600 dark:text-gray-400">Anzahl Monate</dt>
-                        <dd class="font-medium text-gray-900 dark:text-white">
-                            {{ $inquiry->rental_months }}
-                        </dd>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $inquiry->rental_months }}</dd>
                     </div>
+                    <div class="flex justify-between text-sm">
+                        <dt class="text-gray-600 dark:text-gray-400">Einmalige Einrichtungskosten</dt>
+                        <dd class="font-medium text-gray-900 dark:text-white">{{ $this->getFormattedSetupCost() }}</dd>
+                    </div>
+                    @if($this->getVatRate() > 0)
+                    <div class="flex justify-between text-sm border-t border-primary-200 dark:border-primary-500/20 pt-2 mt-1">
+                        <dt class="text-gray-600 dark:text-gray-400">Nettobetrag</dt>
+                        <dd class="font-medium text-gray-700 dark:text-gray-300">{{ $this->getFormattedNetTotal() }}</dd>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <dt class="text-gray-600 dark:text-gray-400">{{ $this->getVatLabel() }}</dt>
+                        <dd class="font-medium text-gray-700 dark:text-gray-300">{{ $this->getFormattedVatAmount() }}</dd>
+                    </div>
+                    @endif
                     <div class="border-t border-primary-200 dark:border-primary-500/20 pt-2 mt-2">
                         <div class="flex justify-between">
-                            <dt class="text-base font-semibold text-gray-900 dark:text-white">Gesamtpreis</dt>
+                            <dt class="text-base font-semibold text-gray-900 dark:text-white">
+                                Gesamtpreis{{ $this->getVatRate() > 0 ? ($this->isVatInclusive() ? ' (inkl. MwSt.)' : ' (brutto)') : '' }}
+                            </dt>
                             <dd class="text-base font-bold text-primary-600 dark:text-primary-400">
-                                {{ number_format($this->getTotalPrice(), 2, ',', '.') }} €
+                                {{ $this->getFormattedGrossTotal() }}
                             </dd>
                         </div>
                     </div>

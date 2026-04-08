@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\RentalPaid;
+use App\Jobs\SendEmailJob;
 use App\Models\Email;
 use App\Models\RentalContent;
 use Illuminate\Support\Facades\Log;
@@ -54,7 +55,7 @@ class SendAccessCodeEmail extends BaseEmailNotificationListener
             'fields_list'   => $rental->fields->map(fn ($field) => $field->name)->join(', '),
         ];
 
-        $email = $this->createAndDispatchEmail(
+        $email = $this->createEmail(
             templateSlug: 'rental-access-code',
             toEmail:      $customer->email,
             toName:       $customer->name,
@@ -72,5 +73,8 @@ class SendAccessCodeEmail extends BaseEmailNotificationListener
         if ($email) {
             Log::info("Zugangscode-E-Mail für Rental #{$rental->id} an {$customer->email} erstellt (ID: {$email->id}).");
         }
+
+        // E-Mail in die Queue einreihen
+        SendEmailJob::dispatch($email);
     }
 }

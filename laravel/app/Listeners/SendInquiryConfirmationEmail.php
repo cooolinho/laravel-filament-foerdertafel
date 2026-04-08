@@ -3,7 +3,10 @@
 namespace App\Listeners;
 
 use App\Events\InquiryCreated;
+use App\Jobs\SendEmailJob;
 use App\Models\Email;
+use App\Models\Inquiry;
+use App\Services\InvoicePdfService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -65,7 +68,7 @@ class SendInquiryConfirmationEmail extends BaseEmailNotificationListener
             'inquiry_date'   => $inquiry->created_at?->format('d.m.Y') ?? now()->format('d.m.Y'),
             'start_date'     => Carbon::parse($inquiry->start_date)->format('d.m.Y'),
             'end_date'       => Carbon::parse($inquiry->end_date)->format('d.m.Y'),
-            'total_price'    => number_format($inquiry->getTotalPrice(), 2, ',', '.'),
+            'total_price'    => number_format($inquiry->calculateGrossTotal(), 2, ',', '.'),
             'rental_months'  => $inquiry->rental_months,
             'field_count'    => $fields->count(),
             'board_name'     => $board?->name ?? 'N/A',
@@ -74,7 +77,7 @@ class SendInquiryConfirmationEmail extends BaseEmailNotificationListener
             'message'        => $inquiry->message ?? '',
         ];
 
-        $email = $this->createAndDispatchEmail(
+        $email = $this->createEmail(
             templateSlug: 'inquiry-confirmation',
             toEmail:      $inquiry->customer_email,
             toName:       $customerName,
@@ -88,7 +91,35 @@ class SendInquiryConfirmationEmail extends BaseEmailNotificationListener
         );
 
         if ($email) {
+            // Für Firmenkunden: Rechnungs-PDF generieren und an die E-Mail anhängen
+            if ($inquiry->is_company) {
+                $this->attachInvoicePdf($email, $inquiry);
+            }
+
+            // E-Mail in die Queue einreihen
+            SendEmailJob::dispatch($email);
+
             Log::info("Anfrage-Bestätigungs-E-Mail für Anfrage #{$inquiry->id} an {$inquiry->customer_email} erstellt (ID: {$email->id}).");
+        }
+    }
+
+    /**
+     * Generiert eine Rechnungs-PDF und hängt sie an die E-Mail an.
+     */
+    protected function attachInvoicePdf(Email $email, Inquiry $inquiry): void
+    {
+        try {
+            $pdfService  = app(InvoicePdfService::class);
+            $documentId = $pdfService->generate($inquiry);
+
+            $email->documents()->attach($documentId);
+
+            Log::info("Rechnungs-PDF für Anfrage #{$inquiry->id} erstellt und an E-Mail #{$email->id} angehängt.");
+        } catch (\Throwable $e) {
+            Log::error("Fehler beim Erstellen der Rechnungs-PDF für Anfrage #{$inquiry->id}: " . $e->getMessage(), [
+                'exception'  => $e,
+                'inquiry_id' => $inquiry->id,
+            ]);
         }
     }
 }

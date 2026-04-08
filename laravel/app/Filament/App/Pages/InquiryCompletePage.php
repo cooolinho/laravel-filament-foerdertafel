@@ -50,31 +50,153 @@ class InquiryCompletePage extends Page
     public function getTotalPricePerMonth(): float
     {
         if (!$this->inquiry || !$this->inquiry->fields) {
-            return 0;
+            return 0.0;
         }
 
-        return $this->inquiry->fields->sum('price_per_month');
+        return (float) $this->inquiry->fields->sum('price_per_month');
+    }
+
+    /**
+     * Basispreis = Mietkosten × Monate + Einrichtungskosten.
+     * Bei inklusiver MwSt. = Brutto, bei exklusiver = Netto.
+     */
+    private function getBasePrice(): float
+    {
+        $pricePerMonth = $this->getTotalPricePerMonth();
+        $months        = max(1, (int) ($this->inquiry?->rental_months ?? 1));
+        $setupCost     = (float) app(GeneralSettings::class)->initial_setup_cost;
+
+        return round(($pricePerMonth * $months) + $setupCost, 2);
+    }
+
+    public function getVatRate(): float
+    {
+        return (float) (app(GeneralSettings::class)->invoice_vat_rate ?? 0);
+    }
+
+    public function isVatInclusive(): bool
+    {
+        return app(GeneralSettings::class)->isVatInclusive();
+    }
+
+    public function getNetTotal(): float
+    {
+        $base = $this->getBasePrice();
+        $rate = $this->getVatRate();
+
+        if ($rate <= 0) {
+            return $base;
+        }
+
+        if ($this->isVatInclusive()) {
+            return round($base / (1 + $rate / 100), 2);
+        }
+
+        return $base;
+    }
+
+    public function getVatAmount(): float
+    {
+        $rate = $this->getVatRate();
+
+        if ($rate <= 0) {
+            return 0.0;
+        }
+
+        if ($this->isVatInclusive()) {
+            return round($this->getBasePrice() - $this->getNetTotal(), 2);
+        }
+
+        return round($this->getNetTotal() * $rate / 100, 2);
+    }
+
+    public function getGrossTotal(): float
+    {
+        if ($this->isVatInclusive()) {
+            return $this->getBasePrice();
+        }
+
+        return round($this->getNetTotal() + $this->getVatAmount(), 2);
     }
 
     public function getTotalPrice(): float
     {
-        $pricePerMonth = $this->getTotalPricePerMonth();
+        return $this->getGrossTotal();
+    }
 
-        if (!$this->inquiry || !$this->inquiry->rental_months) {
-            return $pricePerMonth;
-        }
+    // ── Formatierungs-Hilfsmethoden ───────────────────────────────────────────
 
-        try {
-            return $pricePerMonth * $this->inquiry->rental_months;
-        } catch (\Exception $e) {
-            return $pricePerMonth;
-        }
+    private function formatMoney(float $value): string
+    {
+        return number_format($value, 2, ',', '.') . ' €';
+    }
+
+    private function formatCm(float $value): string
+    {
+        return number_format($value, 1, ',', '.') . ' cm';
+    }
+
+    public function getFormattedPricePerMonth(): string
+    {
+        return $this->formatMoney($this->getTotalPricePerMonth());
+    }
+
+    public function getFormattedSetupCost(): string
+    {
+        return $this->formatMoney((float) app(GeneralSettings::class)->initial_setup_cost);
+    }
+
+    public function getFormattedNetTotal(): string
+    {
+        return $this->formatMoney($this->getNetTotal());
+    }
+
+    public function getFormattedVatRate(): string
+    {
+        return number_format($this->getVatRate(), 0, ',', '.') . ' %';
+    }
+
+    public function getFormattedVatAmount(): string
+    {
+        return $this->formatMoney($this->getVatAmount());
+    }
+
+    public function getFormattedGrossTotal(): string
+    {
+        return $this->formatMoney($this->getGrossTotal());
+    }
+
+    public function getVatLabel(): string
+    {
+        $prefix = $this->isVatInclusive() ? 'inkl.' : 'zzgl.';
+
+        return "{$prefix} {$this->getFormattedVatRate()} MwSt.:";
+    }
+
+    public function getFormattedFieldPricePerMonth(Field $field): string
+    {
+        return $this->formatMoney((float) $field->price_per_month);
+    }
+
+    public function getFormattedFieldWidthCm(): string
+    {
+        return $this->formatCm((float) app(GeneralSettings::class)->field_width_cm);
+    }
+
+    public function getFormattedFieldHeightCm(): string
+    {
+        return $this->formatCm((float) app(GeneralSettings::class)->field_height_cm);
+    }
+
+    public function getFormattedFieldGapCm(): string
+    {
+        return $this->formatCm((float) app(GeneralSettings::class)->field_gap_cm);
     }
 
     /**
      * Berechnet die physischen Abmessungen der gebuchten Felder in cm.
      *
-     * @return array{rows: int, cols: int, width_cm: float, height_cm: float}|null
+     * @return array{rows: int, cols: int, width_cm: float, height_cm: float, width_fmt: string, height_fmt: string}|null
      */
     public function getSelectedFieldDimensions(): ?array
     {
@@ -92,11 +214,16 @@ class InquiryCompletePage extends Page
         $selectionRows = $maxRowEnd - $minRow + 1;
         $selectionCols = $maxColEnd - $minCol + 1;
 
+        $widthCm  = app(GeneralSettings::class)->calculatePhysicalWidth($selectionCols);
+        $heightCm = app(GeneralSettings::class)->calculatePhysicalHeight($selectionRows);
+
         return [
-            'rows'      => $selectionRows,
-            'cols'      => $selectionCols,
-            'width_cm'  => app(GeneralSettings::class)->calculatePhysicalWidth($selectionCols),
-            'height_cm' => app(GeneralSettings::class)->calculatePhysicalHeight($selectionRows),
+            'rows'       => $selectionRows,
+            'cols'       => $selectionCols,
+            'width_cm'   => $widthCm,
+            'height_cm'  => $heightCm,
+            'width_fmt'  => $this->formatCm($widthCm),
+            'height_fmt' => $this->formatCm($heightCm),
         ];
     }
 

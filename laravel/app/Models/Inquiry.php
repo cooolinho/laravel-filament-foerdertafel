@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Settings\GeneralSettings;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -239,5 +240,35 @@ class Inquiry extends Model
         }
 
         return $totalPrice;
+    }
+
+    /**
+     * Berechnet den Bruttogesamtpreis einer Anfrage inklusive Einrichtungskosten und MwSt.
+     * Spiegelt dieselbe Logik wie InquiryPage::getGrossTotal() wider.
+     */
+    public function calculateGrossTotal(): float
+    {
+        $settings = app(GeneralSettings::class);
+
+        // Basispreis: Feldkosten × Monate + Einrichtungskosten
+        $fieldCosts = (float) Field::whereIn('id', $this->requested_fields ?? [])
+            ->sum(Field::price_per_month);
+        $months     = max(1, (int) $this->rental_months);
+        $setupCost  = (float) $settings->initial_setup_cost;
+        $base       = round(($fieldCosts * $months) + $setupCost, 2);
+
+        $vatRate = (float) ($settings->invoice_vat_rate ?? 0);
+
+        if ($vatRate <= 0) {
+            return $base;
+        }
+
+        if ($settings->isVatInclusive()) {
+            // MwSt. ist enthalten → Basispreis ist bereits der Bruttobetrag
+            return $base;
+        }
+
+        // MwSt. aufschlagen
+        return round($base * (1 + $vatRate / 100), 2);
     }
 }

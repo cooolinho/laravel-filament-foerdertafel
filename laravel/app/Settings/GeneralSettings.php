@@ -29,6 +29,21 @@ class GeneralSettings extends Settings
     const string field_gap_cm = 'field_gap_cm';
     const string initial_setup_cost = 'initial_setup_cost';
 
+    // Invoice / Bankverbindung
+    const string invoice_organisation_name = 'invoice_organisation_name';
+    const string invoice_organisation_address = 'invoice_organisation_address';
+    const string invoice_bank_account_holder = 'invoice_bank_account_holder';
+    const string invoice_bank_iban = 'invoice_bank_iban';
+    const string invoice_bank_bic = 'invoice_bank_bic';
+    const string invoice_bank_name = 'invoice_bank_name';
+    const string invoice_number_prefix = 'invoice_number_prefix';
+    const string invoice_vat_rate = 'invoice_vat_rate';
+    const string invoice_vat_mode = 'invoice_vat_mode';
+
+    // MwSt.-Modi
+    const string VAT_MODE_INCLUSIVE = 'inclusive';
+    const string VAT_MODE_EXCLUSIVE = 'exclusive';
+
     // properties
     public string $default_payment_method;
     public int $default_rental_duration;
@@ -44,6 +59,31 @@ class GeneralSettings extends Settings
     public float $field_height_cm;
     public float $field_gap_cm;
     public float $initial_setup_cost;
+
+    // Invoice / Bankverbindung
+    public ?string $invoice_organisation_name;
+    public ?string $invoice_organisation_address;
+    public ?string $invoice_bank_account_holder;
+    public ?string $invoice_bank_iban;
+    public ?string $invoice_bank_bic;
+    public ?string $invoice_bank_name;
+    public ?string $invoice_number_prefix;
+    public float $invoice_vat_rate;
+    public string $invoice_vat_mode;
+
+    /** Gibt true zurück wenn die MwSt. im Preis enthalten ist (inklusiv). */
+    public function isVatInclusive(): bool
+    {
+        return ($this->invoice_vat_mode ?? self::VAT_MODE_INCLUSIVE) === self::VAT_MODE_INCLUSIVE;
+    }
+
+    public static function vatModes(): array
+    {
+        return [
+            self::VAT_MODE_INCLUSIVE => 'Inklusive (MwSt. im Preis enthalten)',
+            self::VAT_MODE_EXCLUSIVE => 'Exklusive (MwSt. wird aufgeschlagen)',
+        ];
+    }
 
     /**
      * @return string

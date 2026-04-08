@@ -277,7 +277,17 @@ class FieldsWidget extends Widget implements HasForms, HasActions
             ->modalDescription('Möchten Sie für alle leeren Positionen im Raster automatisch Felder erstellen? Bereits vorhandene Felder bleiben unverändert.')
             ->modalSubmitActionLabel('Ja, Felder erstellen')
             ->modalCancelActionLabel('Abbrechen')
-            ->action(function () {
+            ->schema([
+                TextInput::make('defaultPricePerMonth')
+                    ->label('Standardpreis pro Monat (€)')
+                    ->required()
+                    ->numeric()
+                    ->prefix('€')
+                    ->minValue(0)
+                    ->step(0.01)
+                    ->default(2.50),
+            ])
+            ->action(function (array $data) {
                 if (!$this->record) {
                     Notification::make()
                         ->danger()
@@ -290,6 +300,7 @@ class FieldsWidget extends Widget implements HasForms, HasActions
                 $board = $this->record;
                 $createdCount = 0;
                 $skippedCount = 0;
+                $defaultPricePerMonth = $data['defaultPricePerMonth'] ?? 2.50;
 
                 // Get all existing fields
                 $existingFields = Field::where(Field::board_id, $board->id)->get();
@@ -321,7 +332,7 @@ class FieldsWidget extends Widget implements HasForms, HasActions
                             Field::column => $col,
                             Field::width => 1,
                             Field::height => 1,
-                            Field::price_per_month => 100.00,
+                            Field::price_per_month => $defaultPricePerMonth,
                             Field::status => Field::STATUS_AVAILABLE,
                             Field::description => "Automatisch erstelltes Feld an Position ({$row},{$col})",
                         ]);

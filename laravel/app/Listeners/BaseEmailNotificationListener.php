@@ -2,7 +2,6 @@
 
 namespace App\Listeners;
 
-use App\Jobs\SendEmailJob;
 use App\Models\Email;
 use App\Models\EmailTemplate;
 use App\Settings\GeneralSettings;
@@ -70,7 +69,7 @@ abstract class BaseEmailNotificationListener implements ShouldQueue
      * @param array  $variables     Platzhalter-Werte für Betreff / Body
      * @param array  $extraData     Zusätzliche Felder für den Email-Datensatz (z. B. customer_id, rental_id, metadata)
      */
-    protected function createAndDispatchEmail(
+    protected function createEmail(
         string $templateSlug,
         string $toEmail,
         string $toName,
@@ -120,9 +119,6 @@ abstract class BaseEmailNotificationListener implements ShouldQueue
         if ($templateDocuments->isNotEmpty()) {
             $email->documents()->attach($templateDocuments->pluck('id')->toArray());
         }
-
-        // E-Mail in die Queue einreihen
-        SendEmailJob::dispatch($email);
 
         return $email;
     }

@@ -59,6 +59,16 @@ class GeneralSettingsPage extends Page implements HasForms
             GeneralSettings::inquiry_overview_info_text  => $settings->inquiry_overview_info_text,
             GeneralSettings::initial_setup_cost          => $settings->initial_setup_cost,
             GeneralSettings::logo_path                   => $settings->logo_path ? [$settings->logo_path] : [],
+            // Rechnungs- / Bankverbindungsfelder
+            GeneralSettings::invoice_organisation_name    => $settings->invoice_organisation_name,
+            GeneralSettings::invoice_organisation_address => $settings->invoice_organisation_address,
+            GeneralSettings::invoice_bank_account_holder  => $settings->invoice_bank_account_holder,
+            GeneralSettings::invoice_bank_iban            => $settings->invoice_bank_iban,
+            GeneralSettings::invoice_bank_bic             => $settings->invoice_bank_bic,
+            GeneralSettings::invoice_bank_name            => $settings->invoice_bank_name,
+            GeneralSettings::invoice_number_prefix        => $settings->invoice_number_prefix,
+            GeneralSettings::invoice_vat_rate             => $settings->invoice_vat_rate ?? 0.0,
+            GeneralSettings::invoice_vat_mode             => $settings->invoice_vat_mode ?? GeneralSettings::VAT_MODE_INCLUSIVE,
         ]);
     }
 
@@ -222,6 +232,76 @@ class GeneralSettingsPage extends Page implements HasForms
                     ])
                     ->columns(1),
 
+                Section::make('Rechnung & Bankverbindung')
+                    ->description('Diese Daten erscheinen auf Rechnungs-PDFs, die automatisch bei Unternehmensanfragen erstellt und per E-Mail versendet werden.')
+                    ->icon('heroicon-o-banknotes')
+                    ->schema([
+                        TextInput::make(GeneralSettings::invoice_organisation_name)
+                            ->label('Organisationsname (Rechnungskopf)')
+                            ->nullable()
+                            ->maxLength(255)
+                            ->placeholder(config('app.name'))
+                            ->helperText('Name der Organisation wie er im Briefkopf der Rechnung erscheint. Leer = App-Name wird verwendet.'),
+
+                        TextInput::make(GeneralSettings::invoice_number_prefix)
+                            ->label('Rechnungsnummer-Präfix')
+                            ->nullable()
+                            ->maxLength(20)
+                            ->default('RE-')
+                            ->placeholder('RE-')
+                            ->helperText('Präfix vor der Rechnungsnummer, z. B. "RE-" → "RE-2026-00001"'),
+
+                        TextInput::make(GeneralSettings::invoice_vat_rate)
+                            ->label('Mehrwertsteuersatz (MwSt.) in %')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->step(0.01)
+                            ->default(0)
+                            ->suffix('%')
+                            ->helperText('0 = keine MwSt. ausweisen. Typische Werte: 7 oder 19. Gemeinnützige Vereine geben hier oft 0 ein.'),
+
+                        Select::make(GeneralSettings::invoice_vat_mode)
+                            ->label('MwSt.-Ausweis')
+                            ->options(GeneralSettings::vatModes())
+                            ->default(GeneralSettings::VAT_MODE_INCLUSIVE)
+                            ->native(false)
+                            ->helperText('Inklusive: MwSt. ist im angezeigten Preis bereits enthalten (Brutto = Preis). Exklusive: MwSt. wird auf den Preis aufgeschlagen.'),
+
+                        Textarea::make(GeneralSettings::invoice_organisation_address)
+                            ->label('Anschrift der Organisation')
+                            ->rows(3)
+                            ->nullable()
+                            ->placeholder("Musterstraße 1\n12345 Musterstadt")
+                            ->helperText('Erscheint im Briefkopf und Footer der Rechnung.')
+                            ->columnSpanFull(),
+
+                        TextInput::make(GeneralSettings::invoice_bank_account_holder)
+                            ->label('Kontoinhaber')
+                            ->nullable()
+                            ->maxLength(255)
+                            ->placeholder('Max Mustermann / Musterverein e.V.'),
+
+                        TextInput::make(GeneralSettings::invoice_bank_name)
+                            ->label('Bankname')
+                            ->nullable()
+                            ->maxLength(255)
+                            ->placeholder('Sparkasse Musterstadt'),
+
+                        TextInput::make(GeneralSettings::invoice_bank_iban)
+                            ->label('IBAN')
+                            ->nullable()
+                            ->maxLength(34)
+                            ->placeholder('DE12 3456 7890 1234 5678 90'),
+
+                        TextInput::make(GeneralSettings::invoice_bank_bic)
+                            ->label('BIC / SWIFT')
+                            ->nullable()
+                            ->maxLength(11)
+                            ->placeholder('MUSTDEXXXX'),
+                    ])
+                    ->columns(2),
+
                 Action::make('save')
                     ->label('Einstellungen speichern')
                     ->button()
@@ -269,6 +349,18 @@ class GeneralSettingsPage extends Page implements HasForms
         $settings->inquiry_overview_info_text  = $data[GeneralSettings::inquiry_overview_info_text] ?? null;
         $settings->logo_path                   = $data[GeneralSettings::logo_path] ?? null;
         $settings->initial_setup_cost          = $data[GeneralSettings::initial_setup_cost];
+
+        // Rechnungs- / Bankverbindungsfelder
+        $settings->invoice_organisation_name    = $data[GeneralSettings::invoice_organisation_name] ?? null;
+        $settings->invoice_organisation_address = $data[GeneralSettings::invoice_organisation_address] ?? null;
+        $settings->invoice_bank_account_holder  = $data[GeneralSettings::invoice_bank_account_holder] ?? null;
+        $settings->invoice_bank_iban            = $data[GeneralSettings::invoice_bank_iban] ?? null;
+        $settings->invoice_bank_bic             = $data[GeneralSettings::invoice_bank_bic] ?? null;
+        $settings->invoice_bank_name            = $data[GeneralSettings::invoice_bank_name] ?? null;
+        $settings->invoice_number_prefix        = $data[GeneralSettings::invoice_number_prefix] ?? 'RE-';
+        $settings->invoice_vat_rate             = (float) ($data[GeneralSettings::invoice_vat_rate] ?? 0.0);
+        $settings->invoice_vat_mode             = $data[GeneralSettings::invoice_vat_mode] ?? GeneralSettings::VAT_MODE_INCLUSIVE;
+
         $settings->save();
 
         Notification::make()
