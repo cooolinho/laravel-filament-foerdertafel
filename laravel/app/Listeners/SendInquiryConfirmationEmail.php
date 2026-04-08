@@ -92,9 +92,9 @@ class SendInquiryConfirmationEmail extends BaseEmailNotificationListener
 
         if ($email) {
             // Für Firmenkunden: Rechnungs-PDF generieren und an die E-Mail anhängen
-            if ($inquiry->is_company) {
+//            if ($inquiry->is_company) {
                 $this->attachInvoicePdf($email, $inquiry);
-            }
+//            }
 
             // E-Mail in die Queue einreihen
             SendEmailJob::dispatch($email);
