@@ -585,9 +585,10 @@ class InquiryPage extends Page implements HasForms
     public function getTotalPrice(): float
     {
         $pricePerMonth = $this->getTotalPricePerMonth();
+        $initialSetupCosts = app(\App\Settings\GeneralSettings::class)->initial_setup_cost;
         $months = max(1, (int) app(\App\Settings\GeneralSettings::class)->default_rental_duration);
 
-        return $pricePerMonth * $months;
+        return ($pricePerMonth * $months) + $initialSetupCosts;
     }
 
     /**

@@ -27,6 +27,7 @@ class GeneralSettings extends Settings
     const string field_width_cm = 'field_width_cm';
     const string field_height_cm = 'field_height_cm';
     const string field_gap_cm = 'field_gap_cm';
+    const string initial_setup_cost = 'initial_setup_cost';
 
     // properties
     public string $default_payment_method;
@@ -42,6 +43,7 @@ class GeneralSettings extends Settings
     public float $field_width_cm;
     public float $field_height_cm;
     public float $field_gap_cm;
+    public float $initial_setup_cost;
 
     /**
      * @return string

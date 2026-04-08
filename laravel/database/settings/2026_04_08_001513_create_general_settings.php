@@ -19,5 +19,6 @@ return new class extends SettingsMigration
         $this->migrator->add('general.field_width_cm', 8.9);
         $this->migrator->add('general.field_height_cm', 5.1);
         $this->migrator->add('general.field_gap_cm', 1.2);
+        $this->migrator->add('general.initial_setup_cost', 10);
     }
 };

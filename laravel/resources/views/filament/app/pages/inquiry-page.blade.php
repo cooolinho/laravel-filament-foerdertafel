@@ -184,6 +184,10 @@
                                     <span class="text-sm text-gray-600 dark:text-gray-400">Mindestlaufzeit:</span>
                                     <span class="font-semibold text-gray-900 dark:text-white">{{ app(\App\Settings\GeneralSettings::class)->default_rental_duration }} Monate</span>
                                 </div>
+                                <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Kosten Ersteinrichtung (Druck):</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">{{ number_format(app(\App\Settings\GeneralSettings::class)->initial_setup_cost, 2, ',', '.') }} €</span>
+                                </div>
                                 <div class="flex justify-between items-center pt-2">
                                     <span class="text-base font-semibold text-gray-900 dark:text-white">Gesamtpreis:</span>
                                     <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ number_format($this->getTotalPrice(), 2, ',', '.') }} €</span>

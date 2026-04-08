@@ -57,6 +57,7 @@ class GeneralSettingsPage extends Page implements HasForms
             GeneralSettings::sepa_mandate_text           => $settings->sepa_mandate_text,
             GeneralSettings::data_confirmation_text      => $settings->data_confirmation_text,
             GeneralSettings::inquiry_overview_info_text  => $settings->inquiry_overview_info_text,
+            GeneralSettings::initial_setup_cost          => $settings->initial_setup_cost,
             GeneralSettings::logo_path                   => $settings->logo_path ? [$settings->logo_path] : [],
         ]);
     }
@@ -97,6 +98,13 @@ class GeneralSettingsPage extends Page implements HasForms
                             ->default(10)
                             ->suffix('Feld(er)')
                             ->helperText('Wie viele Felder kann ein Kunde maximal mieten'),
+
+                        TextInput::make(GeneralSettings::initial_setup_cost)
+                            ->label('Einmalige Einrichtungskosten (€)')
+                            ->numeric()
+                            ->required()
+                            ->suffix('€')
+                            ->helperText('Einmalige Kosten für die Einrichtung einer Vermietung in Euro'),
                     ])
                     ->columns(2),
 
@@ -260,6 +268,7 @@ class GeneralSettingsPage extends Page implements HasForms
         $settings->data_confirmation_text      = $data[GeneralSettings::data_confirmation_text] ?? null;
         $settings->inquiry_overview_info_text  = $data[GeneralSettings::inquiry_overview_info_text] ?? null;
         $settings->logo_path                   = $data[GeneralSettings::logo_path] ?? null;
+        $settings->initial_setup_cost          = $data[GeneralSettings::initial_setup_cost];
         $settings->save();
 
         Notification::make()
