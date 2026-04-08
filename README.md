@@ -1,5 +1,7 @@
 # Laravel Filament Fördertafel
 
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+
 Digitales Board-Management-System für Fußballfeld-Werbeflächen mit Laravel 12 und Filament 4.
 
 ## 📋 Projektübersicht
