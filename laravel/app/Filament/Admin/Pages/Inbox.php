@@ -35,6 +35,7 @@ class Inbox extends Page implements HasTable
     protected static string|null|UnitEnum $navigationGroup = 'Kommunikation';
 
     protected static ?int $navigationSort = 3;
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function getNavigationBadge(): ?string
     {

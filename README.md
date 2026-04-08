@@ -22,6 +22,14 @@ git clone git@github.com:cooolinho/laravel-filament-foerdertafel.git
 cd laravel-filament-foerdertafel
 ```
 
+### Manual init steps (if needed)
+```
+docker-compose up -d
+
+# oder die prod variante
+docker compose -f docker-compose-prod.yml up -d
+```
+
 ### 2. Umgebungsvariablen konfigurieren
 ```bash
 cp .env.example .env
