@@ -4,7 +4,7 @@ namespace App\Filament\App\Pages;
 
 use App\Models\Field;
 use App\Models\Inquiry;
-use App\Models\Setting;
+use App\Settings\GeneralSettings;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Enums\Width;
@@ -95,8 +95,8 @@ class InquiryCompletePage extends Page
         return [
             'rows'      => $selectionRows,
             'cols'      => $selectionCols,
-            'width_cm'  => Setting::calculatePhysicalWidth($selectionCols),
-            'height_cm' => Setting::calculatePhysicalHeight($selectionRows),
+            'width_cm'  => app(GeneralSettings::class)->calculatePhysicalWidth($selectionCols),
+            'height_cm' => app(GeneralSettings::class)->calculatePhysicalHeight($selectionRows),
         ];
     }
 

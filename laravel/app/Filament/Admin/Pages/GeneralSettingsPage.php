@@ -4,7 +4,7 @@ namespace App\Filament\Admin\Pages;
 
 use App\Models\Document;
 use App\Models\EmailTemplate;
-use App\Models\Setting;
+use App\Settings\GeneralSettings;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -21,7 +21,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Storage;
 use UnitEnum;
 
-class SettingsPage extends Page implements HasForms
+class GeneralSettingsPage extends Page implements HasForms
 {
     use InteractsWithForms;
 
@@ -29,37 +29,36 @@ class SettingsPage extends Page implements HasForms
 
     protected static ?string $navigationLabel = 'Einstellungen';
 
-    protected static ?string $title = 'Einstellungen';
+    protected static ?string $title = 'Allgemeine Einstellungen';
 
     protected static string|null|UnitEnum $navigationGroup = 'System';
 
     protected static ?int $navigationSort = 20;
 
-    protected string $view = 'filament.admin.pages.settings-page';
+    protected string $view = 'filament.admin.pages.general-settings-page';
 
     public ?array $data = [];
 
     public function mount(): void
     {
-        $settings = Setting::current();
+        /** @var GeneralSettings $settings */
+        $settings = app(GeneralSettings::class);
 
-        if ($settings) {
-            $this->form->fill([
-                Setting::default_payment_method     => $settings->default_payment_method,
-                Setting::default_rental_duration    => $settings->default_rental_duration,
-                Setting::max_fields_per_customer    => $settings->max_fields_per_customer,
-                Setting::field_width_cm             => $settings->field_width_cm,
-                Setting::field_height_cm            => $settings->field_height_cm,
-                Setting::field_gap_cm               => $settings->field_gap_cm,
-                Setting::email_notifications_enabled => $settings->email_notifications_enabled,
-                Setting::default_email_template_id  => $settings->default_email_template_id,
-                Setting::required_document_ids      => $settings->required_document_ids ?? [],
-                Setting::sepa_mandate_text          => $settings->sepa_mandate_text,
-                Setting::data_confirmation_text     => $settings->data_confirmation_text,
-                Setting::inquiry_overview_info_text => $settings->inquiry_overview_info_text,
-                Setting::logo_path                  => $settings->logo_path ? [$settings->logo_path] : [],
-            ]);
-        }
+        $this->form->fill([
+            GeneralSettings::default_payment_method      => $settings->default_payment_method,
+            GeneralSettings::default_rental_duration     => $settings->default_rental_duration,
+            GeneralSettings::max_fields_per_customer     => $settings->max_fields_per_customer,
+            GeneralSettings::field_width_cm              => $settings->field_width_cm,
+            GeneralSettings::field_height_cm             => $settings->field_height_cm,
+            GeneralSettings::field_gap_cm                => $settings->field_gap_cm,
+            GeneralSettings::email_notifications_enabled => $settings->email_notifications_enabled,
+            GeneralSettings::default_email_template_id   => $settings->default_email_template_id,
+            GeneralSettings::required_document_ids       => $settings->required_document_ids ?? [],
+            GeneralSettings::sepa_mandate_text           => $settings->sepa_mandate_text,
+            GeneralSettings::data_confirmation_text      => $settings->data_confirmation_text,
+            GeneralSettings::inquiry_overview_info_text  => $settings->inquiry_overview_info_text,
+            GeneralSettings::logo_path                   => $settings->logo_path ? [$settings->logo_path] : [],
+        ]);
     }
 
     public function form(Schema $schema): Schema
@@ -69,14 +68,17 @@ class SettingsPage extends Page implements HasForms
                 Section::make('Allgemeine Einstellungen')
                     ->description('Grundeinstellungen für das gesamte System')
                     ->schema([
-                        Select::make(Setting::default_payment_method)
+                        Select::make(GeneralSettings::default_payment_method)
                             ->label('Standard Zahlungsmethode')
-                            ->options(Setting::getPaymentMethods())
+                            ->options([
+                                GeneralSettings::PAYMENT_METHOD_SEPA => 'Überweisung (SEPA)',
+                                GeneralSettings::PAYMENT_METHOD_DONATION => 'Spendenquittung nur auf Anfrage',
+                            ])
                             ->required()
                             ->helperText('Die voreingestellte Zahlungsmethode für neue Kunden')
                             ->native(false),
 
-                        TextInput::make(Setting::default_rental_duration)
+                        TextInput::make(GeneralSettings::default_rental_duration)
                             ->label('Standard Mietdauer (Monate)')
                             ->numeric()
                             ->required()
@@ -86,7 +88,7 @@ class SettingsPage extends Page implements HasForms
                             ->suffix('Monat(e)')
                             ->helperText('Voreingestellte Mietdauer in Monaten'),
 
-                        TextInput::make(Setting::max_fields_per_customer)
+                        TextInput::make(GeneralSettings::max_fields_per_customer)
                             ->label('Maximale Anzahl Felder pro Kunde')
                             ->numeric()
                             ->required()
@@ -101,7 +103,7 @@ class SettingsPage extends Page implements HasForms
                 Section::make('Feld-Abmessungen')
                     ->description('Physische Maße der einzelnen Kacheln auf der Fördertafel (alle Angaben in cm)')
                     ->schema([
-                        TextInput::make(Setting::field_width_cm)
+                        TextInput::make(GeneralSettings::field_width_cm)
                             ->label('Kachelbreite (cm)')
                             ->numeric()
                             ->required()
@@ -111,7 +113,7 @@ class SettingsPage extends Page implements HasForms
                             ->suffix('cm')
                             ->helperText('Breite einer einzelnen Kachel in Zentimetern'),
 
-                        TextInput::make(Setting::field_height_cm)
+                        TextInput::make(GeneralSettings::field_height_cm)
                             ->label('Kachelhöhe (cm)')
                             ->numeric()
                             ->required()
@@ -121,7 +123,7 @@ class SettingsPage extends Page implements HasForms
                             ->suffix('cm')
                             ->helperText('Höhe einer einzelnen Kachel in Zentimetern'),
 
-                        TextInput::make(Setting::field_gap_cm)
+                        TextInput::make(GeneralSettings::field_gap_cm)
                             ->label('Abstand zwischen Kacheln (cm)')
                             ->numeric()
                             ->required()
@@ -136,13 +138,13 @@ class SettingsPage extends Page implements HasForms
                 Section::make('E-Mail Einstellungen')
                     ->description('Konfiguration für E-Mail-Benachrichtigungen')
                     ->schema([
-                        Toggle::make(Setting::email_notifications_enabled)
+                        Toggle::make(GeneralSettings::email_notifications_enabled)
                             ->label('E-Mail Benachrichtigungen aktivieren')
                             ->helperText('Aktiviert oder deaktiviert das Versenden von E-Mail-Benachrichtigungen')
                             ->default(true)
                             ->inline(false),
 
-                        Select::make(Setting::default_email_template_id)
+                        Select::make(GeneralSettings::default_email_template_id)
                             ->label('Standard E-Mail Vorlage')
                             ->options(EmailTemplate::where('is_active', true)->pluck(EmailTemplate::name, 'id'))
                             ->searchable()
@@ -151,7 +153,7 @@ class SettingsPage extends Page implements HasForms
                             ->helperText('Die Vorlage, die standardmäßig für E-Mails verwendet wird')
                             ->native(false),
 
-                        FileUpload::make(Setting::logo_path)
+                        FileUpload::make(GeneralSettings::logo_path)
                             ->label('Organisations-Logo')
                             ->helperText('Das Logo wird im Header aller ausgehenden E-Mails angezeigt. Empfohlen: PNG mit transparentem Hintergrund, min. 200 px Breite.')
                             ->image()
@@ -171,7 +173,7 @@ class SettingsPage extends Page implements HasForms
                 Section::make('Anfrage Einstellungen')
                     ->description('Einstellungen für den Anfrage-Prozess (Kundenportal)')
                     ->schema([
-                        Select::make(Setting::required_document_ids)
+                        Select::make(GeneralSettings::required_document_ids)
                             ->label('Pflichtdokumente')
                             ->multiple()
                             ->options(
@@ -189,21 +191,21 @@ class SettingsPage extends Page implements HasForms
                             ->helperText('Dokumente, die Kunden bei der Anfrage akzeptieren müssen (z. B. AGB, Beitragsordnung, Datenschutzerklärung). Es werden nur aktuelle Versionen angezeigt.')
                             ->native(false),
 
-                        Textarea::make(Setting::sepa_mandate_text)
+                        Textarea::make(GeneralSettings::sepa_mandate_text)
                             ->label('SEPA-Mandat Hinweistext')
                             ->rows(6)
                             ->helperText('Dieser Text wird dem Kunden beim Akzeptieren des SEPA-Mandats angezeigt.')
                             ->placeholder('SEPA-Mandat Hinweistext eingeben...')
                             ->columnSpanFull(),
 
-                        Textarea::make(Setting::data_confirmation_text)
+                        Textarea::make(GeneralSettings::data_confirmation_text)
                             ->label('Datenkorrektheit-Bestätigungstext')
                             ->rows(3)
                             ->helperText('Dieser Text wird dem Kunden als Bestätigung der Datenkorrektheit im letzten Schritt der Anfrage angezeigt.')
                             ->placeholder('Bestätigungstext eingeben...')
                             ->columnSpanFull(),
 
-                        Textarea::make(Setting::inquiry_overview_info_text)
+                        Textarea::make(GeneralSettings::inquiry_overview_info_text)
                             ->label('Hinweistext Übersichtsseite')
                             ->rows(3)
                             ->helperText('Dieser Hinweistext wird im Übersichts-Schritt (Schritt 6) vor dem Absenden angezeigt.')
@@ -211,7 +213,6 @@ class SettingsPage extends Page implements HasForms
                             ->columnSpanFull(),
                     ])
                     ->columns(1),
-
 
                 Action::make('save')
                     ->label('Einstellungen speichern')
@@ -228,31 +229,38 @@ class SettingsPage extends Page implements HasForms
         $data = $this->form->getState();
 
         // FileUpload gibt ein Array zurück – wir brauchen nur den ersten Eintrag (einzelne Datei)
-        if (isset($data[Setting::logo_path]) && is_array($data[Setting::logo_path])) {
-            $data[Setting::logo_path] = !empty($data[Setting::logo_path])
-                ? array_values($data[Setting::logo_path])[0]
+        if (isset($data['logo_path']) && is_array($data['logo_path'])) {
+            $data['logo_path'] = !empty($data['logo_path'])
+                ? array_values($data['logo_path'])[0]
                 : null;
         }
 
-        $settings = Setting::current();
+        /** @var GeneralSettings $settings */
+        $settings = app(GeneralSettings::class);
 
-        if ($settings) {
-            // Altes Logo löschen wenn ein neues hochgeladen wurde
-            if (
-                isset($data[Setting::logo_path])
-                && $settings->logo_path
-                && $data[Setting::logo_path] !== $settings->logo_path
-            ) {
-                Storage::disk('public')->delete($settings->logo_path);
-            }
-
-            $settings->update($data);
-        } else {
-            Setting::create($data);
+        // Altes Logo löschen wenn ein neues hochgeladen wurde
+        if (
+            isset($data['logo_path'])
+            && $settings->logo_path
+            && $data['logo_path'] !== $settings->logo_path
+        ) {
+            Storage::disk('public')->delete($settings->logo_path);
         }
 
-        // Settings-Cache leeren damit das neue Logo sofort wirksam ist
-        Setting::clearCache();
+        $settings->default_payment_method      = $data[GeneralSettings::default_payment_method];
+        $settings->default_rental_duration     = (int) $data[GeneralSettings::default_rental_duration];
+        $settings->max_fields_per_customer     = (int) $data[GeneralSettings::max_fields_per_customer];
+        $settings->field_width_cm              = (float) $data[GeneralSettings::field_width_cm];
+        $settings->field_height_cm             = (float) $data[GeneralSettings::field_height_cm];
+        $settings->field_gap_cm                = (float) $data[GeneralSettings::field_gap_cm];
+        $settings->email_notifications_enabled = (bool) $data[GeneralSettings::email_notifications_enabled];
+        $settings->default_email_template_id   = isset($data[GeneralSettings::default_email_template_id]) ? (int) $data[GeneralSettings::default_email_template_id] : null;
+        $settings->required_document_ids       = $data[GeneralSettings::required_document_ids] ?? [];
+        $settings->sepa_mandate_text           = $data[GeneralSettings::sepa_mandate_text] ?? null;
+        $settings->data_confirmation_text      = $data[GeneralSettings::data_confirmation_text] ?? null;
+        $settings->inquiry_overview_info_text  = $data[GeneralSettings::inquiry_overview_info_text] ?? null;
+        $settings->logo_path                   = $data[GeneralSettings::logo_path] ?? null;
+        $settings->save();
 
         Notification::make()
             ->success()

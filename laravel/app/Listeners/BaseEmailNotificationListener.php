@@ -5,7 +5,7 @@ namespace App\Listeners;
 use App\Jobs\SendEmailJob;
 use App\Models\Email;
 use App\Models\EmailTemplate;
-use App\Models\Setting;
+use App\Settings\GeneralSettings;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -38,7 +38,7 @@ abstract class BaseEmailNotificationListener implements ShouldQueue
     /**
      * Prüft ob E-Mail-Benachrichtigungen aktiviert sind.
      */
-    protected function notificationsEnabled(?Setting $settings): bool
+    protected function notificationsEnabled(?GeneralSettings $settings): bool
     {
         return !($settings && !$settings->email_notifications_enabled);
     }
@@ -47,7 +47,7 @@ abstract class BaseEmailNotificationListener implements ShouldQueue
      * Lädt das E-Mail-Template anhand des Slugs.
      * Fällt auf das Standard-Template aus den Settings zurück.
      */
-    protected function loadTemplate(string $slug, ?Setting $settings): ?EmailTemplate
+    protected function loadTemplate(string $slug, ?GeneralSettings $settings): ?EmailTemplate
     {
         $template = EmailTemplate::where(EmailTemplate::slug, $slug)
             ->where(EmailTemplate::is_active, true)
@@ -77,7 +77,7 @@ abstract class BaseEmailNotificationListener implements ShouldQueue
         array  $variables,
         array  $extraData = []
     ): ?Email {
-        $settings = Setting::current();
+        $settings = app(GeneralSettings::class);
 
         if (!$this->notificationsEnabled($settings)) {
             Log::info("E-Mail-Benachrichtigungen deaktiviert. Kein Versand für Template '{$templateSlug}'.");
@@ -148,7 +148,7 @@ abstract class BaseEmailNotificationListener implements ShouldQueue
             'recipientName'  => $recipientName,
             'replyToAddress' => $replyTo ?? config('mail.from.address'),
             'appUrl'         => config('app.url'),
-            'logoUrl'        => Setting::getLogoUrlFromSettings(),
+            'logoUrl'        => app(GeneralSettings::class)->getLogoUrl(),
         ])->render();
     }
 

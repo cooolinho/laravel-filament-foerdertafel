@@ -4,7 +4,6 @@ namespace Database\Seeders\Demo;
 
 use App\Models\Board;
 use App\Models\Inquiry;
-use App\Models\Setting;
 use Illuminate\Database\Seeder;
 
 class InquirySeeder extends Seeder
@@ -39,7 +38,7 @@ class InquirySeeder extends Seeder
                 ];
 
                 $isCompany = fake()->boolean(40);
-                $rentalMonths = max(1, (int) Setting::get(Setting::default_rental_duration, 1));
+                $rentalMonths = max(1, (int) app(\App\Settings\GeneralSettings::class)->default_rental_duration);
                 $startDate = now()->addDays(rand(1, 30))->startOfMonth();
                 $endDate = (clone $startDate)->addMonths($rentalMonths)->subDay();
 

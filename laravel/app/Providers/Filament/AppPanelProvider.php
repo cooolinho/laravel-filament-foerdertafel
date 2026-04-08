@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use App\Models\Setting;
+
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -27,8 +27,8 @@ class AppPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Red,
             ])
-            ->brandLogo(Setting::getLogoUrlFromSettings())
-            ->brandLogoHeight('60px')
+//            ->brandLogo(app(GeneralSettings::class)->getLogoUrl())
+//            ->brandLogoHeight('60px')
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\\Filament\\App\\Widgets')

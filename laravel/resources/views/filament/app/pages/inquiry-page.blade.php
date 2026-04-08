@@ -47,8 +47,8 @@
                             <h3 class="font-semibold text-blue-900 dark:text-blue-100">Schritt 1: Felder auswählen</h3>
                             <p class="mt-1 text-sm text-blue-800 dark:text-blue-200">
                                 Klicken Sie auf <strong>grüne</strong> Felder, um sie auszuwählen (max.
-                                <strong>{{ \App\Models\Setting::getMaxFieldsPerCustomer() }} Felder</strong>,
-                                max. {{ \App\Models\Setting::getMaxSelectionRows() }} Zeile(n) × {{ \App\Models\Setting::getMaxSelectionCols() }} Spalte(n) – zusammenhängendes Rechteck).
+                                <strong>{{ app(\App\Settings\GeneralSettings::class)->getMaxFieldsPerCustomer() }} Felder</strong>,
+                                max. {{ app(\App\Settings\GeneralSettings::class)->getMaxSelectionRows() }} Zeile(n) × {{ app(\App\Settings\GeneralSettings::class)->getMaxSelectionCols() }} Spalte(n) – zusammenhängendes Rechteck).
                             </p>
                         </div>
                     </div>
@@ -150,8 +150,8 @@
                                         <div class="text-lg font-bold text-green-900 dark:text-green-100">{{ number_format($dims['width_cm'], 1, ',', '.') }} cm</div>
                                         @if($dims['cols'] > 1)
                                             <div class="text-xs text-green-600 dark:text-green-400 mt-0.5">
-                                                {{ $dims['cols'] }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_width_cm, 8.9), 1, ',', '.') }}
-                                                + {{ $dims['cols'] - 1 }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_gap_cm, 1.2), 1, ',', '.') }}
+                                                {{ $dims['cols'] }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_width_cm, 1, ',', '.') }}
+                                                + {{ $dims['cols'] - 1 }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_gap_cm, 1, ',', '.') }}
                                             </div>
                                         @endif
                                     </div>
@@ -160,8 +160,8 @@
                                         <div class="text-lg font-bold text-green-900 dark:text-green-100">{{ number_format($dims['height_cm'], 1, ',', '.') }} cm</div>
                                         @if($dims['rows'] > 1)
                                             <div class="text-xs text-green-600 dark:text-green-400 mt-0.5">
-                                                {{ $dims['rows'] }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_height_cm, 5.1), 1, ',', '.') }}
-                                                + {{ $dims['rows'] - 1 }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_gap_cm, 1.2), 1, ',', '.') }}
+                                                {{ $dims['rows'] }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_height_cm, 1, ',', '.') }}
+                                                + {{ $dims['rows'] - 1 }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_gap_cm, 1, ',', '.') }}
                                             </div>
                                         @endif
                                     </div>
@@ -179,6 +179,10 @@
                                 <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
                                     <span class="text-sm text-gray-600 dark:text-gray-400">Preis pro Monat:</span>
                                     <span class="font-semibold text-gray-900 dark:text-white">{{ number_format($this->getTotalPricePerMonth(), 2, ',', '.') }} €</span>
+                                </div>
+                                <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Mindestlaufzeit:</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">{{ app(\App\Settings\GeneralSettings::class)->default_rental_duration }} Monate</span>
                                 </div>
                                 <div class="flex justify-between items-center pt-2">
                                     <span class="text-base font-semibold text-gray-900 dark:text-white">Gesamtpreis:</span>
@@ -281,7 +285,7 @@
                     $rd = $this->rentalData;
                     $pd = $this->paymentData;
                     $ad = $this->attachmentsData;
-                    $duration  = (int) \App\Models\Setting::get(\App\Models\Setting::default_rental_duration, 1);
+                    $duration  = (int) app(\App\Settings\GeneralSettings::class)->default_rental_duration ?? 1;
                     $startDate = !empty($rd['start_month']) ? \Carbon\Carbon::parse($rd['start_month']) : null;
                     $endDate   = $startDate ? $startDate->copy()->addMonths($duration)->subDay() : null;
                     $billDiff  = isset($pd['billing_use_postal_address']) && !(bool) $pd['billing_use_postal_address'];
@@ -328,8 +332,8 @@
                                         </div>
                                         @if($overviewDims['cols'] > 1)
                                             <div class="text-xs text-green-600 dark:text-green-400 mt-1">
-                                                {{ $overviewDims['cols'] }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_width_cm, 8.9), 1, ',', '.') }} cm
-                                                + {{ $overviewDims['cols'] - 1 }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_gap_cm, 1.2), 1, ',', '.') }} cm Abstand
+                                                {{ $overviewDims['cols'] }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_width_cm, 1, ',', '.') }} cm
+                                                + {{ $overviewDims['cols'] - 1 }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_gap_cm, 1, ',', '.') }} cm Abstand
                                             </div>
                                         @endif
                                     </div>
@@ -340,8 +344,8 @@
                                         </div>
                                         @if($overviewDims['rows'] > 1)
                                             <div class="text-xs text-green-600 dark:text-green-400 mt-1">
-                                                {{ $overviewDims['rows'] }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_height_cm, 5.1), 1, ',', '.') }} cm
-                                                + {{ $overviewDims['rows'] - 1 }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_gap_cm, 1.2), 1, ',', '.') }} cm Abstand
+                                                {{ $overviewDims['rows'] }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_height_cm, 1, ',', '.') }} cm
+                                                + {{ $overviewDims['rows'] - 1 }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_gap_cm, 1, ',', '.') }} cm Abstand
                                             </div>
                                         @endif
                                     </div>
@@ -460,7 +464,7 @@
 
                     {{-- Hinweis --}}
                     <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 text-sm text-amber-800 dark:text-amber-200">
-                        {!! nl2br(e(\App\Models\Setting::get(\App\Models\Setting::inquiry_overview_info_text, 'Bitte prüfen Sie Ihre Angaben sorgfältig. Nach dem Absenden erhalten Sie eine Bestätigung per E-Mail. Wir melden uns in Kürze bei Ihnen.'))) !!}
+                        {!! nl2br(e(app(\App\Settings\GeneralSettings::class)->inquiry_overview_info_text)) !!}
                     </div>
 
                     {{-- Navigation --}}

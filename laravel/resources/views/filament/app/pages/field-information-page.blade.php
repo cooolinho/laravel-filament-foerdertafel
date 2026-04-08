@@ -1,5 +1,5 @@
 @php
-    use App\Models\Setting;
+
 
     $fieldW  = $this->getFieldWidth();
     $fieldH  = $this->getFieldHeight();
@@ -139,7 +139,7 @@
                     {{-- Kumulative Breitenmaße unten (für 2..maxCols Spalten) --}}
                     @for ($c = 2; $c <= $maxCols; $c++)
                         @php
-                            $totalW  = Setting::calculatePhysicalWidth($c);
+                            $totalW  = app(\App\Settings\GeneralSettings::class)->calculatePhysicalWidth($c);
                             $endX    = $tileX($c - 1) + $tileW;
                             $lineY   = $gridH + $marginTop + ($c - 1) * 22;
                         @endphp
@@ -154,7 +154,7 @@
                     {{-- Kumulative Höhenmaße rechts (für 2..maxRows Zeilen) --}}
                     @for ($r = 2; $r <= $maxRows; $r++)
                         @php
-                            $totalH  = Setting::calculatePhysicalHeight($r);
+                            $totalH  = app(\App\Settings\GeneralSettings::class)->calculatePhysicalHeight($r);
                             $endY    = $tileY($r - 1) + $tileH;
                             $lineX   = $gridW + $marginLeft + ($r - 1) * 30;
                             $midY    = ($marginTop + $endY) / 2;

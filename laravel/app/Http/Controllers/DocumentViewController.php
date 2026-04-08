@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Document;
-use App\Models\Setting;
+use App\Settings\GeneralSettings;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -26,7 +26,7 @@ class DocumentViewController extends Controller
             return true;
         }
 
-        $requiredIds = Setting::get(Setting::required_document_ids, []);
+        $requiredIds = app(GeneralSettings::class)->required_document_ids;
 
         return is_array($requiredIds) && in_array($document->id, $requiredIds);
     }

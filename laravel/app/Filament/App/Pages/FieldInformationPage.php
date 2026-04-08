@@ -2,7 +2,8 @@
 
 namespace App\Filament\App\Pages;
 
-use App\Models\Setting;
+
+use App\Settings\GeneralSettings;
 use BackedEnum;
 use Filament\Pages\Page;
 
@@ -23,7 +24,7 @@ class FieldInformationPage extends Page
      */
     public function getFieldWidth(): float
     {
-        return (float) Setting::get(Setting::field_width_cm, 8.9);
+        return (float) app(\App\Settings\GeneralSettings::class)->field_width_cm ?? 8.9;
     }
 
     /**
@@ -31,7 +32,7 @@ class FieldInformationPage extends Page
      */
     public function getFieldHeight(): float
     {
-        return (float) Setting::get(Setting::field_height_cm, 5.1);
+        return (float) app(\App\Settings\GeneralSettings::class)->field_height_cm ?? 5.1;
     }
 
     /**
@@ -39,7 +40,7 @@ class FieldInformationPage extends Page
      */
     public function getFieldGap(): float
     {
-        return (float) Setting::get(Setting::field_gap_cm, 1.2);
+        return (float) app(\App\Settings\GeneralSettings::class)->field_gap_cm ?? 1.2;
     }
 
     /**
@@ -47,7 +48,7 @@ class FieldInformationPage extends Page
      */
     public function getMaxRows(): int
     {
-        return Setting::getMaxSelectionRows();
+        return app(\App\Settings\GeneralSettings::class)->getMaxSelectionRows();
     }
 
     /**
@@ -55,7 +56,7 @@ class FieldInformationPage extends Page
      */
     public function getMaxCols(): int
     {
-        return Setting::getMaxSelectionCols();
+        return app(\App\Settings\GeneralSettings::class)->getMaxSelectionCols();
     }
 
     /**
@@ -63,6 +64,6 @@ class FieldInformationPage extends Page
      */
     public function getValidRectangles(): array
     {
-        return Setting::getValidRectangles();
+        return app(GeneralSettings::class)->getValidRectangles();
     }
 }

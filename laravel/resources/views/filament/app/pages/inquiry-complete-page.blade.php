@@ -1,5 +1,5 @@
 @php
-    $duration = \App\Models\Setting::get(\App\Models\Setting::default_rental_duration);
+    $duration = app(\App\Settings\GeneralSettings::class)->default_rental_duration;
 @endphp
 <x-filament-panels::page>
     @if($inquiry)
@@ -164,8 +164,8 @@
                                         </div>
                                         @if($dims['cols'] > 1)
                                             <div class="text-xs text-green-600 dark:text-green-400 mt-1">
-                                                {{ $dims['cols'] }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_width_cm, 8.9), 1, ',', '.') }}
-                                                + {{ $dims['cols'] - 1 }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_gap_cm, 1.2), 1, ',', '.') }}
+                                                {{ $dims['cols'] }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_width_cm, 1, ',', '.') }}
+                                                + {{ $dims['cols'] - 1 }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_gap_cm, 1, ',', '.') }}
                                             </div>
                                         @endif
                                     </div>
@@ -176,8 +176,8 @@
                                         </div>
                                         @if($dims['rows'] > 1)
                                             <div class="text-xs text-green-600 dark:text-green-400 mt-1">
-                                                {{ $dims['rows'] }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_height_cm, 5.1), 1, ',', '.') }}
-                                                + {{ $dims['rows'] - 1 }} × {{ number_format(\App\Models\Setting::get(\App\Models\Setting::field_gap_cm, 1.2), 1, ',', '.') }}
+                                                {{ $dims['rows'] }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_height_cm, 1, ',', '.') }}
+                                                + {{ $dims['rows'] - 1 }} × {{ number_format(app(\App\Settings\GeneralSettings::class)->field_gap_cm, 1, ',', '.') }}
                                             </div>
                                         @endif
                                     </div>

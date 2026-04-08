@@ -3,7 +3,6 @@
 namespace App\Rules;
 
 use App\Models\Field;
-use App\Models\Setting;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -62,8 +61,8 @@ class FieldsFormRectangle implements ValidationRule
             $selectionRows = $maxRow - $minRow + 1;
             $selectionCols = $maxCol - $minCol + 1;
 
-            $maxAllowedRows = Setting::getMaxSelectionRows();
-            $maxAllowedCols = Setting::getMaxSelectionCols();
+            $maxAllowedRows = app(\App\Settings\GeneralSettings::class)->getMaxSelectionRows();
+            $maxAllowedCols = app(\App\Settings\GeneralSettings::class)->getMaxSelectionCols();
 
             if ($selectionRows > $maxAllowedRows) {
                 $fail("Die Auswahl darf maximal {$maxAllowedRows} Zeile(n) umfassen (aktuell: {$selectionRows}).");

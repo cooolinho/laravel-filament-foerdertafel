@@ -8,9 +8,9 @@ use App\Models\Document;
 use App\Models\Field;
 use App\Models\Inquiry;
 use App\Models\Rental;
-use App\Models\Setting;
 use App\Rules\FieldsFormRectangle;
 use App\Rules\MaxFieldsCount;
+use App\Settings\GeneralSettings;
 use BackedEnum;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
@@ -197,7 +197,7 @@ class InquiryPage extends Page implements HasForms
                             return 'Bitte wählen Sie zunächst einen Start-Monat aus.';
                         }
 
-                        $duration = Setting::get(Setting::default_rental_duration, 1);
+                        $duration = app(\App\Settings\GeneralSettings::class)->default_rental_duration ?? 1;
                         $startDate = \Carbon\Carbon::parse($startMonth);
                         $endDate = $startDate->copy()->addMonths($duration)->subDay();
 
@@ -212,9 +212,9 @@ class InquiryPage extends Page implements HasForms
                     ->columnSpanFull(),
 
                 Textarea::make('message')
-                    ->label('Nachricht (optional)')
+                    ->label('Gewünschter Text auf der Kachel (optional)')
                     ->rows(4)
-                    ->placeholder('Ihre Nachricht an uns...')
+                    ->placeholder('Geben Sie hier den Text ein, der auf Ihrer Kachel erscheinen soll. Zum Beispiel Ihren Namen, einen Gruß oder ein Motto. Lassen Sie das Feld leer, wenn Sie keinen Text wünschen.')
                     ->columnSpanFull(),
             ])
             ->statePath('rentalData');
@@ -228,11 +228,11 @@ class InquiryPage extends Page implements HasForms
             ->schema([
                 Radio::make('payment_method')
                     ->label('Bevorzugte Zahlungsmethode')
-                    ->options(['sepa' => 'SEPA'])
-                    ->default('sepa')
+                    ->options(GeneralSettings::paymentMethods())
+                    ->default(GeneralSettings::PAYMENT_METHOD_SEPA)
                     ->required()
                     ->reactive()
-                    ->helperText(fn ($get) => $get('payment_method') === 'sepa'
+                    ->helperText(fn ($get) => $get('payment_method') === GeneralSettings::PAYMENT_METHOD_SEPA
                         ? 'TSV von 1908 Großenkneten e.V. akzeptiert nur SEPA Zahlungen.'
                         : null)
                     ->columnSpanFull(),
@@ -241,25 +241,25 @@ class InquiryPage extends Page implements HasForms
                     ->label('Kontoinhaber')
                     ->required()
                     ->maxLength(255)
-                    ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                    ->visible(fn ($get) => $get('payment_method') === GeneralSettings::PAYMENT_METHOD_SEPA)
                     ->columnSpanFull(),
 
                 TextInput::make('iban')
                     ->label('IBAN')
                     ->required()
                     ->maxLength(34)
-                    ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                    ->visible(fn ($get) => $get('payment_method') === GeneralSettings::PAYMENT_METHOD_SEPA)
                     ->columnSpanFull(),
 
                 TextInput::make('bic')
                     ->label('BIC')
                     ->maxLength(11)
-                    ->visible(fn ($get) => $get('payment_method') === 'sepa'),
+                    ->visible(fn ($get) => $get('payment_method') === GeneralSettings::PAYMENT_METHOD_SEPA),
 
                 TextInput::make('bank_name')
                     ->label('Bankname')
                     ->maxLength(255)
-                    ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                    ->visible(fn ($get) => $get('payment_method') === GeneralSettings::PAYMENT_METHOD_SEPA)
                     ->helperText(new HtmlString(
                         '<p class="text-sm text-primary-600">BIC oder Bankname sind unbekannt? Du kannst diese Felder freilassen und wir ermitteln sie aus der IBAN.</p>'
                     )),
@@ -271,8 +271,8 @@ class InquiryPage extends Page implements HasForms
                     ->validationMessages([
                         'accepted' => 'Sie müssen das SEPA-Mandat akzeptieren, um eine Anfrage stellen zu können.',
                     ])
-                    ->helperText(Setting::get(Setting::sepa_mandate_text))
-                    ->visible(fn ($get) => $get('payment_method') === 'sepa')
+                    ->helperText(app(GeneralSettings::class)->sepa_mandate_text)
+                    ->visible(fn ($get) => $get('payment_method') === GeneralSettings::PAYMENT_METHOD_SEPA)
                     ->columnSpanFull(),
 
                 Section::make('Rechnungsanschrift')
@@ -364,7 +364,7 @@ class InquiryPage extends Page implements HasForms
                     ->columnSpanFull(),
 
                 Checkbox::make('confirm_data_correctness')
-                    ->label(Setting::get(Setting::data_confirmation_text, 'Durch Angabe meiner Daten erkläre ich meine Daten als korrekt.'))
+                    ->label(app(GeneralSettings::class)->data_confirmation_text ?? "Durch Angabe meiner Daten erkläre ich meine Daten als korrekt.")
                     ->required()
                     ->rules(['accepted'])
                     ->validationMessages([
@@ -393,7 +393,7 @@ class InquiryPage extends Page implements HasForms
                 [
                     'selected_fields' => [
                         'required', 'array', 'min:1',
-                        new MaxFieldsCount(Setting::get(Setting::max_fields_per_customer, 4)),
+                        new MaxFieldsCount(app(\App\Settings\GeneralSettings::class)->max_fields_per_customer ?? 4),
                         new FieldsFormRectangle(),
                     ],
                 ],
@@ -435,7 +435,7 @@ class InquiryPage extends Page implements HasForms
 
     public function toggleField(int $fieldId): void
     {
-        $maxFields = (int) Setting::get(Setting::max_fields_per_customer, 4);
+        $maxFields = (int) app(\App\Settings\GeneralSettings::class)->max_fields_per_customer ?? 4;
 
         if (in_array($fieldId, $this->selectedFields)) {
             // Remove field
@@ -500,7 +500,7 @@ class InquiryPage extends Page implements HasForms
         try {
             $inquiry = DB::transaction(function () use ($contactData, $rentalData, $paymentData, $billingDifferent) {
                 $startDate = \Carbon\Carbon::parse($rentalData['start_month']);
-                $duration  = Setting::get(Setting::default_rental_duration, 1);
+                $duration  = app(\App\Settings\GeneralSettings::class)->default_rental_duration ?? 1;
                 $endDate   = $startDate->copy()->addMonths($duration)->subDay();
 
                 $inquiry = Inquiry::create([
@@ -521,7 +521,7 @@ class InquiryPage extends Page implements HasForms
                     Inquiry::status               => Inquiry::STATUS_PENDING,
                     Inquiry::message              => $rentalData['message'] ?? null,
                     // Zahlungsdaten
-                    Inquiry::payment_method       => $paymentData['payment_method'] ?? 'sepa',
+                    Inquiry::payment_method       => $paymentData['payment_method'] ?? GeneralSettings::PAYMENT_METHOD_SEPA,
                     Inquiry::account_holder       => $paymentData['account_holder'] ?? null,
                     Inquiry::iban                 => $paymentData['iban'] ?? null,
                     Inquiry::bic                  => $paymentData['bic'] ?? null,
@@ -585,7 +585,7 @@ class InquiryPage extends Page implements HasForms
     public function getTotalPrice(): float
     {
         $pricePerMonth = $this->getTotalPricePerMonth();
-        $months = max(1, (int) Setting::get(Setting::default_rental_duration, 1));
+        $months = max(1, (int) app(\App\Settings\GeneralSettings::class)->default_rental_duration);
 
         return $pricePerMonth * $months;
     }
@@ -623,8 +623,8 @@ class InquiryPage extends Page implements HasForms
         return [
             'rows'      => $selectionRows,
             'cols'      => $selectionCols,
-            'width_cm'  => Setting::calculatePhysicalWidth($selectionCols),
-            'height_cm' => Setting::calculatePhysicalHeight($selectionRows),
+            'width_cm'  => app(GeneralSettings::class)->calculatePhysicalWidth($selectionCols),
+            'height_cm' => app(GeneralSettings::class)->calculatePhysicalHeight($selectionRows),
         ];
     }
 
@@ -716,7 +716,7 @@ class InquiryPage extends Page implements HasForms
      */
     protected function buildTermsLabel(): string|HtmlString
     {
-        $documents = Setting::getRequiredDocuments();
+        $documents = app(GeneralSettings::class)->getRequiredDocuments();
 
         if ($documents->isEmpty()) {
             return 'Ich akzeptiere die Allgemeinen Geschäftsbedingungen.';
