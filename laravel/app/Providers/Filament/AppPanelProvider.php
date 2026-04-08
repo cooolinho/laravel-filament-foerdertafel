@@ -28,6 +28,7 @@ class AppPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Red,
             ])
+            ->darkMode(false)
             ->brandLogo(fn () => app(GeneralSettings::class)->getLogoUrl())
             ->brandLogoHeight('60px')
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
