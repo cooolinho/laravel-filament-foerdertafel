@@ -9,10 +9,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class EmailTemplateForm
@@ -60,24 +58,24 @@ class EmailTemplateForm
                     ->columns(2)
                     ->columnSpan(2),
 
-                Section::make('Verfügbare Platzhalter')
-                    ->schema([
-                        TextEntry::make('variables_info')
-                            ->label('')
-                            ->state(function (EmailTemplate $template) {
-                                $variables = $template->available_variables;
-                                $html = '<div class="text-sm">';
-                                foreach ($variables as $key => $description) {
-                                    $html .= '<div class="mb-2">';
-                                    $html .= '<code class="bg-gray-100 px-2 py-1 rounded text-xs">{{ ' . $key . ' }}</code>';
-                                    $html .= '<div class="text-gray-600 mt-1">' . $description . '</div>';
-                                    $html .= '</div>';
-                                }
-                                $html .= '</div>';
-                                return new HtmlString($html);
-                            }),
-                    ])
-                    ->columnSpan(1),
+//                Section::make('Verfügbare Platzhalter')
+//                    ->schema([
+//                        TextEntry::make('variables_info')
+//                            ->label('')
+//                            ->state(function (EmailTemplate $template) {
+//                                $variables = $template->available_variables;
+//                                $html = '<div class="text-sm">';
+//                                foreach ($variables as $key => $description) {
+//                                    $html .= '<div class="mb-2">';
+//                                    $html .= '<code class="bg-gray-100 px-2 py-1 rounded text-xs">{{ ' . $key . ' }}</code>';
+//                                    $html .= '<div class="text-gray-600 mt-1">' . $description . '</div>';
+//                                    $html .= '</div>';
+//                                }
+//                                $html .= '</div>';
+//                                return new HtmlString($html);
+//                            }),
+//                    ])
+//                    ->columnSpan(1),
 
                 Section::make('E-Mail-Absender')
                     ->schema([

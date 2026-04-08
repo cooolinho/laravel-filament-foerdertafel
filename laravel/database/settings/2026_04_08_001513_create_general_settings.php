@@ -34,5 +34,6 @@ return new class extends SettingsMigration
         // 'exclusive' = MwSt. wird auf den Preis aufgeschlagen
         $this->migrator->add('general.invoice_vat_mode', 'inclusive');
         $this->migrator->add('general.imprint_text', null);
+        $this->migrator->add('general.notification_email_addresses', []);
     }
 };

@@ -10,6 +10,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -72,6 +73,8 @@ class GeneralSettingsPage extends Page implements HasForms
             GeneralSettings::invoice_vat_mode             => $settings->invoice_vat_mode ?? GeneralSettings::VAT_MODE_INCLUSIVE,
             // Impressum
             GeneralSettings::imprint_text                  => $settings->imprint_text,
+            // Benachrichtigungs-E-Mail-Adressen
+            GeneralSettings::notification_email_addresses  => $settings->notification_email_addresses ?? [],
         ]);
     }
 
@@ -187,6 +190,13 @@ class GeneralSettingsPage extends Page implements HasForms
                             ->deleteUploadedFileUsing(function ($file) {
                                 Storage::disk('public')->delete($file);
                             })
+                            ->columnSpanFull(),
+
+                        TagsInput::make(GeneralSettings::notification_email_addresses)
+                            ->label('Benachrichtigungs-E-Mail-Adressen')
+                            ->helperText('E-Mail-Adressen, die bei einer neuen Anfrage automatisch benachrichtigt werden. Eingabe bestätigen mit Enter oder Komma.')
+                            ->placeholder('admin@beispiel.de')
+                            ->splitKeys(['Enter', ','])
                             ->columnSpanFull(),
                     ])
                     ->columns(1),
@@ -385,6 +395,9 @@ class GeneralSettingsPage extends Page implements HasForms
 
         // Impressum
         $settings->imprint_text = $data[GeneralSettings::imprint_text] ?? null;
+
+        // Benachrichtigungs-E-Mail-Adressen
+        $settings->notification_email_addresses = $data[GeneralSettings::notification_email_addresses] ?? [];
 
         $settings->save();
 

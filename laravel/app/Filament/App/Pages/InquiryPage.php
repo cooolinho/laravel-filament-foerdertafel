@@ -562,7 +562,7 @@ class InquiryPage extends Page implements HasForms
             InquiryCreated::dispatch($inquiry);
 
             session(['inquiry_complete' => $inquiry->id]);
-            $this->redirect(route('filament.app.pages.inquiry-complete-page'));
+            $this->redirect(route('filament.app.pages.anfrage-erfolgreich-gesendet'));
 
         } catch (\Exception $e) {
             Notification::make()

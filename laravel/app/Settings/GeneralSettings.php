@@ -42,6 +42,7 @@ class GeneralSettings extends Settings
 
     // Impressum
     const string imprint_text = 'imprint_text';
+    const string notification_email_addresses = 'notification_email_addresses';
 
     // MwSt.-Modi
     const string VAT_MODE_INCLUSIVE = 'inclusive';
@@ -76,6 +77,9 @@ class GeneralSettings extends Settings
 
     // Impressum
     public ?string $imprint_text;
+
+    // Benachrichtigungs-E-Mail-Adressen
+    public ?array $notification_email_addresses;
 
     /** Gibt true zurück wenn die MwSt. im Preis enthalten ist (inklusiv). */
     public function isVatInclusive(): bool

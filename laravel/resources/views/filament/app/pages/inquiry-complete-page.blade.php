@@ -184,7 +184,7 @@
                                 </div>
                                 <p class="mt-2 text-xs text-green-700 dark:text-green-400">
                                     Alle Angaben in cm. Weitere Informationen finden Sie auf der
-                                    <a href="{{ route('filament.app.pages.field-information-page') }}"
+                                    <a href="{{ route('filament.app.pages.feld-informationen') }}"
                                        target="_blank"
                                        class="underline font-medium hover:text-green-900 dark:hover:text-green-200">
                                         Feldgrößen-Seite

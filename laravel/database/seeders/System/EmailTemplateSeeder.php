@@ -4,6 +4,7 @@ namespace Database\Seeders\System;
 
 use App\Listeners\SendAccessCodeEmail;
 use App\Listeners\SendInquiryConfirmationEmail;
+use App\Listeners\SendInquiryNotificationEmail;
 use App\Listeners\SendRentalConfirmationEmail;
 use App\Models\EmailTemplate;
 use Illuminate\Database\Seeder;
@@ -47,6 +48,17 @@ class EmailTemplateSeeder extends Seeder
                 EmailTemplate::category => EmailTemplate::CATEGORY_RENTAL,
                 EmailTemplate::description => 'Wird nach Zahlungseingang mit dem Zugangscode für den Kundenbereich versendet',
                 EmailTemplate::available_variables => SendAccessCodeEmail::$defaultVariables,
+                EmailTemplate::is_active => true,
+            ],
+            [
+                EmailTemplate::name => 'Anfrage-Benachrichtigung (intern)',
+                EmailTemplate::slug => 'inquiry-notification',
+                EmailTemplate::subject => 'Neue Anfrage eingegangen - #{{ inquiry_id }} von {{ customer_name }}',
+                EmailTemplate::body_html => $this->getInquiryNotificationHtml(),
+                EmailTemplate::body_text => $this->getInquiryNotificationText(),
+                EmailTemplate::category => EmailTemplate::CATEGORY_INQUIRY,
+                EmailTemplate::description => 'Interne Benachrichtigung bei neuer Anfrage – wird an die in den Einstellungen hinterlegten Admin-E-Mail-Adressen gesendet',
+                EmailTemplate::available_variables => SendInquiryNotificationEmail::$defaultVariables,
                 EmailTemplate::is_active => true,
             ],
 
@@ -419,6 +431,81 @@ Wir freuen uns auf eine gute Zusammenarbeit!
 
 Mit freundlichen Grüßen,
 Ihr Team von {{ company_name }}
+TEXT;
+    }
+
+    private function getInquiryNotificationHtml(): string
+    {
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Neue Anfrage eingegangen</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2563eb;">Neue Anfrage eingegangen</h2>
+        <p>Es ist eine neue Anfrage über das Kundenportal eingegangen.</p>
+
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Antragsteller</h3>
+            <p><strong>Name:</strong> {{ customer_name }}</p>
+            <p><strong>E-Mail:</strong> {{ customer_email }}</p>
+            <p><strong>Telefon:</strong> {{ customer_phone }}</p>
+            <p><strong>Adresse:</strong> {{ address }}</p>
+        </div>
+
+        <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Anfragedetails</h3>
+            <p><strong>Anfrage-Nr.:</strong> {{ inquiry_id }}</p>
+            <p><strong>Datum:</strong> {{ inquiry_date }}</p>
+            <p><strong>Zeitraum:</strong> {{ start_date }} – {{ end_date }} ({{ rental_months }} Monat(e))</p>
+            <p><strong>Anzahl Felder:</strong> {{ field_count }}</p>
+            <p><strong>Tafel:</strong> {{ board_name }}</p>
+            <p><strong>Standort:</strong> {{ location_name }}</p>
+        </div>
+
+        <p style="text-align: center; margin: 30px 0;">
+            <a href="{{ admin_url }}"
+               style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                Anfrage im Admin-Bereich öffnen
+            </a>
+        </p>
+
+        <p style="font-size: 13px; color: #6b7280;">
+            Oder direkt über diesen Link:<br>
+            <a href="{{ admin_url }}">{{ admin_url }}</a>
+        </p>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    private function getInquiryNotificationText(): string
+    {
+        return <<<TEXT
+Neue Anfrage eingegangen
+
+Es ist eine neue Anfrage über das Kundenportal eingegangen.
+
+Antragsteller:
+- Name: {{ customer_name }}
+- E-Mail: {{ customer_email }}
+- Telefon: {{ customer_phone }}
+- Adresse: {{ address }}
+
+Anfragedetails:
+- Anfrage-Nr.: {{ inquiry_id }}
+- Datum: {{ inquiry_date }}
+- Zeitraum: {{ start_date }} – {{ end_date }} ({{ rental_months }} Monat(e))
+- Anzahl Felder: {{ field_count }}
+- Tafel: {{ board_name }}
+- Standort: {{ location_name }}
+
+Anfrage im Admin-Bereich öffnen:
+{{ admin_url }}
 TEXT;
     }
 }
