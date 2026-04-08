@@ -1,4 +1,6 @@
 {
+    "version": "1.0.0",
+    "name": "cooolinho/laravel-filament-foerdertafel",
     "require-dev": {
         "laravel/sail": "^1.41"
     }
