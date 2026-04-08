@@ -5,10 +5,6 @@ use App\Http\Controllers\InquiryAttachmentController;
 use App\Http\Controllers\RentalContentController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 // Öffentliche Dokumentenansicht (nur is_public oder AGB-Dokument aus Einstellungen)
 Route::prefix('documents')->name('documents.')->group(function () {
     Route::get('/{document:file_name}', [DocumentViewController::class, 'show'])->name('show');

@@ -8,6 +8,7 @@ use App\Settings\GeneralSettings;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -69,6 +70,8 @@ class GeneralSettingsPage extends Page implements HasForms
             GeneralSettings::invoice_number_prefix        => $settings->invoice_number_prefix,
             GeneralSettings::invoice_vat_rate             => $settings->invoice_vat_rate ?? 0.0,
             GeneralSettings::invoice_vat_mode             => $settings->invoice_vat_mode ?? GeneralSettings::VAT_MODE_INCLUSIVE,
+            // Impressum
+            GeneralSettings::imprint_text                  => $settings->imprint_text,
         ]);
     }
 
@@ -302,6 +305,25 @@ class GeneralSettingsPage extends Page implements HasForms
                     ])
                     ->columns(2),
 
+                Section::make('Impressum')
+                    ->description('Der HTML-Inhalt des Impressums wird im Kundenportal auf der Impressum-Seite angezeigt.')
+                    ->icon('heroicon-o-document-text')
+                    ->schema([
+                        RichEditor::make(GeneralSettings::imprint_text)
+                            ->label('Impressum (HTML)')
+                            ->helperText('Geben Sie hier den vollständigen Impressum-Text ein. HTML-Formatierungen werden unterstützt.')
+                            ->toolbarButtons([
+                                'bold', 'italic', 'underline', 'strike',
+                                'h2', 'h3',
+                                'bulletList', 'orderedList',
+                                'link',
+                                'blockquote',
+                                'undo', 'redo',
+                            ])
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(1),
+
                 Action::make('save')
                     ->label('Einstellungen speichern')
                     ->button()
@@ -360,6 +382,9 @@ class GeneralSettingsPage extends Page implements HasForms
         $settings->invoice_number_prefix        = $data[GeneralSettings::invoice_number_prefix] ?? 'RE-';
         $settings->invoice_vat_rate             = (float) ($data[GeneralSettings::invoice_vat_rate] ?? 0.0);
         $settings->invoice_vat_mode             = $data[GeneralSettings::invoice_vat_mode] ?? GeneralSettings::VAT_MODE_INCLUSIVE;
+
+        // Impressum
+        $settings->imprint_text = $data[GeneralSettings::imprint_text] ?? null;
 
         $settings->save();
 

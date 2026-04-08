@@ -40,6 +40,9 @@ class GeneralSettings extends Settings
     const string invoice_vat_rate = 'invoice_vat_rate';
     const string invoice_vat_mode = 'invoice_vat_mode';
 
+    // Impressum
+    const string imprint_text = 'imprint_text';
+
     // MwSt.-Modi
     const string VAT_MODE_INCLUSIVE = 'inclusive';
     const string VAT_MODE_EXCLUSIVE = 'exclusive';
@@ -70,6 +73,9 @@ class GeneralSettings extends Settings
     public ?string $invoice_number_prefix;
     public float $invoice_vat_rate;
     public string $invoice_vat_mode;
+
+    // Impressum
+    public ?string $imprint_text;
 
     /** Gibt true zurück wenn die MwSt. im Preis enthalten ist (inklusiv). */
     public function isVatInclusive(): bool

@@ -33,5 +33,6 @@ return new class extends SettingsMigration
         // 'inclusive' = MwSt. ist im Preis enthalten (Standard)
         // 'exclusive' = MwSt. wird auf den Preis aufgeschlagen
         $this->migrator->add('general.invoice_vat_mode', 'inclusive');
+        $this->migrator->add('general.imprint_text', null);
     }
 };

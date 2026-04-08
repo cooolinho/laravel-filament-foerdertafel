@@ -259,7 +259,7 @@
                 <x-filament::button
                     color="gray"
                     tag="a"
-                    href="{{ route('filament.app.pages.inquiry-page') }}"
+                    href="{{ route('filament.app.pages.anfrage-stellen') }}"
                     icon="heroicon-o-arrow-left"
                 >
                     Neue Anfrage stellen

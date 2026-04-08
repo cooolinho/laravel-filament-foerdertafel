@@ -44,6 +44,7 @@ class InquiryPage extends Page implements HasForms
     protected static ?int $navigationSort = 2;
 
     protected static ?string $title = 'Anfrage stellen';
+    protected static ?string $slug = 'anfrage-stellen';
 
     public ?Board $board = null;
 

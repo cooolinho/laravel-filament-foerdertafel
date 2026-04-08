@@ -16,6 +16,7 @@ class InquiryCompletePage extends Page
     protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-check-circle';
 
     protected static ?string $title = 'Anfrage erfolgreich gesendet';
+    protected static ?string $slug = 'anfrage-erfolgreich-gesendet';
 
     // Hide from navigation
     protected static bool $shouldRegisterNavigation = false;

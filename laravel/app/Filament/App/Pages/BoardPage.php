@@ -10,6 +10,7 @@ use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Pages\Page;
+use Filament\Panel;
 use Filament\Support\Enums\Width;
 
 class BoardPage extends Page implements HasActions
@@ -18,11 +19,20 @@ class BoardPage extends Page implements HasActions
 
     protected string $view = 'filament.app.pages.board-page';
 
+    protected static string $routePath = '/';
+
+    public static function getRoutePath(Panel $panel): string
+    {
+        return static::$routePath;
+    }
+
     protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-rectangle-group';
 
-    protected static ?string $navigationLabel = 'Board';
+    protected static ?string $navigationLabel = 'Tafel';
 
     protected static ?int $navigationSort = 1;
+
+    protected static ?string $title = 'Tafel';
 
     public ?Board $board = null;
 

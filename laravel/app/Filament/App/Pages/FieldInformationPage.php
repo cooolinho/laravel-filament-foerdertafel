@@ -18,6 +18,7 @@ class FieldInformationPage extends Page
     protected static ?string $title = 'Feldgrößen & Abmessungen';
 
     protected static ?int $navigationSort = 3;
+    protected static ?string $slug = 'feld-informationen';
 
     /**
      * Gibt die Feldbreite in cm zurück.

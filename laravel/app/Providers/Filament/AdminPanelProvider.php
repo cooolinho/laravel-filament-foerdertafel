@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Admin\Pages\Dashboard;
 use App\Filament\Admin\Pages\UserDashboardSettingsPage;
 use App\Http\Middleware\TrustProxies;
+use App\Settings\GeneralSettings;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -35,8 +36,8 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Purple,
             ])
-//            ->brandLogo(app(GeneralSettings::class)->getLogoUrl())
-//            ->brandLogoHeight('60px')
+            ->brandLogo(fn () => app(GeneralSettings::class)->getLogoUrl())
+            ->brandLogoHeight('60px')
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
             ->pages([
