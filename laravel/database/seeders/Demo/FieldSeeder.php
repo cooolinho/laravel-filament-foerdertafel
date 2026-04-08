@@ -32,98 +32,8 @@ class FieldSeeder extends Seeder
     {
         $createdFields = [];
 
-        // 4 Ecken mit 1x1 Feldern
-        $corners = [
-            ['row' => 1, 'col' => 1, 'name' => 'Ecke Oben Links'],
-            ['row' => 1, 'col' => $board->{Board::columns}, 'name' => 'Ecke Oben Rechts'],
-            ['row' => $board->{Board::rows}, 'col' => 1, 'name' => 'Ecke Unten Links'],
-            ['row' => $board->{Board::rows}, 'col' => $board->{Board::columns}, 'name' => 'Ecke Unten Rechts'],
-        ];
-
-        foreach ($corners as $corner) {
-            $cornerField = Field::create([
-                Field::board_id => $board->id,
-                Field::name => $corner['name'],
-                Field::row => $corner['row'],
-                Field::column => $corner['col'],
-                Field::width => 1,
-                Field::height => 1,
-                Field::price_per_month => 5.00,
-                Field::status => Field::STATUS_AVAILABLE,
-                Field::description => 'Eckfeld - sichtbar bei Eckbällen und Auswechslungen.',
-            ]);
-
-            $createdFields[] = [
-                'row' => $corner['row'],
-                'column' => $corner['col'],
-                'width' => $cornerField->width,
-                'height' => $cornerField->height,
-            ];
-        }
-
-        // 2 Tore mit 1x5 Feldern (vertikal)
-        // Tor Links: startend bei (row=7, col=1)
-        $goalLeft = Field::create([
-            Field::board_id => $board->id,
-            Field::name => 'Tor Links',
-            Field::row => 7,
-            Field::column => 1,
-            Field::width => 1,
-            Field::height => 5,
-            Field::price_per_month => 50.00,
-            Field::status => Field::STATUS_AVAILABLE,
-            Field::description => 'Premium-Position am linken Tor mit höchster Aufmerksamkeit. Ideal für Hauptsponsoren.',
-        ]);
-
-        $createdFields[] = [
-            'row' => $goalLeft->row,
-            'column' => $goalLeft->column,
-            'width' => $goalLeft->width,
-            'height' => $goalLeft->height,
-        ];
-
-        // Tor Rechts: startend bei (row=7, col=16)
-        $goalRight = Field::create([
-            Field::board_id => $board->id,
-            Field::name => 'Tor Rechts',
-            Field::row => 7,
-            Field::column => 16,
-            Field::width => 1,
-            Field::height => 5,
-            Field::price_per_month => 50.00,
-            Field::status => Field::STATUS_AVAILABLE,
-            Field::description => 'Premium-Position am rechten Tor mit höchster Aufmerksamkeit. Ideal für Hauptsponsoren.',
-        ]);
-
-        $createdFields[] = [
-            'row' => $goalRight->row,
-            'column' => $goalRight->column,
-            'width' => $goalRight->width,
-            'height' => $goalRight->height,
-        ];
-
-        // Mittelkreis mit 4x5 Feldern (horizontal): startend bei (row=7, col=7)
-        $middleCircle = Field::create([
-            Field::board_id => $board->id,
-            Field::name => 'Mittelkreis',
-            Field::row => 7,
-            Field::column => 7,
-            Field::width => 4,
-            Field::height => 5,
-            Field::price_per_month => 100.00,
-            Field::status => Field::STATUS_AVAILABLE,
-            Field::description => 'Herz des Spielfelds - wird zu Spielbeginn und bei jedem Anstoß gesehen. Premium-Position mit maximaler Sichtbarkeit.',
-        ]);
-
-        $createdFields[] = [
-            'row' => $middleCircle->row,
-            'column' => $middleCircle->column,
-            'width' => $middleCircle->width,
-            'height' => $middleCircle->height,
-        ];
-
         // Fülle restliche Positionen mit Standard-Feldern
-        $standardPrice = 10.00;
+        $standardPrice = 2.5;
         for ($r = 1; $r <= $board->{Board::rows}; $r++) {
             for ($c = 1; $c <= $board->{Board::columns}; $c++) {
                 // Prüfe ob Position schon belegt ist
@@ -134,6 +44,9 @@ class FieldSeeder extends Seeder
                 // Generiere Feldnamen im Format A1, B2, etc.
                 $fieldName = chr(64 + $r) . $c;
 
+                // Premium-Zonen prüfen
+                $premium = $this->getPremiumData($r, $c);
+
                 Field::create([
                     Field::board_id => $board->id,
                     Field::name => 'Feld ' . $fieldName,
@@ -141,9 +54,9 @@ class FieldSeeder extends Seeder
                     Field::column => $c,
                     Field::width => 1,
                     Field::height => 1,
-                    Field::price_per_month => $standardPrice,
+                    Field::price_per_month => $premium ? $premium['price'] : $standardPrice,
                     Field::status => Field::STATUS_AVAILABLE,
-                    Field::description => 'Standardfeld mit guter Sichtbarkeit auf dem Spielfeld.',
+                    Field::description => $premium ? $premium['description'] : 'Standardfeld mit guter Sichtbarkeit auf dem Spielfeld.',
                 ]);
 
                 $createdFields[] = [
@@ -154,6 +67,33 @@ class FieldSeeder extends Seeder
                 ];
             }
         }
+    }
+
+    /**
+     * Gibt Premium-Daten zurück, wenn die Position in einer Premium-Zone liegt.
+     * Zonen basieren auf der Feldnamens-Konvention chr(64 + $row) . $col:
+     *   - Torraum links:  D1–N3  (Zeilen 4–14, Spalten 1–3)
+     *   - Torraum rechts: D16–N18 (Zeilen 4–14, Spalten 16–18)
+     *   - Mittelkreis:    H9–J10  (Zeilen 8–10, Spalten 9–10)
+     */
+    private function getPremiumData(int $row, int $col): ?array
+    {
+        // Torraum links: D1 - N3
+        if ($row >= 4 && $row <= 14 && $col >= 1 && $col <= 3) {
+            return ['price' => 3.33, 'description' => 'Premium Feld Torraum'];
+        }
+
+        // Torraum rechts: D16 - N18
+        if ($row >= 4 && $row <= 14 && $col >= 16 && $col <= 18) {
+            return ['price' => 3.33, 'description' => 'Premium Feld Torraum'];
+        }
+
+        // Mittelkreis: H9 - J10
+        if ($row >= 8 && $row <= 10 && $col >= 9 && $col <= 10) {
+            return ['price' => 3.33, 'description' => 'Premium Feld Mittelkreis'];
+        }
+
+        return null;
     }
 
     /**

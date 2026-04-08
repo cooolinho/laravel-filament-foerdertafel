@@ -27,7 +27,7 @@ class BoardSeeder extends Seeder
                 Board::location_id => $stadion->id,
                 Board::name => 'Fördertafel Fussballstadion',
                 Board::rows => 17,
-                Board::columns => 16,
+                Board::columns => 18,
                 Board::grid_gap => 1,
                 Board::description => 'Fördertafel für das Fussballstadion mit vordefinierten Feldern für Ecken, Tore und Mittelkreis.',
             ]);
